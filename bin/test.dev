@@ -1,0 +1,44 @@
+#!/bin/bash
+
+set -euo pipefail
+
+if [[ "$(uname -s)" != "Darwin" ]]; then
+    echo "Focus Island requires macOS to build." >&2
+    exit 1
+fi
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+developer_dir="$(xcode-select -p)"
+sdk_path="${SDKROOT:-$(xcrun --sdk macosx --show-sdk-path)}"
+build_flags=(--configuration debug)
+
+if [[ -d "$developer_dir/Library/Developer/Frameworks/Testing.framework" ]]; then
+    build_flags+=(--build-system native)
+    # shortcut: CLT's macOS 27 SDK lacks SwiftUI macros; remove when CLT ships them.
+    if [[ -z "${SDKROOT:-}" && "$(xcrun --sdk macosx --show-sdk-version)" == 27.* \
+        && -d "$developer_dir/SDKs/MacOSX26.5.sdk" ]]; then
+        sdk_path="$developer_dir/SDKs/MacOSX26.5.sdk"
+    fi
+fi
+build_flags+=(--sdk "$sdk_path")
+test_flags=("${build_flags[@]}")
+
+testing_plugin="$developer_dir/usr/lib/swift/host/plugins/testing/libTestingMacros.dylib"
+if [[ -f "$testing_plugin" ]]; then
+    test_flags+=(-Xswiftc -load-plugin-library -Xswiftc "$testing_plugin")
+fi
+
+printf 'Using SDK: %s\n' "$sdk_path"
+zsh scripts/test-clt.sh "${test_flags[@]}"
+swift build "${build_flags[@]}"
+
+build_dir="$(swift build "${build_flags[@]}" --show-bin-path)"
+for product in OpenIslandApp OpenIslandHooks OpenIslandSetup; do
+    if [[ ! -x "$build_dir/$product" ]]; then
+        printf 'Missing build output: %s/%s\n' "$build_dir" "$product" >&2
+        exit 1
+    fi
+done
+printf '\nTests passed. Debug app and helpers built in:\n%s\n' "$build_dir"

@@ -111,6 +111,16 @@ Requirements: a clean `main` that matches `origin/main`, release notes in `docs/
 
 ## Building and running the dev version
 
+Run the tests and compile the debug app and both helpers:
+
+```bash
+bin/test.dev
+```
+
+The script prints the build directory and stops on any test or build failure. On Command Line Tools setups with the macOS 27 SDK, it uses the installed macOS 26.5 SDK to work around missing SwiftUI macros. Set `SDKROOT` to select a different SDK. It does not install or launch the app.
+
+To build, install and launch the dev app bundle:
+
 ```bash
 zsh scripts/launch-dev-app.sh
 ```
