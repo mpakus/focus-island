@@ -1040,6 +1040,8 @@ struct TerminalSessionAttachmentProbe {
 
     private func phasePriority(_ phase: SessionPhase) -> Int {
         switch phase {
+        case .idle:
+            0
         case .waitingForApproval:
             4
         case .waitingForAnswer:

@@ -299,6 +299,10 @@ public final class BridgeServer: @unchecked Sendable {
             send(.response(.acknowledged), to: clientID)
 
         case let .requestQuestion(sessionID, prompt):
+            guard localState.session(id: sessionID)?.tool != .codex else {
+                send(.response(.acknowledged), to: clientID)
+                return
+            }
             guard hasSession(id: sessionID) else {
                 send(.response(.acknowledged), to: clientID)
                 return
@@ -316,6 +320,10 @@ public final class BridgeServer: @unchecked Sendable {
             send(.response(.acknowledged), to: clientID)
 
         case let .resolvePermission(sessionID, resolution):
+            guard localState.session(id: sessionID)?.tool != .codex else {
+                send(.response(.acknowledged), to: clientID)
+                return
+            }
             if pendingClaudeInteractions[sessionID] != nil {
                 resolvePendingClaudeInteraction(sessionID: sessionID, resolution: resolution)
                 send(.response(.acknowledged), to: clientID)
@@ -334,6 +342,10 @@ public final class BridgeServer: @unchecked Sendable {
             send(.response(.acknowledged), to: clientID)
 
         case let .answerQuestion(sessionID, response):
+            guard localState.session(id: sessionID)?.tool != .codex else {
+                send(.response(.acknowledged), to: clientID)
+                return
+            }
             if pendingClaudeInteractions[sessionID] != nil {
                 resolvePendingClaudeQuestion(sessionID: sessionID, response: response)
                 send(.response(.acknowledged), to: clientID)
@@ -355,12 +367,22 @@ public final class BridgeServer: @unchecked Sendable {
             )
             send(.response(.acknowledged), to: clientID)
 
+        case let .processCodexHook(payload):
+            let events = CodexHookAdapter.events(for: payload, existing: localState.session(id: payload.internalSessionID))
+            // Acknowledge before broadcasting so slow observers cannot delay Codex.
+            send(.response(.acknowledged), to: clientID)
+            for event in events { emit(event) }
+
         case let .processClaudeHook(payload):
             handleClaudeHook(payload, from: clientID)
         }
     }
 
     private func handleClaudeHook(_ payload: ClaudeHookPayload, from clientID: UUID) {
+        guard localState.session(id: payload.sessionID)?.tool != .codex else {
+            send(.response(.acknowledged), to: clientID)
+            return
+        }
         // Subagent processes fire their own hooks with agentID set.
         // The parent session already receives SubagentStart/SubagentStop events,
         // so we suppress subagent hooks to avoid creating duplicate sessions.

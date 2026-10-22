@@ -12,6 +12,7 @@ final class SessionDiscoveryCoordinator {
         var claudeRecordsNeedPrune: Bool
         var discoveredClaudeSessions: [AgentSession]
         var hooksBinaryURL: URL?
+        var codexSessions: [AgentSession] = []
     }
 
     @ObservationIgnored
@@ -29,8 +30,14 @@ final class SessionDiscoveryCoordinator {
     @ObservationIgnored
     private let claudeSessionRegistry: ClaudeSessionRegistry
 
-    init(claudeSessionRegistry: ClaudeSessionRegistry = ClaudeSessionRegistry()) {
+    @ObservationIgnored
+    private let codexSessionRegistry: CodexSessionRegistry
+
+    init(claudeSessionRegistry: ClaudeSessionRegistry = ClaudeSessionRegistry(), codexSessionRegistry: CodexSessionRegistry? = nil) {
         self.claudeSessionRegistry = claudeSessionRegistry
+        self.codexSessionRegistry = codexSessionRegistry ?? CodexSessionRegistry(
+            fileURL: claudeSessionRegistry.fileURL.deletingLastPathComponent().appendingPathComponent("codex-sessions.json")
+        )
     }
 
     @ObservationIgnored
@@ -64,13 +71,17 @@ final class SessionDiscoveryCoordinator {
             discoveredClaudeSessions: discoveredClaude,
             hooksBinaryURL: HooksBinaryLocator.locate(
                 executableDirectory: Bundle.main.executableURL?.deletingLastPathComponent()
-            )
+            ),
+            codexSessions: (try? codexSessionRegistry.load()) ?? []
         )
     }
 
     /// Applies startup discovery results on the main thread after background I/O completes.
     /// Returns the hooksBinaryURL found during startup.
     func applyStartupDiscoveryPayload(_ payload: StartupDiscoveryPayload) {
+        if !payload.codexSessions.isEmpty {
+            state = SessionState(sessions: mergeDiscoveredSessions(payload.codexSessions))
+        }
         // Prune stale records if needed.
         if payload.claudeRecordsNeedPrune {
             try? claudeSessionRegistry.save(payload.claudeRecords)
@@ -86,7 +97,7 @@ final class SessionDiscoveryCoordinator {
         if !payload.discoveredClaudeSessions.isEmpty {
             let mergedSessions = mergeDiscoveredSessions(payload.discoveredClaudeSessions)
             state = SessionState(sessions: mergedSessions)
-            scheduleClaudeSessionPersistence()
+            scheduleSessionPersistence()
             onStatusMessage?("Discovered \(payload.discoveredClaudeSessions.count) recent Claude session(s) from local transcripts.")
         }
     }
@@ -98,6 +109,7 @@ final class SessionDiscoveryCoordinator {
 
         for discovered in discoveredSessions {
             if let existing = mergedByID[discovered.id] {
+                guard existing.tool == discovered.tool else { continue }
                 mergedByID[discovered.id] = merge(discovered: discovered, into: existing)
             } else if let existingID = existingSessionID(matchingTranscriptOf: discovered, in: mergedByID) {
                 mergedByID[existingID] = merge(discovered: discovered, into: mergedByID[existingID]!)
@@ -119,11 +131,13 @@ final class SessionDiscoveryCoordinator {
         }
 
         return sessions.first(where: {
-            $0.value.claudeMetadata?.transcriptPath == discoveredPath
+            $0.value.tool == discovered.tool && $0.value.claudeMetadata?.transcriptPath == discoveredPath
         })?.key
     }
 
     private func merge(discovered: AgentSession, into existing: AgentSession) -> AgentSession {
+        // A registry snapshot never downgrades a live hook event that arrived during startup.
+        if existing.tool == .codex { return existing }
         var merged = existing
         let discoveredIsNewer = discovered.updatedAt >= existing.updatedAt
 
@@ -206,7 +220,7 @@ final class SessionDiscoveryCoordinator {
         }
     }
 
-    func scheduleClaudeSessionPersistence() {
+    func scheduleSessionPersistence() {
         claudeSessionPersistenceTask?.cancel()
 
         let records = state.sessions
@@ -219,9 +233,12 @@ final class SessionDiscoveryCoordinator {
             }
             .map(ClaudeTrackedSessionRecord.init(session:))
         let registry = claudeSessionRegistry
+        let codexRegistry = codexSessionRegistry
+        let codexSessions = state.sessions.filter { $0.tool == .codex && !$0.isDemoSession }
 
         claudeSessionPersistenceTask = Self.persistenceTask {
             try registry.save(records)
+            try codexRegistry.save(codexSessions)
         }
     }
 }

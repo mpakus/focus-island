@@ -52,6 +52,7 @@ struct DayTimelineView: View {
             }
             var pieces: [String] = []
             if total(.claude) > 0 { pieces.append("Claude \(DaySummaryFormatter.duration(total(.claude)))") }
+            if total(.codex) > 0 { pieces.append("Codex \(DaySummaryFormatter.duration(total(.codex)))") }
             if total(.you) > 0 { pieces.append("ты \(DaySummaryFormatter.duration(total(.you)))") }
             if total(.waiting) > 0 { pieces.append("ждал \(DaySummaryFormatter.duration(total(.waiting)))") }
             return pieces.isEmpty ? nil : "\(lane.title): \(pieces.joined(separator: ", "))"
@@ -68,6 +69,7 @@ struct DayTimelineView: View {
 
     private static func color(_ kind: ActivityKind) -> Color {
         switch kind {
+        case .codex: .mint
         case .claude: FocusStyle.working
         case .you: FocusStyle.you
         case .waiting: FocusStyle.waiting
@@ -104,6 +106,7 @@ struct DayTimelineView: View {
     private var legend: some View {
         HStack(spacing: 16) {
             legendItem("Claude работает", kind: .claude)
+            legendItem("Codex работает", kind: .codex)
             legendItem("ты в задаче", kind: .you)
             legendItem("ждёт тебя", kind: .waiting)
             legendItem("отвлечение", kind: .distraction)
@@ -163,7 +166,7 @@ struct DayTimelineView: View {
         let color = color(kind)
         let outline = Path(roundedRect: rect, cornerRadius: radius)
         switch kind {
-        case .claude, .you:
+        case .claude, .codex, .you:
             context.fill(outline, with: .color(color))
         case .waiting, .distraction:
             var layer = context

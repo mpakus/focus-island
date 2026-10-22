@@ -4,6 +4,8 @@ import SwiftUI
 struct TaskTimeTotals: Equatable, Sendable {
     var totalSeconds: TimeInterval
     var claudeSeconds: TimeInterval
+    var observedAgentSeconds: TimeInterval? = nil
+    var agentSeconds: TimeInterval { observedAgentSeconds ?? claudeSeconds }
 }
 
 struct TaskDetailView: View {
@@ -171,6 +173,10 @@ struct TaskDetailView: View {
                 }
             )
             if Self.showsCloseTask(column: focus.board.task(id: task.id)?.boardColumn) {
+                Menu("Новая сессия") {
+                    Button("Claude Code") { focus.startNewSession(forTaskID: task.id, provider: .claudeCode) }
+                    Button("Codex") { focus.startNewSession(forTaskID: task.id, provider: .codex) }
+                }
                 Button("+ Добавить сессию") { showsSessionsPicker = true }
                     .buttonStyle(FocusButtonStyle(kind: rows.isEmpty && unrowed.isEmpty ? .primary : .secondary))
                     .padding(.top, 4)
@@ -384,7 +390,7 @@ struct TaskDetailView: View {
 
     nonisolated static func timeSummary(_ totals: TaskTimeTotals) -> String? {
         guard totals.totalSeconds > 0 else { return nil }
-        return "всего \(BoardView.duration(totals.totalSeconds)) · Claude \(BoardView.duration(totals.claudeSeconds))"
+        return "всего \(BoardView.duration(totals.totalSeconds)) · агенты \(BoardView.duration(totals.agentSeconds))"
     }
 
     nonisolated static func timeTotals(spans: [ActivitySpan], now: Date) -> TaskTimeTotals {
@@ -395,8 +401,9 @@ struct TaskDetailView: View {
                 .filter { $0.1 > $0.0 }
         }
         return TaskTimeTotals(
-            totalSeconds: unionSeconds(intervals([.claude, .you])),
-            claudeSeconds: unionSeconds(intervals([.claude]))
+            totalSeconds: unionSeconds(intervals([.claude, .codex, .you])),
+            claudeSeconds: unionSeconds(intervals([.claude])),
+            observedAgentSeconds: unionSeconds(intervals([.claude, .codex]))
         )
     }
 

@@ -10,6 +10,7 @@ public struct SessionStarted: Equatable, Codable, Sendable {
     public var timestamp: Date
     public var jumpTarget: JumpTarget?
     public var claudeMetadata: ClaudeSessionMetadata?
+    public var codexMetadata: CodexSessionMetadata?
     public var isRemote: Bool
 
     public init(
@@ -22,6 +23,7 @@ public struct SessionStarted: Equatable, Codable, Sendable {
         timestamp: Date,
         jumpTarget: JumpTarget? = nil,
         claudeMetadata: ClaudeSessionMetadata? = nil,
+        codexMetadata: CodexSessionMetadata? = nil,
         isRemote: Bool = false
     ) {
         self.sessionID = sessionID
@@ -33,6 +35,7 @@ public struct SessionStarted: Equatable, Codable, Sendable {
         self.timestamp = timestamp
         self.jumpTarget = jumpTarget
         self.claudeMetadata = claudeMetadata
+        self.codexMetadata = codexMetadata
         self.isRemote = isRemote
     }
 }
@@ -146,6 +149,18 @@ public struct ClaudeSessionMetadataUpdated: Equatable, Codable, Sendable {
     }
 }
 
+public struct CodexSessionMetadataUpdated: Equatable, Codable, Sendable {
+    public var sessionID: String
+    public var metadata: CodexSessionMetadata
+    public var timestamp: Date
+
+    public init(sessionID: String, metadata: CodexSessionMetadata, timestamp: Date) {
+        self.sessionID = sessionID
+        self.metadata = metadata
+        self.timestamp = timestamp
+    }
+}
+
 public struct ActionableStateResolved: Equatable, Codable, Sendable {
     public var sessionID: String
     public var summary: String
@@ -170,6 +185,7 @@ public enum AgentEvent: Equatable, Codable, Sendable {
     case sessionCompleted(SessionCompleted)
     case jumpTargetUpdated(JumpTargetUpdated)
     case claudeSessionMetadataUpdated(ClaudeSessionMetadataUpdated)
+    case codexSessionMetadataUpdated(CodexSessionMetadataUpdated)
     case actionableStateResolved(ActionableStateResolved)
 
     private enum CodingKeys: String, CodingKey {
@@ -181,6 +197,7 @@ public enum AgentEvent: Equatable, Codable, Sendable {
         case sessionCompleted
         case jumpTargetUpdated
         case claudeSessionMetadataUpdated
+        case codexSessionMetadataUpdated
         case actionableStateResolved
     }
 
@@ -192,6 +209,7 @@ public enum AgentEvent: Equatable, Codable, Sendable {
         case sessionCompleted
         case jumpTargetUpdated
         case claudeSessionMetadataUpdated
+        case codexSessionMetadataUpdated
         case actionableStateResolved
     }
 
@@ -216,6 +234,8 @@ public enum AgentEvent: Equatable, Codable, Sendable {
             self = .claudeSessionMetadataUpdated(
                 try container.decode(ClaudeSessionMetadataUpdated.self, forKey: .claudeSessionMetadataUpdated)
             )
+        case .codexSessionMetadataUpdated:
+            self = .codexSessionMetadataUpdated(try container.decode(CodexSessionMetadataUpdated.self, forKey: .codexSessionMetadataUpdated))
         case .actionableStateResolved:
             self = .actionableStateResolved(
                 try container.decode(ActionableStateResolved.self, forKey: .actionableStateResolved)
@@ -248,6 +268,9 @@ public enum AgentEvent: Equatable, Codable, Sendable {
         case let .claudeSessionMetadataUpdated(payload):
             try container.encode(EventType.claudeSessionMetadataUpdated, forKey: .type)
             try container.encode(payload, forKey: .claudeSessionMetadataUpdated)
+        case let .codexSessionMetadataUpdated(payload):
+            try container.encode(EventType.codexSessionMetadataUpdated, forKey: .type)
+            try container.encode(payload, forKey: .codexSessionMetadataUpdated)
         case let .actionableStateResolved(payload):
             try container.encode(EventType.actionableStateResolved, forKey: .type)
             try container.encode(payload, forKey: .actionableStateResolved)

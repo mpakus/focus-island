@@ -35,6 +35,14 @@ public final class FocusStore: Sendable {
         var configuration = Configuration()
         configuration.busyMode = .timeout(5)
         let queue = try DatabaseQueue(path: fileURL.path, configuration: configuration)
+        // Keep a consistent pre-migration snapshot; never restore it automatically over later work.
+        try queue.writeWithoutTransaction { db in
+            if try db.tableExists("grdb_migrations"),
+               try !String.fetchAll(db, sql: "SELECT identifier FROM grdb_migrations").contains("v6") {
+                let backup = fileURL.appendingPathExtension("before-codex-\(UUID().uuidString).sqlite")
+                try db.execute(sql: "VACUUM INTO ?", arguments: [backup.path])
+            }
+        }
         do {
             try self.init(queue: queue)
         } catch {
@@ -202,6 +210,14 @@ public final class FocusStore: Sendable {
             try db.alter(table: "sessions") { t in
                 t.add(column: "doneAt", .datetime)
             }
+        }
+        if identifier == "v5" { return migrator }
+        migrator.registerMigration("v6") { db in
+            try db.alter(table: "sessions") { t in
+                t.add(column: "provider", .text).notNull().defaults(to: "claudeCode")
+                t.add(column: "nativeSessionID", .text).notNull().defaults(to: "")
+            }
+            try db.execute(sql: "UPDATE sessions SET nativeSessionID = id")
         }
         return migrator
     }

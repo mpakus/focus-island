@@ -102,6 +102,7 @@ struct AgentSessionPresentationTests {
     func completionReplyRecipientCoversEveryAgentTool() {
         let expectedNames: [(AgentTool, String)] = [
             (.claudeCode, "Claude"),
+            (.codex, "Codex"),
         ]
         #expect(expectedNames.map { $0.0.rawValue }.sorted() == AgentTool.allCases.map(\.rawValue).sorted())
 

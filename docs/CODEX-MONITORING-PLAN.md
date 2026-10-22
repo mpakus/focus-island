@@ -1,12 +1,12 @@
 # Codex as the second monitored agent
 
-Status: implementation plan, 2026-10-22. Source baseline: local `main`, `de9571f`.
+Status: implemented as an opt-in CLI preview, 2026-10-22. Source baseline: local `main`, `de9571f`. The original design below records the investigation; the implementation/validation status at the end distinguishes shipped code from pending native-client acceptance.
 
 Add Codex to the existing Focus Island session pipeline so Claude Code and Codex can share tasks, attention queues, timers, and history. Use a small Codex adapter behind the existing Unix socket bridge. Keep the application local and retain the `OpenIsland*` executable names.
 
 The first release should monitor local Codex CLI sessions. Include local Codex desktop sessions only after their lifecycle and navigation checks pass independently. Approvals and answers stay in Codex. Full interaction parity, remote/cloud sessions, and a general agent-plugin framework are outside this first release.
 
-## What the project does today
+## Functionality at the original baseline
 
 | Area | Implemented behavior | Source |
 | --- | --- | --- |
@@ -204,6 +204,41 @@ The preferred rollback is to disable/uninstall only the Codex integration while 
 
 Suggested delivery order is five reviewable changes after the contract spike: identity/storage; bridge adapter; setup/recovery; shared UI/actions/reports; acceptance fixtures/documentation. Complete each slice with its matching tests before widening scope. A schedule estimate should follow phase 0, because supported runtime events and desktop targeting are the principal uncertainties.
 
-## Validation of this analysis
+## Validation of the original analysis
 
 This plan is grounded in the checked-in code, tests, harness scripts, fetched official documentation, and local CLI/compiler help/version checks. No application code or live agent settings were changed. The Swift suite, GUI, hook emission, terminal actions, and desktop navigation were not exercised during this documentation-only analysis. Their verification is required by the implementation gates above.
+
+
+## Implementation and validation status (2026-10-22)
+
+Implemented in the existing Swift targets:
+
+- Namespaced Codex identity, optional metadata and explicit idle phase; Claude identifiers and old data remain intact.
+- Bounded command-hook adapter and bridge command with immediate acknowledgement, correlated observation-only approvals, turn deduplication/continuation, interruption and session end.
+- Exact-entry hook ownership, backups and atomic config writes; separate install/status/uninstall controls and explicit Codex trust instructions.
+- Versioned Codex registry, stale restart recovery, provider-separated process reconciliation, 15-minute unconfirmed timeout and dismissal. Shared-server PID/TTY guesses are not used.
+- Additive v6 history migration with consistent SQLite snapshot, native-ID resume, new-session provider choice, generic prompt/summary accessors, provider labels, safe clipboard fallback and handler-level rejection of inline Codex decisions/sending.
+- Codex activity spans and combined wall-clock union in reports, task totals and pomodoro summaries. Daily export and timeline retain provider distinctions.
+- Synthetic adapter, socket, installer, migration, recovery, reporting and app regression tests; a Codex approval GUI harness and standalone helper fault tests. Harness scenes now inject in-memory storage and temporary registries and disable transcript backfill.
+
+Verification environment: Swift 6.4, Command Line Tools, macOS 26.5 SDK. The installed default macOS 27 SDK failed in external SwiftUI/Testing macro loading; the following explicit SDK/plugin invocation compiled and exercised the suite:
+
+```bash
+rtk proxy zsh scripts/test-clt.sh --build-system native \
+  --sdk /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk \
+  -Xswiftc -load-plugin-library \
+  -Xswiftc /Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing/libTestingMacros.dylib
+rtk proxy swift build --build-system native \
+  --sdk /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk \
+  -c release --product OpenIslandHooks
+rtk proxy python3 scripts/test-codex-hooks.py .build/release/OpenIslandHooks
+rtk proxy zsh scripts/lint-strings.sh
+```
+
+The synthetic fixture data is in `CodexMonitoringTests.swift`, `CodexHookInstallerTests.swift`, `CodexHistoryTests.swift`, and `CodexAppTests.swift`. No fixture is labelled as a native Codex recording. The helper fault test uses disposable sockets, checks valid no-op JSON and zero exit status for missing/stalled bridges, malformed/oversized/empty input, chunked stdin, skip mode and stalled stdin. A 750 ms whole-process watchdog bounds stalled stdin/connect; socket reply budget is 250 ms and the installed hook timeout is one second.
+
+Native release gate remains open: the inspected CLI version is `0.163.0-alpha.11.1`, but authenticated/trusted live lifecycle callbacks have not been exercised. Questions, exact terminal targeting, desktop navigation, transcript discovery and remote/cloud monitoring remain disabled or unclaimed. Repeat phase 0 and the native portions of phase 5 before advertising a supported Codex release. Hook configuration and trust in the user's actual Codex home were not changed during implementation.
+
+Final automated results: 886 Swift tests in 83 suites passed, strings lint passed, and the release hook product built. Release helper fault cases all returned exit 0 and `{}`; sampled missing-bridge time was 0.189 s, stalled-bridge time 0.292 s, and stalled-stdin time 0.833 s. These are local timing samples, not a scheduling guarantee.
+
+The Codex approval GUI scenario passed artifact validation and visual inspection at 736 × 376 pixels: provider badge reads Codex, with Open and no Allow/Deny buttons. The six original smoke scenarios were also launched: completion and long-completion passed; closed, session list, approval and question failed existing frame-size assertions (observed respectively 736 × 196, 736 × 347, 736 × 433, and 736 × 545). No claim of a fully green GUI harness is made. The new isolated harness has an empty in-memory board; reconciling these older layout expectations remains separate follow-up work. Logs and screenshots are retained under `.worklog/` in the implementation worktree.

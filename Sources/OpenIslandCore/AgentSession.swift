@@ -2,11 +2,12 @@ import Foundation
 
 public enum AgentTool: String, CaseIterable, Codable, Sendable {
     case claudeCode
+    case codex
 
-    public var displayName: String { "Claude Code" }
-    public var shortName: String { "Claude" }
-    public var isClaudeCodeFork: Bool { true }
-    public var brandColorHex: String { "#d97742" }
+    public var displayName: String { self == .codex ? "Codex" : "Claude Code" }
+    public var shortName: String { self == .codex ? "Codex" : "Claude" }
+    public var isClaudeCodeFork: Bool { self == .claudeCode }
+    public var brandColorHex: String { self == .codex ? "#74AA9C" : "#d97742" }
 }
 
 public enum SessionOrigin: String, Codable, Sendable {
@@ -25,6 +26,7 @@ public enum SessionAttachmentState: String, Codable, Sendable {
 }
 
 public enum SessionPhase: String, Codable, Sendable, CaseIterable {
+    case idle
     case running
     case waitingForApproval
     case waitingForAnswer
@@ -32,6 +34,8 @@ public enum SessionPhase: String, Codable, Sendable, CaseIterable {
 
     public var displayName: String {
         switch self {
+        case .idle:
+            "Idle"
         case .running:
             "Running"
         case .waitingForApproval:
@@ -47,7 +51,7 @@ public enum SessionPhase: String, Codable, Sendable, CaseIterable {
         switch self {
         case .waitingForApproval, .waitingForAnswer:
             true
-        case .running, .completed:
+        case .idle, .running, .completed:
             false
         }
     }
@@ -281,6 +285,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
     public var questionPrompt: QuestionPrompt?
     public var jumpTarget: JumpTarget?
     public var claudeMetadata: ClaudeSessionMetadata?
+    public var codexMetadata: CodexSessionMetadata?
 
     /// Whether this session originates from a remote (SSH) connection.
     public var isRemote: Bool = false
@@ -316,7 +321,8 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         permissionRequest: PermissionRequest? = nil,
         questionPrompt: QuestionPrompt? = nil,
         jumpTarget: JumpTarget? = nil,
-        claudeMetadata: ClaudeSessionMetadata? = nil
+        claudeMetadata: ClaudeSessionMetadata? = nil,
+        codexMetadata: CodexSessionMetadata? = nil
     ) {
         self.id = id
         self.title = title
@@ -331,6 +337,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         self.questionPrompt = questionPrompt
         self.jumpTarget = jumpTarget
         self.claudeMetadata = claudeMetadata
+        self.codexMetadata = codexMetadata
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -347,6 +354,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         case questionPrompt
         case jumpTarget
         case claudeMetadata
+        case codexMetadata
     }
 
     public init(from decoder: any Decoder) throws {
@@ -364,6 +372,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         questionPrompt = try container.decodeIfPresent(QuestionPrompt.self, forKey: .questionPrompt)
         jumpTarget = try container.decodeIfPresent(JumpTarget.self, forKey: .jumpTarget)
         claudeMetadata = try container.decodeIfPresent(ClaudeSessionMetadata.self, forKey: .claudeMetadata)
+        codexMetadata = try container.decodeIfPresent(CodexSessionMetadata.self, forKey: .codexMetadata)
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -381,6 +390,7 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
         try container.encodeIfPresent(questionPrompt, forKey: .questionPrompt)
         try container.encodeIfPresent(jumpTarget, forKey: .jumpTarget)
         try container.encodeIfPresent(claudeMetadata, forKey: .claudeMetadata)
+        try container.encodeIfPresent(codexMetadata, forKey: .codexMetadata)
     }
 }
 
@@ -414,12 +424,20 @@ public extension AgentSession {
         return false
     }
 
+    var nativeSessionID: String { codexMetadata?.sessionID ?? id }
+
+    var wasResumed: Bool {
+        tool == .codex ? codexMetadata?.source == "resume" : claudeMetadata?.startupSource == .resume
+    }
+
+    var supportsInlineInteraction: Bool { tool == .claudeCode }
+
     var currentToolName: String? {
-        claudeMetadata?.currentTool
+        tool == .codex ? codexMetadata?.currentTool : claudeMetadata?.currentTool
     }
 
     var lastAssistantMessageText: String? {
-        claudeMetadata?.lastAssistantMessage
+        tool == .codex ? codexMetadata?.lastAssistantMessage : claudeMetadata?.lastAssistantMessage
     }
 
     var completionAssistantMessageText: String? {
@@ -427,18 +445,18 @@ public extension AgentSession {
     }
 
     var trackingTranscriptPath: String? {
-        claudeMetadata?.transcriptPath
+        tool == .codex ? codexMetadata?.transcriptPath : claudeMetadata?.transcriptPath
     }
 
     var latestUserPromptText: String? {
-        PromptText.clean(claudeMetadata?.lastUserPrompt)
+        PromptText.clean(tool == .codex ? codexMetadata?.lastUserPrompt : claudeMetadata?.lastUserPrompt)
     }
 
     var initialUserPromptText: String? {
-        PromptText.clean(claudeMetadata?.initialUserPrompt)
+        PromptText.clean(tool == .codex ? codexMetadata?.initialUserPrompt : claudeMetadata?.initialUserPrompt)
     }
 
     var currentCommandPreviewText: String? {
-        claudeMetadata?.currentToolInputPreview
+        tool == .codex ? codexMetadata?.currentToolInputPreview : claudeMetadata?.currentToolInputPreview
     }
 }

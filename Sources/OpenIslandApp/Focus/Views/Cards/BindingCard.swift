@@ -14,7 +14,7 @@ struct BindingCard: View {
                 Image(systemName: "sparkle")
                     .foregroundStyle(FocusStyle.link)
                     .accessibilityHidden(true)
-                Text("Новая сессия Claude")
+                Text("Новая сессия \(focus.session(sessionID)?.tool.shortName ?? "агента")")
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(1)
                 if let cwd {

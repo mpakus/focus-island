@@ -17,6 +17,12 @@ final class HookInstallationCoordinator {
     var claudeHookStatus: ClaudeHookInstallationStatus? {
         didSet { onClaudeHookStatusChanged?() }
     }
+    var codexHookStatus: CodexHookInstallationStatus? {
+        didSet { onClaudeHookStatusChanged?() }
+    }
+    var codexHookError: String?
+    var isCodexHookSetupBusy = false
+    var codexHooksConfigured: Bool { codexHookStatus?.readyForVerification == true }
     var claudeStatusLineStatus: ClaudeStatusLineInstallationStatus?
     var claudeUsageSnapshot: ClaudeUsageSnapshot?
     var hooksBinaryURL: URL?
@@ -300,6 +306,7 @@ final class HookInstallationCoordinator {
 
     /// Awaitable versions of refresh for use in startup flow to avoid race conditions.
     func refreshAllHookStatusAndWait() async {
+        refreshCodexHookStatus()
         await withTaskGroup(of: Void.self) { group in
             group.addTask { @MainActor [weak self] in
                 guard let self else { return }
@@ -369,6 +376,7 @@ final class HookInstallationCoordinator {
         }
 
         switch agent {
+        case .codex: return false // Codex connection and repair stay explicit because changed hooks need trust review.
         case .claudeCode: return !claudeHooksInstalled
         case .claudeUsageBridge: return !claudeUsageInstalled && !claudeStatusLineProvidedByOtherIsland
         }
@@ -384,6 +392,7 @@ final class HookInstallationCoordinator {
     func migrateIntentStoreIfNeeded() {
         intentStore.migrateFromLegacyStateIfNeeded { [self] agent in
             switch agent {
+            case .codex: return codexHooksConfigured
             case .claudeCode: return claudeHooksInstalled
             case .claudeUsageBridge: return claudeUsageInstalled
             }
@@ -391,6 +400,42 @@ final class HookInstallationCoordinator {
     }
 
     // MARK: - Install / uninstall
+
+    func refreshCodexHookStatus() {
+        do {
+            codexHookStatus = try CodexHookInstallationManager().status()
+            codexHookError = nil
+        } catch {
+            codexHookError = error.localizedDescription
+            codexHookStatus = nil
+        }
+    }
+
+    func updateCodexHooks(install: Bool) {
+        guard !isCodexHookSetupBusy else { return }
+        if install && hooksBinaryURL == nil {
+            codexHookError = "Build OpenIslandHooks before connecting Codex."
+            return
+        }
+        isCodexHookSetupBusy = true
+        defer { isCodexHookSetupBusy = false }
+        do {
+            let manager = CodexHookInstallationManager()
+            if install, let binary = hooksBinaryURL {
+                codexHookStatus = try manager.install(hooksBinaryURL: binary)
+            } else {
+                codexHookStatus = try manager.uninstall()
+            }
+            intentStore.setIntent(install ? .installed : .uninstalled, for: .codex)
+            codexHookError = nil
+            onStatusMessage?(install
+                ? "Codex configured. Review /hooks in Codex, then send a prompt to verify monitoring."
+                : "Codex monitoring hooks removed.")
+        } catch {
+            codexHookError = error.localizedDescription
+            onStatusMessage?(error.localizedDescription)
+        }
+    }
 
     func installClaudeHooks() {
         guard let hooksBinaryURL else {

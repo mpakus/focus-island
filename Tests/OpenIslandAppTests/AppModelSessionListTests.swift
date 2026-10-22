@@ -55,7 +55,7 @@ struct AppModelSessionListTests {
             ),
         ])
 
-        model.discovery.scheduleClaudeSessionPersistence()
+        model.discovery.scheduleSessionPersistence()
 
         for _ in 0..<50 where !FileManager.default.fileExists(atPath: registry.fileURL.path) {
             try await Task.sleep(for: .milliseconds(20))

@@ -61,7 +61,7 @@ struct SessionHubView: View {
                 Text("Новая сессия")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(FocusStyle.primaryText)
-                Text(Self.newSessionDetail(cwd: focus.sessionCWD(sessionID), prompt: focus.session(sessionID)?.claudeMetadata?.initialUserPrompt))
+                Text(Self.newSessionDetail(cwd: focus.sessionCWD(sessionID), prompt: focus.session(sessionID)?.initialUserPromptText))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
             }
@@ -115,7 +115,7 @@ struct SessionHubView: View {
                     onDismiss: { focus.dismissAllDoneSuggestion(taskID: task.id) }
                 )
             } else if rows.isEmpty {
-                Text("Нет сессий — открой Claude Code и добавь сессию сюда")
+                Text("Нет сессий — открой Claude Code или Codex и добавь сессию сюда")
                     .font(.system(size: 13))
                     .foregroundStyle(FocusStyle.secondaryText)
                     .padding(.vertical, 4)
@@ -349,6 +349,9 @@ struct SessionHubView: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(FocusStyle.primaryText)
                         .lineLimit(1)
+                    if let provider = focus.session(row.id)?.tool.shortName {
+                        Text(provider).font(.caption2).foregroundStyle(.secondary)
+                    }
                     if row.taskID != nil, let project = row.projectName {
                         ProjectTag(project)
                     }
@@ -366,6 +369,11 @@ struct SessionHubView: View {
                 SessionStatusBadge(kind: status)
             }
             buttons(row, primaryID: primaryID)
+            if focus.session(row.id)?.codexMetadata?.isStale == true {
+                Button("Dismiss") { focus.dismissUnconfirmedCodexSession(row.id) }
+                    .buttonStyle(.borderless)
+                    .help("Stop monitoring this unconfirmed Codex session; keep its history")
+            }
             if unbindable, let taskID = row.taskID {
                 SessionMoreMenu(focus: focus, sessionID: row.id, taskID: taskID)
             }

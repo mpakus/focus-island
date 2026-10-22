@@ -126,7 +126,7 @@ final class ProcessMonitoringCoordinator {
                         if shouldResolveTerminals {
                             g = probe.ghosttySnapshotAvailability()
                             t = probe.terminalSnapshotAvailability()
-                            j = resolver.resolveJumpTargets(for: liveSessions, activeProcesses: s)
+                            j = resolver.resolveJumpTargets(for: liveSessions.filter { $0.tool == .claudeCode }, activeProcesses: s)
                         } else {
                             g = .available([], appIsRunning: false)
                             t = .available([], appIsRunning: false)
@@ -175,6 +175,9 @@ final class ProcessMonitoringCoordinator {
         // view invalidation) on every intermediate mutation.
         let originalState = state
         var local = originalState
+        for session in local.sessions where session.tool == .codex {
+            for event in CodexHookAdapter.staleEvents(for: session, now: .now) { local.apply(event) }
+        }
 
         let mergedSessions = mergedWithSyntheticClaudeSessions(
             existingSessions: local.sessions,
@@ -188,11 +191,13 @@ final class ProcessMonitoringCoordinator {
         adoptProcessTTYsForClaudeSessions(activeProcesses: activeProcesses, sessions: &local)
         adoptProcessTerminalAppsForClaudeSessions(activeProcesses: activeProcesses, sessions: &local)
 
-        let sessions = local.sessions.filter(\.isTrackedLiveSession)
+        let sessions = local.sessions.filter { $0.isTrackedLiveSession && $0.tool == .claudeCode }
         guard !sessions.isEmpty else {
             // Flush local changes only if something actually changed.
             if local != originalState {
                 state = local
+                onSessionsReconciled?()
+                onPersistenceNeeded?()
             }
             isResolvingInitialLiveSessions = false
             return
@@ -238,7 +243,7 @@ final class ProcessMonitoringCoordinator {
         // use them directly to avoid blocking the main thread with AppleScript calls.
         let resolverJumpTargets = preResolvedJumpTargets
             ?? terminalJumpTargetResolver.resolveJumpTargets(
-                for: local.sessions.filter(\.isTrackedLiveSession),
+                for: local.sessions.filter { $0.isTrackedLiveSession && $0.tool == .claudeCode },
                 activeProcesses: activeProcesses
             )
         if !resolverJumpTargets.isEmpty {
@@ -275,7 +280,7 @@ final class ProcessMonitoringCoordinator {
     // MARK: - Event helpers
 
     func markSessionAttached(for event: AgentEvent) {
-        guard let sessionID = sessionID(for: event) else {
+        guard let sessionID = sessionID(for: event), state.session(id: sessionID)?.tool != .codex else {
             return
         }
 
@@ -283,7 +288,7 @@ final class ProcessMonitoringCoordinator {
     }
 
     func markSessionProcessAlive(for event: AgentEvent) {
-        guard let sessionID = sessionID(for: event) else {
+        guard let sessionID = sessionID(for: event), state.session(id: sessionID)?.tool != .codex else {
             return
         }
 
@@ -303,6 +308,8 @@ final class ProcessMonitoringCoordinator {
         case let .sessionCompleted(payload):
             payload.sessionID
         case let .jumpTargetUpdated(payload):
+            payload.sessionID
+        case let .codexSessionMetadataUpdated(payload):
             payload.sessionID
         case let .claudeSessionMetadataUpdated(payload):
             payload.sessionID
@@ -733,6 +740,7 @@ final class ProcessMonitoringCoordinator {
     // MARK: - Display helpers
 
     func liveAttachmentKey(for session: AgentSession) -> String? {
+        if session.tool == .codex { return session.id }
         guard let jumpTarget = session.jumpTarget else {
             return nil
         }

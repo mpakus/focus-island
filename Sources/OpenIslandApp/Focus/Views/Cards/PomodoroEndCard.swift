@@ -136,7 +136,7 @@ struct PomodoroEndCard: View {
     private var kpiRow: some View {
         HStack(alignment: .top, spacing: 10) {
             kpi("Ты в задаче", Self.minutesValue(summary?.youInTaskSeconds ?? 0))
-            kpi("Claude работал", Self.minutesValue(summary?.claudeSeconds ?? 0))
+            kpi("Агенты работали", Self.minutesValue(summary?.agentSeconds ?? 0))
             kpi(
                 "Отвлечения",
                 Self.minutesValue(summary?.distractionSeconds ?? 0),

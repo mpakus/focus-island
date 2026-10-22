@@ -125,7 +125,7 @@ public enum SessionHub {
         if let task {
             title = task.title
         } else {
-            let prompt = (PromptText.clean(record?.firstPrompt) ?? PromptText.clean(session.claudeMetadata?.initialUserPrompt))?
+            let prompt = (PromptText.clean(record?.firstPrompt) ?? PromptText.clean(session.initialUserPromptText))?
                 .split(whereSeparator: \.isWhitespace)
                 .joined(separator: " ")
             let name = projectName ?? "без проекта"
@@ -163,7 +163,7 @@ public enum SessionHub {
             }
             return "\(what) · ждёт \(minutes) мин"
         case .review:
-            return "Claude закончил \(minutes) мин назад"
+            return "\(session.tool.shortName) закончил \(minutes) мин назад"
         case .running:
             guard let progress else { return "\(minutes) мин в работе" }
             let step = min(progress.total, progress.completed + 1)
@@ -172,7 +172,7 @@ public enum SessionHub {
             parts.append("\(minutes) мин")
             return parts.joined(separator: " · ")
         case .idle:
-            return "Claude закончил \(minutes) мин назад"
+            return session.phase == .idle ? session.summary : "\(session.tool.shortName) закончил \(minutes) мин назад"
         case .unbound:
             return "Нет активности \(minutes) мин"
         case .parked:

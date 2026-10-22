@@ -4,6 +4,8 @@ import OpenIslandCore
 
 public struct SessionObservation: Equatable, Sendable {
     public var sessionID: String
+    public var provider: AgentTool
+    public var nativeSessionID: String
     public var cwd: String?
     public var title: String
     public var firstPrompt: String?
@@ -13,7 +15,9 @@ public struct SessionObservation: Equatable, Sendable {
     public var observedAt: Date
     public var isEnded: Bool
 
-    public init(sessionID: String, cwd: String?, title: String, firstPrompt: String?, lastPrompt: String?, lastAssistantMessage: String?, transcriptPath: String?, observedAt: Date, isEnded: Bool) {
+    public init(sessionID: String, cwd: String?, title: String, firstPrompt: String?, lastPrompt: String?, lastAssistantMessage: String?, transcriptPath: String?, observedAt: Date, isEnded: Bool, provider: AgentTool = .claudeCode, nativeSessionID: String? = nil) {
+        self.provider = provider
+        self.nativeSessionID = nativeSessionID ?? sessionID
         self.sessionID = sessionID
         self.cwd = cwd
         self.title = title
@@ -30,12 +34,14 @@ public struct SessionObservation: Equatable, Sendable {
             sessionID: session.id,
             cwd: session.jumpTarget?.workingDirectory,
             title: session.title,
-            firstPrompt: PromptText.clean(session.claudeMetadata?.initialUserPrompt),
-            lastPrompt: PromptText.clean(session.claudeMetadata?.lastUserPrompt),
-            lastAssistantMessage: session.claudeMetadata?.lastAssistantMessage.map { String($0.prefix(SessionHistory.maxAssistantMessageLength)) },
-            transcriptPath: session.claudeMetadata?.transcriptPath,
+            firstPrompt: session.initialUserPromptText,
+            lastPrompt: session.latestUserPromptText,
+            lastAssistantMessage: session.lastAssistantMessageText.map { String($0.prefix(SessionHistory.maxAssistantMessageLength)) },
+            transcriptPath: session.trackingTranscriptPath,
             observedAt: session.updatedAt,
-            isEnded: session.isSessionEnded
+            isEnded: session.isSessionEnded,
+            provider: session.tool,
+            nativeSessionID: session.nativeSessionID
         )
     }
 }
@@ -52,6 +58,7 @@ public final class SessionHistory: Sendable {
     public func record(_ observation: SessionObservation) throws {
         try store.dbQueue.write { db in
             if var existing = try SessionRecord.fetchOne(db, key: observation.sessionID) {
+                guard existing.provider == observation.provider, existing.nativeSessionID == observation.nativeSessionID else { return }
                 if let cwd = observation.cwd {
                     existing.cwd = cwd
                     existing.projectName = Self.projectName(for: cwd)
@@ -88,7 +95,9 @@ public final class SessionHistory: Sendable {
                     endedAt: observation.isEnded ? observation.observedAt : nil,
                     status: observation.isEnded ? .ended : .live,
                     taskId: nil,
-                    transcriptPath: observation.transcriptPath
+                    transcriptPath: observation.transcriptPath,
+                    provider: observation.provider,
+                    nativeSessionID: observation.nativeSessionID
                 ).insert(db)
             }
         }
@@ -153,6 +162,7 @@ public final class SessionHistory: Sendable {
     public func mergeTranscript(_ summary: TranscriptSummary) throws {
         try store.dbQueue.write { db in
             if var existing = try SessionRecord.fetchOne(db, key: summary.sessionID) {
+                guard existing.provider == .claudeCode else { return }
                 existing.cwd = existing.cwd ?? summary.cwd
                 existing.projectName = existing.projectName ?? Self.projectName(for: summary.cwd)
                 existing.firstPrompt = existing.firstPrompt ?? summary.firstPrompt

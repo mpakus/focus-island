@@ -2,7 +2,7 @@
 
 [![Focus Island: one pomodoro, three Claude Code sessions in Ghostty, Claude and PyCharm](docs/media/focus-island-demo.gif)](docs/media/focus-island-demo.mp4)
 
-**Focus Island** is a macOS tool that turns the time you spend waiting on Claude Code into something useful. While Claude works on a task, the app suggests your next step: a new task from a simple kanban board, a session that is waiting for you, or a nudge to get back to work if you drifted off to social media.
+**Focus Island** is a macOS tool that turns the time you spend waiting on coding agents into something useful. While an agent works on a task, the app suggests your next step: a new task from a simple kanban board, a session that is waiting for you, or a nudge to get back to work if you drifted off to social media.
 
 > [!NOTE]
 > The Focus Island interface is currently in Russian. UI labels quoted below are English translations.
@@ -21,7 +21,7 @@
 
 **Start of day and binding sessions to tasks**
 - "Start of day" — a morning card: what was left open yesterday, last night's note, and a pick of 1–3 tasks for today.
-- A new Claude Code session offers to bind itself to a task (from this project or others), create a task from the first prompt, or skip.
+- A new Claude Code or connected Codex session offers to bind itself to a task (from this project or others), create a task from the first prompt, or skip.
 
 **Focus timer**
 - "Pick a task · Todo N" in the closed island and a "What are you working on now?" card; starting a task (dragging it to In progress or clicking "Start") opens the "Start task" sheet.
@@ -35,8 +35,8 @@
 - The number of pomodoros per day appears in the "Today" summary.
 - "Take" on the pick card brings a task from "In progress" into focus; if it has no sessions, the "Task sessions" screen opens right away with checkboxes (bound sessions first, then the project's sessions). While a task is in focus, the panel shows only its sessions: "Unbind", "+ Add session", "Timer", "✓ Close task" (goes straight to Done, with an 8-second "Undo").
 
-**While Claude is working**
-- Every session is labelled with its task and Claude's current plan step (from TodoWrite): "Step k of n", progress and a time estimate.
+**While an agent is working**
+- Every session is labelled with its task; Claude Code also shows its current plan step (from TodoWrite): "Step k of n", progress and a time estimate.
 - "What's next?" — stay in the task: queue the next prompt, review changed files (git diff), tick off the definition of done; or, as a second option, switch to a waiting session or another task.
 - Prompt queue: when Claude finishes, "Send and go back" pastes the prompt into the session's terminal and takes you there. Sending works in Ghostty, iTerm2, Terminal.app and tmux; in other terminals the prompt is copied to the clipboard (⌘V).
 - Distraction nudge: if you wander off to Telegram, YouTube and the like, the island reminds you to go back to the terminal (snooze for 5 minutes or "I need this").
@@ -54,15 +54,52 @@
 - Task card: description, definition of done, "Where you left off", queued prompt, all task sessions with "Open" / "Resume" / "Unbind", "+ Add session" (same picker screen), "Close task".
 
 **Reports**
-- "Today" — a daily summary: "You were working", "Claude was working", "Sessions waited for you", distractions, a time strip by task, "Done", "Still open", "Start tomorrow with"; "Copy to note" puts a markdown summary on the clipboard.
+- "Today" — a daily summary: "You were working", "Agents were working", "Sessions waited for you", distractions, a time strip by task, "Done", "Still open", "Start tomorrow with"; "Copy to note" puts a markdown summary on the clipboard.
 - "Week" — tasks, sessions, distractions, hours per day and "Where the time went".
-- "History" — a searchable session archive; "Open" jumps to a live session and "Resume" continues one via `claude --resume`.
+- "History" — a searchable session archive; "Open" jumps to a live session and "Resume" continues one via `claude --resume` or `codex resume` with its native session ID.
 
 **Settings** (Settings → Focus)
-- Claude Code hook status and path, install and uninstall.
+- Independent Claude Code and Codex hook status, paths, install and uninstall.
 - "Sessions": parallel session limit (1–6), waiting-session reminder (5–60 min), the "Start of day" morning screen.
 - "What's next?", "Distractions" (threshold, blocklist of domains and apps), terminal used for Resume, board hotkey.
 - Settings → General → "Open island on hover": turn it off to open the island only by clicking the notch.
+
+## Codex monitoring (opt-in preview)
+
+This branch adds local Codex command-hook monitoring alongside Claude Code. The adapter and UI have been verified with synthetic documented-contract fixtures. Native hook trust/emission and desktop lifecycle acceptance are still pending; no minimum supported Codex release is certified yet. The inspected CLI was `0.163.0-alpha.11.1`.
+
+1. Build and launch this version of Focus Island.
+2. Open **Settings → Focus → Codex → Install Codex hooks**.
+3. In Codex, open `/hooks` and review/enable/trust the installed hooks using its own controls.
+4. Send a prompt. Focus Island must show **Codex: receiving events** and a Codex session before treating monitoring as connected.
+
+CLI alternative from the repository:
+
+```bash
+swift build -c release --product OpenIslandHooks
+swift run OpenIslandSetup installCodex --hooks-binary .build/release/OpenIslandHooks
+swift run OpenIslandSetup statusCodex
+# Disconnect later; history and the shared Claude helper remain intact:
+swift run OpenIslandSetup uninstallCodex
+```
+
+Configuration uses `CODEX_HOME` or `~/.codex/hooks.json`; the setup CLI also accepts `--codex-dir /path/to/home`. Existing hooks are preserved, changed configuration is backed up, and the installer never writes Codex trust records. If Focus Island entries already appear in `config.toml`, resolve those duplicates before installing.
+
+| Capability | Claude Code | Codex preview |
+| --- | --- | --- |
+| Running, idle, completion, interruption | Existing support | Hook adapter; native-client acceptance pending |
+| Task binding, timers, history, provider labels | Yes | Yes |
+| Approval attention | Existing inline flow | Observe and open app; decide in Codex |
+| Questions, plan steps, subagents, usage | Existing support | Not mapped |
+| Navigation | Supported terminal/session routes below | App activation for Terminal, iTerm and Ghostty when hinted; select the conversation yourself |
+| Queued prompt / completion reply | Existing supported sending routes | Copy queued prompt and open app; direct sending disabled |
+| Resume / new session | `claude --resume` / `claude` | `codex resume` / `codex`; task card has an agent choice |
+| Restart recovery | Registry and transcript discovery | Own registry; restored sessions stay unconfirmed until a fresh hook |
+| Local desktop, cloud, remote | Existing Claude routes | Not certified / not supported |
+
+Codex hooks have no heartbeat. After 15 minutes without a signal, the session becomes **unconfirmed**, stops accumulating work/wait time, and remains dismissible. This does not mean the turn succeeded or the process died. Optional Codex transcript discovery is not included. Final replies come from hook payloads when supplied.
+
+Daily, weekly and task work totals use the union of Claude and Codex intervals; overlapping sessions are not added twice. Daily exports and the timeline retain provider subtotals. SQLite migration `v6` saves a consistent `before-codex-*.sqlite` snapshot before upgrading existing data. Prefer disconnecting Codex to downgrading the app; older builds do not understand the new provider/activity values. Preserve the current database before restoring any older backup.
 
 ## Releasing
 
@@ -84,7 +121,7 @@ App data is stored in `~/Library/Application Support/FocusIsland/`.
 
 Checks: `zsh scripts/harness.sh ci`, tests: `zsh scripts/test-clt.sh`.
 
-Planned integrations: [Codex monitoring analysis and implementation plan](docs/CODEX-MONITORING-PLAN.md).
+Implementation and validation: [Codex monitoring plan and evidence](docs/CODEX-MONITORING-PLAN.md).
 
 ## About
 

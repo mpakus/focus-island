@@ -56,6 +56,7 @@ public struct SessionState: Equatable, Sendable {
     public mutating func apply(_ event: AgentEvent) {
         switch event {
         case let .sessionStarted(payload):
+            guard sessionsByID[payload.sessionID].map({ $0.tool == payload.tool }) ?? true else { return }
             let preservedFirstSeenAt = sessionsByID[payload.sessionID]?.firstSeenAt
             var session = AgentSession(
                 id: payload.sessionID,
@@ -68,7 +69,8 @@ public struct SessionState: Equatable, Sendable {
                 updatedAt: payload.timestamp,
                 firstSeenAt: preservedFirstSeenAt,
                 jumpTarget: payload.jumpTarget,
-                claudeMetadata: payload.claudeMetadata?.isEmpty == true ? nil : payload.claudeMetadata
+                claudeMetadata: payload.claudeMetadata?.isEmpty == true ? nil : payload.claudeMetadata,
+                codexMetadata: payload.codexMetadata
             )
             session.isRemote = payload.isRemote
             session.isHookManaged = payload.origin == .live
@@ -140,6 +142,7 @@ public struct SessionState: Equatable, Sendable {
             session.updatedAt = payload.timestamp
             if payload.isSessionEnd == true {
                 session.isSessionEnded = true
+                if session.tool == .codex { session.codexMetadata?.ended = true }
             }
             upsert(session)
 
@@ -153,11 +156,21 @@ public struct SessionState: Equatable, Sendable {
             upsert(session)
 
         case let .claudeSessionMetadataUpdated(payload):
-            guard var session = sessionsByID[payload.sessionID] else {
+            guard var session = sessionsByID[payload.sessionID], session.tool == .claudeCode else {
                 return
             }
 
             session.claudeMetadata = payload.claudeMetadata.isEmpty ? nil : payload.claudeMetadata
+            session.updatedAt = payload.timestamp
+            upsert(session)
+
+        case let .codexSessionMetadataUpdated(payload):
+            guard var session = sessionsByID[payload.sessionID], session.tool == .codex else { return }
+            session.codexMetadata = payload.metadata
+            session.isHookManaged = true
+            session.isSessionEnded = payload.metadata.ended
+            session.isProcessAlive = false // Hook activity does not identify a dedicated Codex process.
+            session.attachmentState = payload.metadata.isStale ? .stale : .attached
             session.updatedAt = payload.timestamp
             upsert(session)
 
@@ -188,6 +201,7 @@ public struct SessionState: Equatable, Sendable {
             return
         }
 
+        guard session.supportsInlineInteraction else { return }
         session.permissionRequest = nil
         session.updatedAt = timestamp
 
@@ -211,6 +225,7 @@ public struct SessionState: Equatable, Sendable {
             return
         }
 
+        guard session.supportsInlineInteraction else { return }
         session.questionPrompt = nil
         session.phase = .running
         let summary = response.displaySummary
@@ -280,6 +295,7 @@ public struct SessionState: Equatable, Sendable {
         var changed: Set<String> = []
 
         for (id, var session) in sessionsByID {
+            guard session.tool != .codex else { continue }
             // Remote sessions have no local process — keep them alive as long
             // as the bridge is delivering hook events.
             if session.isRemote {
@@ -340,7 +356,12 @@ public struct SessionState: Equatable, Sendable {
     public mutating func dismissSession(id: String) {
         guard var session = sessionsByID[id] else { return }
         session.isSessionEnded = true
-        session.phase = .completed
+        if session.tool == .codex {
+            session.codexMetadata?.ended = true
+            session.permissionRequest = nil
+            session.questionPrompt = nil
+        }
+        session.phase = session.tool == .codex ? .idle : .completed
         session.updatedAt = .now
         upsert(session)
     }

@@ -1,9 +1,17 @@
 import AppKit
+import FocusCore
+import OpenIslandCore
 import SwiftUI
 
 @MainActor
 final class OpenIslandAppDelegate: NSObject, NSApplicationDelegate {
-    let model = AppModel()
+    lazy var model: AppModel = {
+        guard harnessLaunchConfiguration.scenario != nil else { return AppModel() }
+        // Harness scenes must never migrate a real database or persist demo sessions.
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("focus-harness-\(UUID().uuidString)")
+        return AppModel(focusStore: try! FocusStore.inMemory(),
+            claudeRegistry: ClaudeSessionRegistry(fileURL: directory.appendingPathComponent("claude-sessions.json")), runBackfill: false)
+    }()
     private let harnessLaunchConfiguration = HarnessLaunchConfiguration()
     private let launchedAt = Date()
     private lazy var harnessRuntimeMonitor = HarnessRuntimeMonitor(launchedAt: launchedAt)

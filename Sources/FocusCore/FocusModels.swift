@@ -1,5 +1,6 @@
 import Foundation
 import GRDB
+import OpenIslandCore
 
 public enum BoardColumn: String, Codable, CaseIterable, Sendable, Identifiable {
     case backlog
@@ -55,6 +56,9 @@ public enum SessionRecordStatus: String, Codable, Sendable {
 public struct SessionRecord: Codable, Equatable, Identifiable, Sendable, FetchableRecord, PersistableRecord {
     public static let databaseTableName = "sessions"
 
+    public var provider: AgentTool
+    public var nativeSessionID: String
+
     public var id: String
     public var cwd: String?
     public var projectName: String?
@@ -72,7 +76,9 @@ public struct SessionRecord: Codable, Equatable, Identifiable, Sendable, Fetchab
     public var lastSeenAt: Date?
     public var doneAt: Date?
 
-    public init(id: String, cwd: String?, projectName: String?, title: String, firstPrompt: String?, lastPrompt: String?, lastAssistantMessage: String?, startedAt: Date, lastActivityAt: Date, endedAt: Date?, status: SessionRecordStatus, taskId: String?, transcriptPath: String?, parkedAt: Date? = nil, lastSeenAt: Date? = nil, doneAt: Date? = nil) {
+    public init(id: String, cwd: String?, projectName: String?, title: String, firstPrompt: String?, lastPrompt: String?, lastAssistantMessage: String?, startedAt: Date, lastActivityAt: Date, endedAt: Date?, status: SessionRecordStatus, taskId: String?, transcriptPath: String?, parkedAt: Date? = nil, lastSeenAt: Date? = nil, doneAt: Date? = nil, provider: AgentTool = .claudeCode, nativeSessionID: String? = nil) {
+        self.provider = provider
+        self.nativeSessionID = nativeSessionID ?? id
         self.id = id
         self.cwd = cwd
         self.projectName = projectName
@@ -182,6 +188,7 @@ public struct QueuedPrompt: Codable, Equatable, Identifiable, Sendable, Fetchabl
 
 public enum ActivityKind: String, Codable, Sendable, CaseIterable {
     case claude
+    case codex
     case waiting
     case you
     case distraction

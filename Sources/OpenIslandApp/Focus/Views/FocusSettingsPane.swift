@@ -7,6 +7,12 @@ struct FocusSettingsPane: View {
     var hooksConfigPath: String?
     var install: () -> Void = {}
     var uninstall: () -> Void = {}
+    var codexConfigured = false
+    var codexStatus = "Not connected"
+    var codexConfigPath = ""
+    var installCodex: () -> Void = {}
+    var uninstallCodex: () -> Void = {}
+    @State private var confirmingCodexUninstall = false
     @State private var confirmingUninstall = false
     @State private var appsText = ""
     @State private var domainsText = ""
@@ -48,6 +54,19 @@ struct FocusSettingsPane: View {
                     }
                 }
             }
+            Section("Codex") {
+                LabeledContent("Status", value: codexStatus)
+                Text(Self.hooksPathText(path: codexConfigPath, home: FileManager.default.homeDirectoryForCurrentUser.path))
+                    .font(.caption).foregroundStyle(.secondary)
+                Text("After installation, open /hooks in Codex and enable/trust these hooks, then send a prompt. Approval requests must be answered in Codex. Questions and exact session navigation are not supported yet.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Button(codexConfigured ? "Remove Codex hooks" : "Install Codex hooks") {
+                    if codexConfigured { confirmingCodexUninstall = true } else { installCodex() }
+                }
+                if codexConfigured {
+                    Button("Reinstall Codex hooks", action: installCodex)
+                }
+            }
             if let backup = focus.storeRecoveredBackupURL {
                 Text("База Focus была повреждена и пересоздана. Копия: \(backup.path)")
                     .foregroundStyle(.orange)
@@ -57,7 +76,7 @@ struct FocusSettingsPane: View {
                     .foregroundStyle(.orange)
             }
             Section("Что дальше?") {
-                Toggle("Показывать подсказку, пока Claude работает", isOn: $focus.settings.nextActionEnabled)
+                Toggle("Показывать подсказку, пока агент работает", isOn: $focus.settings.nextActionEnabled)
                 Stepper("Через \(Int(focus.settings.nextActionDelay)) с", value: $focus.settings.nextActionDelay, in: 5...120, step: 5)
             }
             Section("Фокус-таймер") {
@@ -115,6 +134,10 @@ struct FocusSettingsPane: View {
             Button("Отмена", role: .cancel) {}
         } message: {
             Text("Focus Island перестанет получать события Claude Code.")
+        }
+        .confirmationDialog("Remove Codex hooks?", isPresented: $confirmingCodexUninstall) {
+            Button("Remove hooks", role: .destructive, action: uninstallCodex)
+            Button("Cancel", role: .cancel) {}
         }
         .onAppear(perform: loadStopList)
     }

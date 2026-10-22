@@ -237,6 +237,15 @@ def main() -> None:
         if report.get("sessionCount") != 9:
             assert_contains_any(text_values, ["sessions hidden", "9 "], "sessionList text values")
 
+    elif scenario == "codexApproval":
+        if notch_status != "opened" or not is_actionable_session_surface(island_surface):
+            fail("Codex approval must remain visible and actionable")
+        if selected_session_phase(report) != "waitingForApproval":
+            fail("Codex request must remain pending")
+        if {"Allow", "Allow Once", "Deny"} & button_labels:
+            fail("Codex monitoring must not expose inline decisions")
+        assert_contains_any(button_labels, ["Open app for Codex"], "Codex navigation")
+
     elif scenario == "approvalCard":
         if notch_status != "opened":
             fail(f"expected opened notch for approvalCard, got {notch_status!r}")

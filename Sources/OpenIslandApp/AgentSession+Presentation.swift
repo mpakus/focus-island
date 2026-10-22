@@ -88,6 +88,8 @@ extension AgentSession {
 
     var spotlightStatusLabel: String {
         switch phase {
+        case .idle:
+            return codexMetadata?.isStale == true ? "Unconfirmed" : "Idle"
         case .running:
             if let currentTool = spotlightCurrentToolLabel {
                 return "Live · \(currentTool)"
@@ -207,7 +209,7 @@ extension AgentSession {
     }
 
     var completionReplyRecipientName: String {
-        "Claude"
+        tool.shortName
     }
 
     var notificationHeaderPromptLineText: String? {
@@ -234,6 +236,8 @@ extension AgentSession {
         }
 
         switch phase {
+        case .idle:
+            return codexMetadata?.isStale == true ? "Unconfirmed" : "Idle"
         case .running:
             if let activity = spotlightRunningActivityText {
                 return activity
@@ -259,6 +263,8 @@ extension AgentSession {
         }
 
         switch phase {
+        case .idle:
+            return .idle
         case .running:
             return .live
         case .completed:

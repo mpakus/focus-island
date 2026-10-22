@@ -78,6 +78,7 @@ struct HistoryRow: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            Text(record.provider.shortName).font(.caption2).foregroundStyle(.secondary)
             if let project = record.projectName { ProjectTag(project) }
             Text(focus.board.task(id: record.taskId)?.title ?? "без задачи")
                 .font(FocusStyle.secondaryFont)

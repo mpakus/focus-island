@@ -76,7 +76,9 @@ enum DaySummaryFormatter {
         }
         var lines = [
             "- Ты в работе: \(duration(report.youSeconds))",
+            "- Агенты работали: \(duration(report.agentSeconds))",
             "- Claude работал: \(duration(report.claudeSeconds))",
+            "- Codex работал: \(duration(report.codexSeconds))",
             "- Сессии ждали тебя: \(duration(report.waitingSeconds))",
             distraction
         ]
@@ -167,7 +169,7 @@ struct DaySummaryView: View {
         let value = report
         return HStack(alignment: .top, spacing: 12) {
             kpi("Ты в работе", value.map { DaySummaryFormatter.duration($0.youSeconds) } ?? "—")
-            kpi("Claude работал", value.map { DaySummaryFormatter.duration($0.claudeSeconds) } ?? "—")
+            kpi("Агенты работали", value.map { DaySummaryFormatter.duration($0.agentSeconds) } ?? "—")
             kpi("Сессии ждали тебя", value.map { DaySummaryFormatter.duration($0.waitingSeconds) } ?? "—", color: FocusStyle.waitingText)
             kpi(
                 "Отвлечения",

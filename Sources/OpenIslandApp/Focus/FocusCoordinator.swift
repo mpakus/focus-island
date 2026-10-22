@@ -456,7 +456,7 @@ final class FocusCoordinator {
             }
             if isNew,
                session.isHookManaged,
-               session.claudeMetadata?.startupSource != .resume,
+               !session.wasResumed,
                now.timeIntervalSince(session.firstSeenAt) < Self.bindingPromptWindow,
                (try? history.session(id: session.id))?.taskId == nil,
                !pendingBindingSessionIDs.contains(session.id) {
@@ -481,7 +481,7 @@ final class FocusCoordinator {
             } else {
                 planStartedAt[session.id] = nil
             }
-            let turnPrompt = session.claudeMetadata?.lastUserPrompt ?? ""
+            let turnPrompt = session.codexMetadata?.turnID ?? session.latestUserPromptText ?? ""
             switch session.phase {
             case .running:
                 let newPrompt = runStartedAt[session.id] != nil && turnPrompts[session.id].map { $0 != turnPrompt } == true
@@ -491,7 +491,7 @@ final class FocusCoordinator {
                 }
             case .waitingForApproval, .waitingForAnswer:
                 break
-            case .completed:
+            case .idle, .completed:
                 if let startedAt = runStartedAt[session.id] {
                     lastTurnDurations[session.id] = max(0, now.timeIntervalSince(startedAt))
                 }
@@ -499,7 +499,7 @@ final class FocusCoordinator {
                 turnPrompts[session.id] = nil
             }
             previousPhases[session.id] = session.phase
-            turnTracker.observe(sessionID: session.id, phase: session.phase, lastUserPrompt: session.claudeMetadata?.lastUserPrompt, at: now)
+            turnTracker.observe(sessionID: session.id, phase: session.phase, lastUserPrompt: session.codexMetadata?.turnID ?? session.latestUserPromptText, at: now)
         }
 
         if !finishedTurns.isEmpty {
@@ -774,7 +774,7 @@ final class FocusCoordinator {
             return
         }
         let result: PromptSendResult
-        if let session = session(sessionID) {
+        if let session = session(sessionID), session.supportsInlineInteraction {
             result = await promptSender.send(prompt.text, to: session)
         } else {
             result = .unsupported
@@ -972,7 +972,7 @@ final class FocusCoordinator {
                 let same = cwd.map { Self.projectPath(task.projectPath, contains: $0) } ?? false
                 let boundTitle = board.task(id: self.taskID(forSession: session.id))?.title
                 let stored = self.record(session.id)
-                let detail = sessionDetail(session.id, prompt: stored?.lastPrompt ?? session.claudeMetadata?.lastUserPrompt, cwd: cwd)
+                let detail = sessionDetail(session.id, prompt: stored?.lastPrompt ?? session.latestUserPromptText, cwd: cwd)
                 let row = BindableSession(
                     id: session.id,
                     title: sessionLabels[session.id] ?? session.title,
@@ -1057,7 +1057,7 @@ final class FocusCoordinator {
                 return BindableSession(
                     id: session.id,
                     title: sessionLabels[session.id] ?? session.title,
-                    detail: sessionDetail(session.id, prompt: stored?.lastPrompt ?? session.claudeMetadata?.lastUserPrompt, cwd: cwd),
+                    detail: sessionDetail(session.id, prompt: stored?.lastPrompt ?? session.latestUserPromptText, cwd: cwd),
                     projectName: projectName(sessionID: session.id),
                     boundTaskTitle: nil,
                     isSameProject: true,
@@ -1415,7 +1415,8 @@ final class FocusCoordinator {
             distractionCount: report?.distractionCount ?? 0,
             returnedCount: report?.returnedCount ?? 0,
             finishedSessionTitles: finishedSessionTitles(taskID: item.taskId, from: item.startedAt, to: end),
-            checkedCriteria: checkedCriteria(taskID: item.taskId, from: item.startedAt, to: end)
+            checkedCriteria: checkedCriteria(taskID: item.taskId, from: item.startedAt, to: end),
+            observedAgentSeconds: report?.agentSeconds
         )
     }
 
@@ -1705,13 +1706,19 @@ final class FocusCoordinator {
             return
         }
         guard let cwd = record.cwd, FileManager.default.fileExists(atPath: cwd) else { return }
-        attempt { try launcher.run(command: ResumeCommand.resume(sessionID: record.id, cwd: cwd), in: settings.resumeTerminal) }
+        attempt { try launcher.run(command: ResumeCommand.resume(sessionID: record.nativeSessionID, cwd: cwd, provider: record.provider), in: settings.resumeTerminal) }
     }
 
-    func startNewSession(forTaskID taskID: String) {
+    func startNewSession(forTaskID taskID: String, provider: AgentTool = .claudeCode) {
         guard let task = board.task(id: taskID) else { return }
         let cwd = TaskDetailView.newSessionCwd(projectPath: task.projectPath, home: FileManager.default.homeDirectoryForCurrentUser.path)
-        attempt { try launcher.run(command: ResumeCommand.newSession(cwd: cwd), in: settings.resumeTerminal) }
+        attempt { try launcher.run(command: ResumeCommand.newSession(cwd: cwd, provider: provider), in: settings.resumeTerminal) }
+    }
+
+    func dismissUnconfirmedCodexSession(_ sessionID: String) {
+        guard let session = session(sessionID), session.tool == .codex,
+              session.codexMetadata?.isStale == true else { return }
+        endSupersededSessions?([sessionID])
     }
 
     func taskSpans(taskID: String, now: Date) -> [ActivitySpan] {
@@ -1965,7 +1972,7 @@ final class FocusCoordinator {
                     id: row.id,
                     title: Self.firstTaskTitle(
                         label: sessionLabel(row.id),
-                        prompt: PromptText.clean((try? history.session(id: row.id))?.firstPrompt) ?? PromptText.clean(session(row.id)?.claudeMetadata?.initialUserPrompt),
+                        prompt: PromptText.clean((try? history.session(id: row.id))?.firstPrompt) ?? PromptText.clean(session(row.id)?.initialUserPromptText),
                         projectName: row.projectName
                     ),
                     cwd: sessionCWD(row.id),
@@ -1989,7 +1996,7 @@ final class FocusCoordinator {
         if let projectName, !projectName.isEmpty {
             return projectName
         }
-        return "Сессия Claude"
+        return "Сессия агента"
     }
 
     nonisolated static let firstTaskTitleLimit = 60
@@ -2062,9 +2069,9 @@ final class FocusCoordinator {
     }
 
     private func spanKind(for session: AgentSession) -> ActivityKind? {
-        guard !session.isSessionEnded else { return nil }
+        guard !session.isSessionEnded, session.codexMetadata?.isStale != true else { return nil }
         if session.phase == .running {
-            return .claude
+            return session.tool == .codex ? .codex : .claude
         }
         guard !presenceTracker.isAway, !parkedSessionIDs.contains(session.id) else { return nil }
         switch session.phase {
@@ -2568,6 +2575,8 @@ struct PomodoroSummary: Equatable, Sendable {
     let returnedCount: Int
     let finishedSessionTitles: [String]
     let checkedCriteria: [String]
+    var observedAgentSeconds: TimeInterval? = nil
+    var agentSeconds: TimeInterval { observedAgentSeconds ?? claudeSeconds }
 }
 
 struct BreakSummary: Equatable, Sendable {

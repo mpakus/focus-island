@@ -85,6 +85,7 @@ struct TerminalPromptSender: PromptSending {
     }
 
     func send(_ rawText: String, to session: AgentSession) async -> PromptSendResult {
+        guard session.tool != .codex else { return .unsupported }
         let text = Self.normalized(rawText)
         let target = session.jumpTarget
         switch Self.route(for: target) {

@@ -99,6 +99,8 @@ public struct TaskLane: Equatable, Sendable, Identifiable {
 public struct DayReport: Equatable, Sendable {
     public let youSeconds: TimeInterval
     public let claudeSeconds: TimeInterval
+    public let codexSeconds: TimeInterval
+    public let agentSeconds: TimeInterval
     public let waitingSeconds: TimeInterval
     public let distractionSeconds: TimeInterval
     public let distractionCount: Int
@@ -110,9 +112,11 @@ public struct DayReport: Equatable, Sendable {
     public let distractionLane: [LaneSegment]
     public let activeTaskIDs: Set<String>
 
-    public init(youSeconds: TimeInterval, claudeSeconds: TimeInterval, waitingSeconds: TimeInterval, distractionSeconds: TimeInterval, distractionCount: Int, returnedCount: Int, maxParallel: Int, firstAt: Date?, lastAt: Date?, lanes: [TaskLane], distractionLane: [LaneSegment], activeTaskIDs: Set<String> = []) {
+    public init(youSeconds: TimeInterval, claudeSeconds: TimeInterval, waitingSeconds: TimeInterval, distractionSeconds: TimeInterval, distractionCount: Int, returnedCount: Int, maxParallel: Int, firstAt: Date?, lastAt: Date?, lanes: [TaskLane], distractionLane: [LaneSegment], activeTaskIDs: Set<String> = [], codexSeconds: TimeInterval = 0, agentSeconds: TimeInterval? = nil) {
         self.youSeconds = youSeconds
         self.claudeSeconds = claudeSeconds
+        self.codexSeconds = codexSeconds
+        self.agentSeconds = agentSeconds ?? claudeSeconds + codexSeconds
         self.waitingSeconds = waitingSeconds
         self.distractionSeconds = distractionSeconds
         self.distractionCount = distractionCount
@@ -300,14 +304,16 @@ public enum ReportBuilder {
             distractionSeconds: unionSeconds(distractionIntervals),
             distractionCount: clippedEpisodes.count,
             returnedCount: clippedEpisodes.filter { $0.episode.returnedWithinSec != nil }.count,
-            maxParallel: maxOverlap(intervals(.claude)),
+            maxParallel: maxOverlap(intervals(.claude) + intervals(.codex)),
             firstAt: allStarts.min(),
             lastAt: allEnds.max(),
             lanes: lanes,
             distractionLane: clippedEpisodes
                 .sorted { $0.start < $1.start }
                 .map { LaneSegment(kind: .distraction, start: $0.start, end: $0.end) },
-            activeTaskIDs: Set(ranked.compactMap(\.key))
+            activeTaskIDs: Set(ranked.compactMap(\.key)),
+            codexSeconds: unionSeconds(intervals(.codex)),
+            agentSeconds: unionSeconds(intervals(.claude) + intervals(.codex))
         )
     }
 
@@ -331,7 +337,7 @@ public enum ReportBuilder {
         }.count
 
         var work: [String?: [(Date, Date)]] = [:]
-        for item in clipped where item.kind == .claude || item.kind == .you {
+        for item in clipped where item.kind == .claude || item.kind == .codex || item.kind == .you {
             work[item.taskID, default: []].append((item.start, item.end))
         }
         var sessionCounts: [String?: Int] = [:]

@@ -20,6 +20,7 @@ enum IslandDebugScenario: String, CaseIterable, Identifiable {
     case questionCard
     case completionCard
     case longCompletionCard
+    case codexApproval
 
     var id: String { rawValue }
 
@@ -37,6 +38,8 @@ enum IslandDebugScenario: String, CaseIterable, Identifiable {
             "Completion Card"
         case .longCompletionCard:
             "Long Completion Card"
+        case .codexApproval:
+            "Codex Approval"
         }
     }
 
@@ -54,11 +57,27 @@ enum IslandDebugScenario: String, CaseIterable, Identifiable {
             "Auto-expanded finished-task reminder surface after a turn completes."
         case .longCompletionCard:
             "Long finished-task reply stays inside the card and scrolls internally."
+        case .codexApproval:
+            "Mixed agents with a Codex request that can only be answered in Codex."
         }
     }
 
     func snapshot(at now: Date = .now) -> IslandDebugSnapshot {
         switch self {
+        case .codexApproval:
+            var session = DebugSessionFactory.approvalSession(now: now)
+            session.id = "codex:demo-approval"
+            session.title = "Codex · open-island"
+            session.tool = .codex
+            session.claudeMetadata = nil
+            session.codexMetadata = CodexSessionMetadata(sessionID: "demo-approval", lastEventAt: now)
+            session.summary = "Review the tool request in Codex."
+            session.permissionRequest = PermissionRequest(title: "Codex needs approval", summary: session.summary,
+                affectedPath: "/tmp/project", primaryActionTitle: "Open app for Codex", requiresTerminalApproval: true)
+            return IslandDebugSnapshot(title: title, summary: summary, previewHeight: 330,
+                notchStatus: .opened, notchOpenReason: .notification,
+                islandSurface: .sessionList(actionableSessionID: session.id),
+                sessions: DebugSessionFactory.notificationSessions(lead: session, now: now), selectedSessionID: session.id)
         case .closed:
             let sessions = DebugSessionFactory.listSessions(now: now)
             return IslandDebugSnapshot(

@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 import OpenIslandCore
 
 @main
@@ -7,14 +8,21 @@ struct OpenIslandHooksCLI {
 
     static func main() {
         do {
+            let arguments = Array(CommandLine.arguments.dropFirst())
+            let sourceString = rawSourceString(arguments: arguments)
             // Allow wrappers to delegate one child process away from Open Island without changing global hook installation.
             // 允许外部控制器只让当前子进程跳过 Open Island hook，不影响全局安装状态。
             if HookSkipConfiguration.shouldSkipHooks(environment: ProcessInfo.processInfo.environment) {
+                if sourceString == "codex" { FileHandle.standardOutput.write(Data("{}\n".utf8)) }
                 return
             }
 
-            let arguments = Array(CommandLine.arguments.dropFirst())
-            guard let sourceString = rawSourceString(arguments: arguments), sourceString == "claude" else {
+            guard let sourceString else { return }
+            if sourceString == "codex" {
+                processCodex()
+                return
+            }
+            guard sourceString == "claude" else {
                 return
             }
 
@@ -46,6 +54,30 @@ struct OpenIslandHooksCLI {
         } catch {
             // Hooks should fail open so the CLI continues working even if the bridge is unavailable.
             logStderr("hook failed: \(error)")
+        }
+    }
+
+    private static func processCodex() {
+        // A valid no-op for Stop and for the other supported command hooks, including failures.
+        FileHandle.standardOutput.write(Data("{}\n".utf8))
+        // Bound the entire helper, including stalled stdin/connect (socket receive timeouts alone do not).
+        DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(750)) { exit(EXIT_SUCCESS) }
+        do {
+            let limit = 1_048_576
+            var input = Data()
+            while let chunk = try FileHandle.standardInput.read(upToCount: min(65_536, limit + 1 - input.count)), !chunk.isEmpty {
+                input.append(chunk)
+                guard input.count <= limit else { return }
+            }
+            guard !input.isEmpty else { return }
+            var payload = try JSONDecoder().decode(CodexHookPayload.self, from: input)
+            payload.observedAt = .now
+            payload.terminalApp = ProcessInfo.processInfo.environment["TERM_PROGRAM"]
+            guard payload.isValid else { return }
+            let client = BridgeCommandClient(socketURL: BridgeSocketLocation.currentURL())
+            _ = try client.send(.processCodexHook(payload), timeout: 0.25)
+        } catch {
+            logStderr("Codex monitoring unavailable; continuing without monitoring.")
         }
     }
 

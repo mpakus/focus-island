@@ -79,6 +79,7 @@ public enum BridgeCommand: Equatable, Codable, Sendable {
     case resolvePermission(sessionID: String, resolution: PermissionResolution)
     case answerQuestion(sessionID: String, response: QuestionPromptResponse)
     case processClaudeHook(ClaudeHookPayload)
+    case processCodexHook(CodexHookPayload)
 
     private enum CodingKeys: String, CodingKey {
         case type
@@ -88,6 +89,7 @@ public enum BridgeCommand: Equatable, Codable, Sendable {
         case resolution
         case response
         case claudeHook
+        case codexHook
     }
 
     private enum CommandType: String, Codable {
@@ -96,6 +98,7 @@ public enum BridgeCommand: Equatable, Codable, Sendable {
         case resolvePermission
         case answerQuestion
         case processClaudeHook
+        case processCodexHook
     }
 
     public init(from decoder: any Decoder) throws {
@@ -120,6 +123,8 @@ public enum BridgeCommand: Equatable, Codable, Sendable {
                 sessionID: try container.decode(String.self, forKey: .sessionID),
                 response: try container.decode(QuestionPromptResponse.self, forKey: .response)
             )
+        case .processCodexHook:
+            self = .processCodexHook(try container.decode(CodexHookPayload.self, forKey: .codexHook))
         case .processClaudeHook:
             self = .processClaudeHook(try container.decode(ClaudeHookPayload.self, forKey: .claudeHook))
         }
@@ -144,6 +149,9 @@ public enum BridgeCommand: Equatable, Codable, Sendable {
             try container.encode(CommandType.answerQuestion, forKey: .type)
             try container.encode(sessionID, forKey: .sessionID)
             try container.encode(response, forKey: .response)
+        case let .processCodexHook(payload):
+            try container.encode(CommandType.processCodexHook, forKey: .type)
+            try container.encode(payload, forKey: .codexHook)
         case let .processClaudeHook(payload):
             try container.encode(CommandType.processClaudeHook, forKey: .type)
             try container.encode(payload, forKey: .claudeHook)

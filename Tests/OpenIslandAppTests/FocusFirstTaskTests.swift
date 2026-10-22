@@ -38,7 +38,7 @@ struct FocusFirstTaskTests {
         let long = String(repeating: "а", count: 80)
         #expect(FocusCoordinator.firstTaskTitle(label: nil, prompt: long, projectName: nil) == String(repeating: "а", count: 60) + "…")
         #expect(FocusCoordinator.firstTaskTitle(label: "", prompt: "  ", projectName: "api") == "api")
-        #expect(FocusCoordinator.firstTaskTitle(label: nil, prompt: nil, projectName: nil) == "Сессия Claude")
+        #expect(FocusCoordinator.firstTaskTitle(label: nil, prompt: nil, projectName: nil) == "Сессия агента")
     }
 
     @Test

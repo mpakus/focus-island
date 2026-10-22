@@ -44,6 +44,7 @@ enum FocusStyle {
 
     static func phaseColor(_ phase: SessionPhase) -> Color {
         switch phase {
+        case .idle: parkedDot
         case .running: working
         case .waitingForApproval, .waitingForAnswer: waiting
         case .completed: done

@@ -526,7 +526,7 @@ struct IslandPanelView: View {
                 onReply: TerminalTextSender.canReply(to: session, enabled: model.completionReplyEnabled)
                     ? { model.replyToSession(session, text: $0) } : nil,
                 onJump: { model.jumpToSession(session) },
-                onDismiss: session.isRemote ? { model.dismissSession(session.id) } : nil,
+                onDismiss: session.isRemote || session.tool == .codex ? { model.dismissSession(session.id) } : nil,
                 turnSummary: model.turnSummaries[session.id]
             )
             .task(id: "\(session.id)|\(session.phase)|\(session.updatedAt.timeIntervalSince1970)") {
@@ -695,8 +695,8 @@ struct IslandPanelView: View {
             return "\(session.id)|question|\(session.questionPrompt?.id.uuidString ?? "none")"
         case .completed:
             return "\(session.id)|completed|\(session.updatedAt.timeIntervalSinceReferenceDate)"
-        case .running:
-            return "\(session.id)|running"
+        case .idle, .running:
+            return "\(session.id)|\(session.phase.rawValue)"
         }
     }
 
@@ -1472,12 +1472,12 @@ private struct IslandSessionRow: View {
             return notificationWorkspaceHeadlineText
         }
 
-        return session.spotlightHeadlineText
+        return "\(session.tool.shortName) · \(session.spotlightHeadlineText)"
     }
 
     private var notificationWorkspaceHeadlineText: String {
         let workspace = session.spotlightWorkspaceName.trimmedForNotificationCard
-        let title = workspace.isEmpty ? session.tool.displayName : workspace
+        let title = workspace.isEmpty ? session.tool.displayName : "\(session.tool.shortName) · \(workspace)"
         guard let branch = session.spotlightWorktreeBranch?.trimmedForNotificationCard,
               !branch.isEmpty else {
             return title
@@ -1499,7 +1499,7 @@ private struct IslandSessionRow: View {
     }
 
     private var agentBadgeTitle: String {
-        "claude"
+        session.tool.shortName.lowercased()
     }
 
     private var rowLeadingInset: CGFloat {
@@ -1597,15 +1597,26 @@ private struct IslandSessionRow: View {
 
     @ViewBuilder
     private var actionableBody: some View {
-        switch session.phase {
-        case .waitingForApproval:
-            approvalActionBody
-        case .waitingForAnswer:
-            questionActionBody
-        case .completed:
-            completionActionBody
-        case .running:
-            EmptyView()
+        if !session.supportsInlineInteraction && session.phase.requiresAttention {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(session.permissionRequest?.summary ?? "Review and respond in Codex.")
+                if let command = session.currentCommandPreviewText {
+                    Text(command).font(.system(.caption, design: .monospaced)).lineLimit(2)
+                }
+                Button("Open app for Codex", action: onJump)
+            }
+            .padding(12)
+        } else {
+            switch session.phase {
+            case .waitingForApproval:
+                approvalActionBody
+            case .waitingForAnswer:
+                questionActionBody
+            case .completed:
+                completionActionBody
+            case .idle, .running:
+                EmptyView()
+            }
         }
     }
 
@@ -1629,6 +1640,8 @@ private struct IslandSessionRow: View {
         switch session.phase {
         case .waitingForApproval, .waitingForAnswer, .completed:
             actionableBody
+        case .idle:
+            EmptyView()
         case .running:
             runningDetailBody
         }
@@ -2008,6 +2021,8 @@ private struct IslandSessionRow: View {
 
     private var statusGlyphName: String {
         switch session.phase {
+        case .idle:
+            "pause.circle"
         case .waitingForApproval:
             "exclamationmark.triangle.fill"
         case .waitingForAnswer:

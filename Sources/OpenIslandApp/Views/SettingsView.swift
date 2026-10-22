@@ -141,7 +141,12 @@ struct SettingsView: View {
                 hooksInstalled: model.claudeHooksInstalled,
                 hooksConfigPath: model.claudeHookStatus?.settingsURL.path,
                 install: { model.installClaudeHooks() },
-                uninstall: { model.uninstallClaudeHooks() }
+                uninstall: { model.uninstallClaudeHooks() },
+                codexConfigured: model.codexHooksConfigured,
+                codexStatus: model.codexHookStatusText,
+                codexConfigPath: model.codexHookConfigPath,
+                installCodex: { model.installCodexHooks() },
+                uninstallCodex: { model.uninstallCodexHooks() }
             )
         case .general:
             GeneralSettingsPane(model: model)

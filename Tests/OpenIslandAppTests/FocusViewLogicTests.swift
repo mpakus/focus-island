@@ -464,7 +464,7 @@ struct FocusViewLogicTests {
         let totals = TaskDetailView.timeTotals(spans: spans, now: t.addingTimeInterval(3300))
         #expect(totals.claudeSeconds == 1200)
         #expect(totals.totalSeconds == 1500)
-        #expect(TaskDetailView.timeSummary(totals) == "всего 25 мин · Claude 20 мин")
+        #expect(TaskDetailView.timeSummary(totals) == "всего 25 мин · агенты 20 мин")
         #expect(TaskDetailView.timeSummary(TaskTimeTotals(totalSeconds: 0, claudeSeconds: 0)) == nil)
     }
 
@@ -619,7 +619,9 @@ struct FocusViewLogicTests {
         # Пятница, 9 октября
 
         - Ты в работе: 5 ч 20 м
+        - Агенты работали: 3 ч 45 м
         - Claude работал: 3 ч 45 м
+        - Codex работал: 0 м
         - Сессии ждали тебя: 48 м
         - Отвлечения: 11 м (4 раза, вернулся 3)
         - Макс. параллельно: 4

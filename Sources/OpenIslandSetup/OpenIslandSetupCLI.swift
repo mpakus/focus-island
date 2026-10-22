@@ -22,10 +22,14 @@ private struct SetupCommand {
         case installClaude
         case uninstallClaude
         case statusClaude
+        case installCodex
+        case statusCodex
+        case uninstallCodex
     }
 
     let action: Action
     let claudeDirectory: URL
+    let codexDirectory: URL
     let hooksBinary: URL?
 
     init(arguments: [String]) throws {
@@ -38,6 +42,7 @@ private struct SetupCommand {
 
         var hooksBinary: URL?
         var claudeDirectory = ClaudeConfigDirectory.resolved()
+        var codexDirectory = CodexConfigDirectory.resolved()
 
         var index = 1
         while index < arguments.count {
@@ -48,6 +53,11 @@ private struct SetupCommand {
                     throw SetupError.missingValue("--hooks-binary")
                 }
                 hooksBinary = URL(fileURLWithPath: arguments[index]).standardizedFileURL
+
+            case "--codex-dir":
+                index += 1
+                guard index < arguments.count else { throw SetupError.missingValue("--codex-dir") }
+                codexDirectory = URL(fileURLWithPath: arguments[index]).standardizedFileURL
 
             case "--claude-dir":
                 index += 1
@@ -63,16 +73,34 @@ private struct SetupCommand {
             index += 1
         }
 
-        if action == .installClaude, hooksBinary == nil {
+        if action == .installClaude || action == .installCodex, hooksBinary == nil {
             hooksBinary = HooksBinaryLocator.locate()
         }
 
         self.claudeDirectory = claudeDirectory
+        self.codexDirectory = codexDirectory
         self.hooksBinary = hooksBinary
     }
 
     func run() throws {
         switch action {
+        case .installCodex, .statusCodex, .uninstallCodex:
+            let manager = CodexHookInstallationManager(directory: codexDirectory)
+            let status: CodexHookInstallationStatus
+            switch action {
+            case .installCodex:
+                guard let hooksBinary else { throw SetupError.usage }
+                status = try manager.install(hooksBinaryURL: hooksBinary)
+            case .uninstallCodex: status = try manager.uninstall()
+            default: status = try manager.status()
+            }
+            print("Codex hooks: \(status.configured ? "configured" : "not configured")")
+            print("Config: \(status.configURL.path)")
+            print("Helper available: \(status.binaryAvailable)")
+            print("Inline duplicate: \(status.inlineConflict)")
+            if status.configured {
+                print("Review and trust the hooks in Codex /hooks, then send a prompt to verify monitoring.")
+            }
         case .installClaude:
             try installClaude()
         case .uninstallClaude:
@@ -138,6 +166,9 @@ private enum SetupError: Error, LocalizedError {
         case .usage:
             """
             Usage:
+              swift run OpenIslandSetup installCodex [--hooks-binary /abs/path/to/OpenIslandHooks] [--codex-dir /abs/path/to/.codex]
+              swift run OpenIslandSetup statusCodex [--codex-dir /abs/path/to/.codex]
+              swift run OpenIslandSetup uninstallCodex [--codex-dir /abs/path/to/.codex]
               swift run OpenIslandSetup installClaude [--hooks-binary /abs/path/to/OpenIslandHooks] [--claude-dir /abs/path/to/.claude]
               swift run OpenIslandSetup uninstallClaude [--claude-dir /abs/path/to/.claude]
               swift run OpenIslandSetup statusClaude [--hooks-binary /abs/path/to/OpenIslandHooks] [--claude-dir /abs/path/to/.claude]

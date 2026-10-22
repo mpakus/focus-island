@@ -93,6 +93,19 @@ final class AppModel {
     var claudeUsageSnapshot: ClaudeUsageSnapshot? { hooks.claudeUsageSnapshot }
     var hooksBinaryURL: URL? { hooks.hooksBinaryURL }
     var claudeHooksInstalled: Bool { hooks.claudeHooksInstalled }
+    var codexHooksConfigured: Bool { hooks.codexHooksConfigured }
+    var codexHookConfigPath: String { hooks.codexHookStatus?.configURL.path ?? CodexConfigDirectory.resolved().appendingPathComponent("hooks.json").path }
+    var codexHookStatusText: String {
+        if let error = hooks.codexHookError { return error }
+        if hooks.codexHookStatus?.inlineConflict == true { return "Duplicate Focus Island hooks in config.toml." }
+        if hooks.codexHookStatus?.configured == true && hooks.codexHookStatus?.binaryAvailable == false { return "Codex: helper unavailable — reinstall hooks" }
+        if state.sessions.contains(where: { $0.tool == .codex && $0.codexMetadata?.isStale == false && !$0.isSessionEnded }) {
+            return "Codex: receiving events"
+        }
+        return codexHooksConfigured ? "Codex: configured — review /hooks and send a prompt to verify" : "Codex: not connected"
+    }
+    func installCodexHooks() { hooks.updateCodexHooks(install: true) }
+    func uninstallCodexHooks() { hooks.updateCodexHooks(install: false) }
     var claudeUsageInstalled: Bool { hooks.claudeUsageInstalled }
     var claudeStatusLineProvidedByOtherIsland: Bool { hooks.claudeStatusLineProvidedByOtherIsland }
     var claudeHookStatusTitle: String { hooks.claudeHookStatusTitle }
@@ -473,16 +486,17 @@ final class AppModel {
             try TerminalJumpService().jump(to: target)
         },
         isNotificationSessionAlreadyFrontmost: @escaping @Sendable (AgentSession) async -> Bool = { session in
-            await ForegroundTerminalSessionProbe().matches(session: session)
+            session.tool == .claudeCode ? await ForegroundTerminalSessionProbe().matches(session: session) : false
         },
         focusStore: FocusStore? = nil,
-        claudeRegistry: ClaudeSessionRegistry? = nil
+        claudeRegistry: ClaudeSessionRegistry? = nil,
+        runBackfill: Bool = true
     ) {
         self.discovery = SessionDiscoveryCoordinator(claudeSessionRegistry: claudeRegistry ?? ClaudeSessionRegistry())
         self.terminalJumpAction = terminalJumpAction
         self.isNotificationSessionAlreadyFrontmost = isNotificationSessionAlreadyFrontmost
         let openResult = focusStore.map { FocusStoreOpenResult(store: $0, outcome: .normal) } ?? FocusStore.openWithRecovery(fileURL: FocusStore.defaultFileURL)
-        self.focus = FocusCoordinator(store: openResult.store, storeOutcome: openResult.outcome, launcher: AppleScriptTerminalLauncher())
+        self.focus = FocusCoordinator(store: openResult.store, storeOutcome: openResult.outcome, launcher: AppleScriptTerminalLauncher(), runBackfill: runBackfill)
         UserDefaults.standard.register(defaults: [
             Self.showDockIconDefaultsKey: true,
             Self.hapticFeedbackEnabledDefaultsKey: false,
@@ -527,7 +541,7 @@ final class AppModel {
         }
         hooks.onClaudeHookStatusChanged = { [weak self] in
             guard let self else { return }
-            let installed = self.hooks.claudeHooksInstalled
+            let installed = self.hooks.claudeHooksInstalled || self.hooks.codexHooksConfigured
             guard installed || self.focusHookStateReady else { return }
             self.focus.setHooksInstalled(installed)
         }
@@ -548,7 +562,7 @@ final class AppModel {
             self?.refreshOverlayPlacementIfVisible()
         }
         monitoring.onPersistenceNeeded = { [weak self] in
-            self?.discovery.scheduleClaudeSessionPersistence()
+            self?.discovery.scheduleSessionPersistence()
         }
         focus.playSound = { name in
             NSSound(named: NSSound.Name(name))?.play()
@@ -570,7 +584,7 @@ final class AppModel {
         focus.endSupersededSessions = { [weak self] sessionIDs in
             guard let self else { return }
             for id in sessionIDs { self.dismissSession(id) }
-            self.discovery.scheduleClaudeSessionPersistence()
+            self.discovery.scheduleSessionPersistence()
         }
         focus.jumpToSession = { [weak self] sessionID in
             guard let self, let session = self.state.session(id: sessionID) else { return }
@@ -944,9 +958,9 @@ final class AppModel {
             ),
             AcceptanceStep(
                 id: "hooks",
-                title: "Claude hooks installed",
-                detail: "Managed hook entries should be present in Claude `settings.json`.",
-                isComplete: hooks.claudeHooksInstalled
+                title: "Agent hooks configured",
+                detail: "Configure Claude Code or Codex hooks in Settings → Focus.",
+                isComplete: hooks.claudeHooksInstalled || hooks.codexHooksConfigured
             ),
             AcceptanceStep(
                 id: "overlay",
@@ -956,9 +970,9 @@ final class AppModel {
             ),
             AcceptanceStep(
                 id: "session",
-                title: "A Claude session is observed",
-                detail: "Start Claude Code in Terminal and wait for the first session row to appear.",
-                isComplete: hasClaudeSession
+                title: "An agent session is observed",
+                detail: "Send a prompt in Claude Code or Codex and wait for a session row.",
+                isComplete: hasAnySession
             ),
             AcceptanceStep(
                 id: "jump",
@@ -999,10 +1013,10 @@ final class AppModel {
         }
 
         if isReadyForFirstAcceptance {
-            return "You can start your first acceptance run now. Launch Claude Code in Terminal and walk the last two steps."
+            return "You can start your first acceptance run now. Launch Claude Code or Codex and walk the last two steps."
         }
 
-        return "Finish the setup steps in the left column, then start Claude Code from Terminal."
+        return "Finish the setup steps in the left column, then start Claude Code or Codex."
     }
 
     func startIfNeeded(
@@ -1028,6 +1042,7 @@ final class AppModel {
 
             // These are already async or lightweight — safe to start immediately.
             hooks.refreshClaudeHookStatus()
+            hooks.refreshCodexHookStatus()
             hooks.refreshClaudeUsageState()
             hooks.startClaudeUsageMonitoringIfNeeded()
 
@@ -1095,7 +1110,7 @@ final class AppModel {
             do {
                 try await client.send(.registerClient(role: .observer))
                 self.isBridgeReady = true
-                self.lastActionMessage = "Bridge ready. Waiting for Claude hook events."
+                self.lastActionMessage = "Bridge ready. Waiting for agent hook events."
                 self.harnessRuntimeMonitor?.recordMilestone("bridgeReady", message: self.lastActionMessage)
             } catch {
                 guard !Task.isCancelled else { return }
@@ -1230,7 +1245,7 @@ final class AppModel {
     }
 
     func approveFocusedPermission(_ approved: Bool) {
-        guard let session = focusedSession else {
+        guard let session = focusedSession, session.supportsInlineInteraction else {
             return
         }
 
@@ -1243,7 +1258,7 @@ final class AppModel {
     }
 
     func answerFocusedQuestion(_ answer: String) {
-        guard let session = focusedSession else {
+        guard let session = focusedSession, session.supportsInlineInteraction else {
             return
         }
 
@@ -1254,12 +1269,26 @@ final class AppModel {
     }
 
     func jumpToFocusedSession() {
-        jump(to: focusedSession?.jumpTarget)
+        if let session = focusedSession { jumpToSession(session) }
     }
 
     func jumpToSession(_ session: AgentSession, marksSeen: Bool = true) {
         if marksSeen {
             focus.markSessionSeen(session.id)
+        }
+        if session.tool == .codex {
+            let aliases = ["apple_terminal": "com.apple.Terminal", "terminal": "com.apple.Terminal",
+                "iterm.app": "com.googlecode.iterm2", "iterm2": "com.googlecode.iterm2",
+                "ghostty": "com.mitchellh.ghostty"]
+            let hint = session.jumpTarget?.terminalApp.lowercased() ?? ""
+            guard let bundle = aliases[hint],
+                  let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundle).first else {
+                lastActionMessage = "Open Codex in its original client. Exact session navigation is not available."
+                return
+            }
+            app.activate(options: [])
+            lastActionMessage = "Opened the terminal app. Select the Codex session there."
+            return
         }
         guard let jumpTarget = session.jumpTarget,
               jumpTarget.terminalApp.lowercased() != "unknown" else {
@@ -1350,7 +1379,7 @@ final class AppModel {
     }
 
     func approvePermission(for sessionID: String, approved: Bool) {
-        guard let session = state.session(id: sessionID) else {
+        guard let session = state.session(id: sessionID), session.supportsInlineInteraction else {
             return
         }
 
@@ -1369,7 +1398,7 @@ final class AppModel {
     }
 
     func approvePermission(for sessionID: String, action: ApprovalAction) {
-        guard let session = state.session(id: sessionID) else {
+        guard let session = state.session(id: sessionID), session.supportsInlineInteraction else {
             return
         }
 
@@ -1406,7 +1435,7 @@ final class AppModel {
     }
 
     func answerQuestion(for sessionID: String, answer: QuestionPromptResponse) {
-        guard let session = state.session(id: sessionID) else {
+        guard let session = state.session(id: sessionID), session.supportsInlineInteraction else {
             return
         }
 
@@ -1422,6 +1451,7 @@ final class AppModel {
     }
 
     func replyToSession(_ session: AgentSession, text: String) {
+        guard session.supportsInlineInteraction else { return }
         dismissNotificationSurfaceIfPresent(for: session.id)
         synchronizeSelection()
         refreshOverlayPlacementIfVisible()
@@ -1497,7 +1527,7 @@ final class AppModel {
         }
         synchronizeSelection()
         refreshOverlayPlacementIfVisible()
-        discovery.scheduleClaudeSessionPersistence()
+        discovery.scheduleSessionPersistence()
 
         if updateLastActionMessage {
             lastActionMessage = describe(event)
@@ -1659,7 +1689,7 @@ final class AppModel {
 
     private func settleFocusHookState() {
         focusHookStateReady = true
-        focus.setHooksInstalled(hooks.claudeHooksInstalled)
+        focus.setHooksInstalled(hooks.claudeHooksInstalled || hooks.codexHooksConfigured)
     }
 
     private func observeFocusLifecycle() {
@@ -1772,6 +1802,8 @@ final class AppModel {
         }
 
         switch session.phase {
+        case .idle:
+            break
         case .running:
             score += 2_000
         case .waitingForApproval:
@@ -1817,6 +1849,8 @@ final class AppModel {
             return payload.summary
         case let .jumpTargetUpdated(payload):
             return "Jump target updated to \(payload.jumpTarget.terminalApp)."
+        case let .codexSessionMetadataUpdated(_):
+            return "Codex session metadata updated."
         case let .claudeSessionMetadataUpdated(payload):
             if let currentTool = payload.claudeMetadata.currentTool {
                 return "Claude is running \(currentTool)."
