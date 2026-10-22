@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -46,17 +47,17 @@ struct PomodoroEndCard: View {
                         .monospacedDigit()
                         .foregroundStyle(FocusStyle.primaryText)
                         .lineLimit(1)
-                    Text("Отдохни — подсказки и отвлечения на перерыве молчат")
+                    Text(L10n.tr("focus.take_a_break_hints_and_distraction_alerts_are_paused"))
                         .font(FocusStyle.secondaryFont)
                         .foregroundStyle(FocusStyle.secondaryText)
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if remaining != nil {
-                    Button("Начать сейчас") { focus.startBreak(nextStep: nextStep, minutes: breakMinutes) }
+                    Button(L10n.tr("focus.start_now")) { focus.startBreak(nextStep: nextStep, minutes: breakMinutes) }
                         .buttonStyle(FocusButtonStyle(kind: .rest, height: 32))
                         .keyboardShortcut(.defaultAction)
-                    Button("Отменить") { focus.cancelBreakCountdown() }
+                    Button(L10n.tr("focus.cancel")) { focus.cancelBreakCountdown() }
                         .buttonStyle(FocusButtonStyle(kind: .quiet, height: 32, horizontalPadding: 6))
                 } else {
                     Button(Self.breakTitle(minutes: breakMinutes)) { focus.startBreak(nextStep: nextStep, minutes: breakMinutes) }
@@ -65,7 +66,7 @@ struct PomodoroEndCard: View {
                 }
             }
             HStack(spacing: 10) {
-                Text("Длительность")
+                Text(L10n.tr("focus.duration"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
                 MinutesSegments(choices: PomodoroFormat.breakChoices, selected: breakMinutes) {
@@ -135,10 +136,10 @@ struct PomodoroEndCard: View {
 
     private var kpiRow: some View {
         HStack(alignment: .top, spacing: 10) {
-            kpi("Ты в задаче", Self.minutesValue(summary?.youInTaskSeconds ?? 0))
-            kpi("Агенты работали", Self.minutesValue(summary?.agentSeconds ?? 0))
+            kpi(L10n.tr("focus.you_on_task"), Self.minutesValue(summary?.youInTaskSeconds ?? 0))
+            kpi(L10n.tr("focus.agents_working"), Self.minutesValue(summary?.agentSeconds ?? 0))
             kpi(
-                "Отвлечения",
+                L10n.tr("focus.distractions"),
                 Self.minutesValue(summary?.distractionSeconds ?? 0),
                 detail: summary.flatMap { Self.distractionDetail(count: $0.distractionCount, returned: $0.returnedCount) }
             )
@@ -168,7 +169,7 @@ struct PomodoroEndCard: View {
         )
         if !items.isEmpty {
             VStack(alignment: .leading, spacing: 6) {
-                FocusSectionCaption("Пока шёл таймер")
+                FocusSectionCaption(L10n.tr("focus.while_the_timer_ran"))
                 ForEach(Array(items.enumerated()), id: \.offset) { _, item in
                     HStack(spacing: 10) {
                         StatusDot(color: item.isCriterion ? FocusStyle.working : FocusStyle.done)
@@ -187,20 +188,20 @@ struct PomodoroEndCard: View {
 
     private var nextStepField: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextField("Следующий шаг — чтобы вернуться без раскачки", text: $nextStep)
+            TextField(L10n.tr("focus.next_step_pick_up_where_you_left_off"), text: $nextStep)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
                 .padding(.horizontal, 10)
                 .frame(height: 34)
                 .background(RoundedRectangle(cornerRadius: FocusStyle.buttonRadius).fill(FocusStyle.fieldFill))
                 .overlay(RoundedRectangle(cornerRadius: FocusStyle.buttonRadius).stroke(FocusStyle.fieldBorder, lineWidth: 1))
-                .accessibilityLabel("Следующий шаг")
+                .accessibilityLabel(L10n.tr("focus.next_step"))
         }
     }
 
     private var footer: some View {
         HStack(spacing: 8) {
-            Button("Закончить на сегодня") { focus.endForToday(nextStep: nextStep) }
+            Button(L10n.tr("focus.finish_for_today")) { focus.endForToday(nextStep: nextStep) }
                 .buttonStyle(FocusButtonStyle(kind: .quiet, horizontalPadding: 6))
             Spacer(minLength: 0)
             Button(Self.continueTitle(minutes: nextFocusMinutes)) {
@@ -236,50 +237,48 @@ struct PomodoroEndCard: View {
     }
 
     nonisolated static func headline(cycleIndex: Int, cycle: Int) -> String {
-        "Фокус \(cycleIndex) из \(cycle) готов"
+        L10n.tr("focus.focus_of_complete", "\(cycleIndex)", "\(cycle)")
     }
 
     nonisolated static func title(minutes: Int, taskTitle: String) -> String {
         let value = "\(minutes) \(minutesWord(minutes))"
-        guard !taskTitle.isEmpty else { return "\(value) фокуса" }
-        return "\(value) в «\(taskTitle)»"
+        guard !taskTitle.isEmpty else { return L10n.tr("focus.of_focus", "\(value)") }
+        return L10n.tr("focus.on_173", "\(value)", "\(taskTitle)")
     }
 
     nonisolated static func minutesValue(_ seconds: TimeInterval) -> String {
-        "\(max(0, Int((seconds / 60).rounded()))) мин"
+        L10n.tr("focus.min", "\(max(0, Int((seconds / 60).rounded())))")
     }
 
     nonisolated static func distractionDetail(count: Int, returned: Int) -> String? {
         guard count > 0 else { return nil }
-        let mod10 = count % 10
-        let mod100 = count % 100
-        let word = (2...4).contains(mod10) && !(12...14).contains(mod100) ? "раза" : "раз"
+        let word = L10n.tr(L10n.pluralKey(count, one: "common.times.one", few: "common.times.few", many: "common.times.many"))
         let base = "\(count) \(word)"
         if returned <= 0 { return base }
-        if returned >= count { return "\(base), вернулся" }
-        return "\(base), вернулся \(returned)"
+        if returned >= count { return L10n.tr("focus.returned", "\(base)") }
+        return L10n.tr("focus.returned_177", "\(base)", "\(returned)")
     }
 
     nonisolated static func whileRunningItems(finishedSessionTitles: [String], checkedCriteria: [String]) -> [Item] {
-        finishedSessionTitles.map { Item(text: "«\($0)» — Claude закончил", isCriterion: false) }
-            + checkedCriteria.map { Item(text: "Критерий «\($0)» отмечен", isCriterion: true) }
+        finishedSessionTitles.map { Item(text: L10n.tr("focus.the_agent_finished", "\($0)"), isCriterion: false) }
+            + checkedCriteria.map { Item(text: L10n.tr("focus.criterion_checked", "\($0)"), isCriterion: true) }
     }
 
     nonisolated static func continueTitle(minutes: Int) -> String {
-        "Без перерыва — ещё \(minutes) мин"
+        L10n.tr("focus.skip_break_another_min", "\(minutes)")
     }
 
     nonisolated static func breakTitle(minutes: Int) -> String {
-        "☕ Начать перерыв · \(minutes) мин"
+        L10n.tr("focus.start_break_min", "\(minutes)")
     }
 
     nonisolated static func breakHeadline(minutes: Int, secondsLeft: Int?) -> String {
-        guard let secondsLeft else { return "Перерыв \(minutes) мин" }
-        return "Перерыв \(minutes) мин начнётся через \(secondsLeft) с"
+        guard let secondsLeft else { return L10n.tr("focus.min_break", "\(minutes)") }
+        return L10n.tr("focus.min_break_starts_in_s", "\(minutes)", "\(secondsLeft)")
     }
 
     nonisolated static func afterBreakCaption(focusMinutes: Int) -> String {
-        "потом фокус \(focusMinutes) мин"
+        L10n.tr("focus.then_min_of_focus", "\(focusMinutes)")
     }
 
     nonisolated static func countdownProgress(secondsLeft: Int) -> CGFloat {
@@ -296,10 +295,6 @@ struct PomodoroEndCard: View {
     }
 
     nonisolated private static func minutesWord(_ count: Int) -> String {
-        let mod10 = count % 10
-        let mod100 = count % 100
-        if mod10 == 1 && mod100 != 11 { return "минута" }
-        if (2...4).contains(mod10) && !(12...14).contains(mod100) { return "минуты" }
-        return "минут"
+        return L10n.tr(L10n.pluralKey(count, one: "focus.minute", few: "focus.minutes", many: "focus.minutes_187"))
     }
 }

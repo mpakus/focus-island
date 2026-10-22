@@ -10,6 +10,31 @@ import Vision
 @MainActor
 @Suite(.serialized)
 struct SettingsRenderingTests {
+    // Run separately per language so changing the shared UI preference cannot race other suites.
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["FOCUS_ISLAND_PREVIEW_LANGUAGE"] != nil))
+    func localizedSettingsPreview() async throws {
+        let code = try #require(ProcessInfo.processInfo.environment["FOCUS_ISLAND_PREVIEW_LANGUAGE"])
+        let language = try #require(LanguageManager.AppLanguage(rawValue: code))
+        let previous = LanguageManager.shared.language
+        defer { LanguageManager.shared.language = previous }
+        LanguageManager.shared.language = language
+        let model = AppModel(focusStore: try FocusStore.inMemory(), claudeRegistry: .temporaryForTesting(), runBackfill: false)
+        model.hooks.hooksBinaryURL = URL(fileURLWithPath: "/fixture/OpenIslandHooks")
+        let general = try await render(GeneralSettingsPane(model: model), name: "general-\(code)", model: model)
+        #expect(general.contains("English"))
+        #expect(general.contains("Español"))
+        let setup = try await render(SetupSettingsPane(model: model), name: "setup-\(code)", model: model)
+        #expect(setup.contains("Codex"))
+        #expect(setup.contains("/hooks"))
+        let focus = try await render(FocusSettingsPane(focus: model.focus), name: "focus-\(code)", model: model)
+        let expected = language == .en ? "Focus timer" : language == .es ? "Temporizador" : "Фокус"
+        #expect(focus.contains(expected))
+        let state = BoardWindowState()
+        _ = try await render(BoardRootView(focus: model.focus, state: state), name: "board-\(code)", model: model)
+        let today = DaySummaryFormatter.title(Date(timeIntervalSince1970: 1_791_547_200))
+        #expect(!today.isEmpty)
+    }
+
     @Test(arguments: [false, true])
     func setupExposesBothAgentsAndCodexTrustInstructions(installed: Bool) async throws {
         let model = AppModel(focusStore: try FocusStore.inMemory(), claudeRegistry: .temporaryForTesting(), runBackfill: false)
@@ -82,6 +107,9 @@ struct SettingsRenderingTests {
         // SwiftUI's accessibility tree is incomplete in the CLI runner; verify the visible text.
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
+        let supported = try request.supportedRecognitionLanguages()
+        request.recognitionLanguages = ["en-US", "es-ES", "ru-RU"].filter { supported.contains($0) }
+        request.automaticallyDetectsLanguage = true
         try VNImageRequestHandler(url: imageURL).perform([request])
         return (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
     }

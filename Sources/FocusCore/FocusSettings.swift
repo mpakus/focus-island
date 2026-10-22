@@ -1,3 +1,4 @@
+import OpenIslandCore
 import Foundation
 
 public enum ResumeTerminal: String, Codable, CaseIterable, Sendable, Identifiable {
@@ -27,7 +28,7 @@ public enum BoardHotKey: String, Codable, CaseIterable, Sendable, Identifiable {
         switch self {
         case .optionCommandB: "⌥⌘B"
         case .controlOptionB: "⌃⌥B"
-        case .off: "Выключен"
+        case .off: L10n.tr("focus.off")
         }
     }
 }

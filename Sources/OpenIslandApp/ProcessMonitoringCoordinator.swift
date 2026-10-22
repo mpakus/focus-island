@@ -479,7 +479,7 @@ final class ProcessMonitoringCoordinator {
             origin: .live,
             attachmentState: .attached,
             phase: .completed,
-            summary: "Claude session detected from \(terminalApp).",
+            summary: L10n.tr("core.claude_session_detected_from", "\(terminalApp)"),
             updatedAt: now,
             jumpTarget: JumpTarget(
                 terminalApp: terminalApp,

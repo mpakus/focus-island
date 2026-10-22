@@ -11,7 +11,6 @@ struct OpenIslandHooksCLI {
             let arguments = Array(CommandLine.arguments.dropFirst())
             let sourceString = rawSourceString(arguments: arguments)
             // Allow wrappers to delegate one child process away from Open Island without changing global hook installation.
-            // 允许外部控制器只让当前子进程跳过 Open Island hook，不影响全局安装状态。
             if HookSkipConfiguration.shouldSkipHooks(environment: ProcessInfo.processInfo.environment) {
                 if sourceString == "codex" { FileHandle.standardOutput.write(Data("{}\n".utf8)) }
                 return

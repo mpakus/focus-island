@@ -13,7 +13,7 @@ struct StayInTaskCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             headerBlock
-            Text("Пока ждёшь — в этой же задаче")
+            Text(L10n.tr("focus.while_you_wait_in_the_same_task"))
                 .font(.system(size: 18, weight: .bold))
                 .lineLimit(2)
                 .minimumScaleFactor(0.85)
@@ -39,7 +39,7 @@ struct StayInTaskCard: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
                     StatusDot(color: FocusStyle.working)
-                    Text("Claude работает над «\(taskTitle)»")
+                    Text(L10n.tr("focus.the_agent_is_working_on", "\(taskTitle)"))
                         .font(.system(size: 13, weight: .semibold))
                         .lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -71,13 +71,13 @@ struct StayInTaskCard: View {
     private var promptBox: some View {
         FocusBox(border: FocusStyle.link.opacity(0.3), spacing: 10) {
             HStack(spacing: 8) {
-                FocusSectionCaption("1 · Следующий промпт", color: FocusStyle.link)
-                Text("отправится, когда Claude закончит")
+                FocusSectionCaption(L10n.tr("focus.1_next_prompt"), color: FocusStyle.link)
+                Text(L10n.tr("focus.send_it_when_the_agent_finishes"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
                     .lineLimit(1)
             }
-            TextField("Следующий промпт", text: $promptText, axis: .vertical)
+            TextField(L10n.tr("focus.next_prompt"), text: $promptText, axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(2...4)
                 .font(.system(size: 13))
@@ -85,13 +85,13 @@ struct StayInTaskCard: View {
                 .padding(.vertical, 9)
                 .background(RoundedRectangle(cornerRadius: 9).fill(FocusStyle.surface))
                 .overlay(RoundedRectangle(cornerRadius: 9).stroke(FocusStyle.link.opacity(0.45), lineWidth: 1))
-                .accessibilityLabel("Следующий промпт")
+                .accessibilityLabel(L10n.tr("focus.next_prompt"))
             HStack(spacing: 8) {
-                Button(queued?.text == trimmedPrompt && !trimmedPrompt.isEmpty ? "В очереди" : "Поставить в очередь", action: queuePrompt)
+                Button(queued?.text == trimmedPrompt && !trimmedPrompt.isEmpty ? L10n.tr("focus.queued") : L10n.tr("focus.queue"), action: queuePrompt)
                     .buttonStyle(FocusButtonStyle(kind: .primary))
                     .keyboardShortcut(.return, modifiers: .command)
                     .disabled(trimmedPrompt.isEmpty || queued?.text == trimmedPrompt)
-                Text("или ⌘↩")
+                Text(L10n.tr("focus.or"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
             }
@@ -104,7 +104,7 @@ struct StayInTaskCard: View {
         if !files.isEmpty {
             let cwd = focus.sessionCWD(sessionID)
             FocusBox(spacing: 4) {
-                FocusSectionCaption("2 · Проверь, что уже сделано")
+                FocusSectionCaption(L10n.tr("focus.2_review_completed_work"))
                 ForEach(files) { file in
                     HStack(spacing: 12) {
                         Text(file.path)
@@ -114,7 +114,7 @@ struct StayInTaskCard: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Text("+\(file.added)").font(FocusStyle.monoFont).foregroundStyle(FocusStyle.working)
                         Text("−\(file.removed)").font(FocusStyle.monoFont).foregroundStyle(FocusStyle.removed)
-                        Button("Открыть") {
+                        Button(L10n.tr("focus.open")) {
                             if let cwd {
                                 NSWorkspace.shared.open(Self.fileURL(cwd: cwd, path: file.path))
                             }
@@ -130,16 +130,16 @@ struct StayInTaskCard: View {
 
     private var criteriaBox: some View {
         FocusBox(spacing: 8) {
-            FocusSectionCaption("3 · Критерий готовности")
+            FocusSectionCaption(L10n.tr("focus.3_completion_criteria"))
             if let taskID = focus.taskID(forSession: sessionID) {
                 CriteriaChecklist(focus: focus, taskID: taskID).id(taskID)
             } else {
                 HStack {
-                    Text("У сессии нет задачи")
+                    Text(L10n.tr("focus.this_session_has_no_task"))
                         .font(FocusStyle.secondaryFont)
                         .foregroundStyle(FocusStyle.secondaryText)
                     Spacer()
-                    Menu("Выбрать задачу") {
+                    Menu(L10n.tr("focus.choose_task")) {
                         ForEach(focus.pickerTasks(forSessionID: sessionID)) { task in
                             Button(task.title) { focus.perform(.bindTriggering(taskID: task.id)) }
                         }
@@ -191,7 +191,7 @@ struct StayInTaskCard: View {
         case let .attend(id, reason, _):
             Self.attendTitle(name: sessionName(id), reason: reason)
         case let .review(id):
-            "\(sessionName(id)) — готово, не просмотрено"
+            L10n.tr("focus.done_not_reviewed", "\(sessionName(id))")
         case let .startTask(taskID, _):
             focus.board.task(id: taskID)?.title ?? ""
         }
@@ -212,12 +212,12 @@ struct StayInTaskCard: View {
 
     private var footer: some View {
         HStack(spacing: 8) {
-            TextField("+ задача в Todo", text: $quickAddText)
+            TextField(L10n.tr("focus.task_in_to_do"), text: $quickAddText)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
                 .onSubmit(quickAdd)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Button("Пропустить") { focus.perform(.dismiss) }
+            Button(L10n.tr("focus.skip")) { focus.perform(.dismiss) }
                 .buttonStyle(FocusButtonStyle(kind: .quiet))
         }
     }
@@ -251,24 +251,24 @@ struct StayInTaskCard: View {
 
     nonisolated static func header(progress: PlanProgress?, remaining: TimeInterval?, elapsed: TimeInterval?) -> String {
         guard let progress else {
-            guard let elapsed else { return "Работает" }
+            guard let elapsed else { return L10n.tr("focus.working_228") }
             let minutes = FocusText.minutes(elapsed)
-            return minutes == 0 ? "Работает · меньше минуты" : "Работает · \(minutes) мин"
+            return minutes == 0 ? L10n.tr("focus.working_less_than_a_minute") : L10n.tr("focus.working_min", "\(minutes)")
         }
         let step = min(progress.total, progress.completed + 1)
-        var text = "Шаг \(step) из \(progress.total)"
+        var text = L10n.tr("focus.step_of", "\(step)", "\(progress.total)")
         if let title = progress.currentTitle, !title.isEmpty {
             text += ": \(title)"
         }
         if let remaining {
-            text += " · по плану ещё ~\(FocusText.roundedUpMinutes(remaining)) мин"
+            text += L10n.tr("focus.about_min_left_in_the_plan", "\(FocusText.roundedUpMinutes(remaining))")
         }
         return text
     }
 
     nonisolated static func switchTitle(remaining: TimeInterval?) -> String {
-        guard let remaining else { return "Или переключиться" }
-        return "Или переключиться — \(FocusText.roundedUpMinutes(remaining)) мин хватит"
+        guard let remaining else { return L10n.tr("focus.or_switch_tasks") }
+        return L10n.tr("focus.or_switch_min_is_enough", "\(FocusText.roundedUpMinutes(remaining))")
     }
 
     nonisolated static func clock(_ seconds: TimeInterval) -> String {
@@ -287,27 +287,27 @@ struct StayInTaskCard: View {
         switch alternative {
         case let .attend(_, reason, _):
             switch reason {
-            case .approval: "Разрешение · дело на минуту"
-            case .question: "Вопрос · дело на минуту"
-            case .unseenCompletion: "Готово, не просмотрено"
+            case .approval: L10n.tr("focus.permission_takes_a_minute")
+            case .question: L10n.tr("focus.question_takes_a_minute")
+            case .unseenCompletion: L10n.tr("focus.done_not_reviewed_236")
             }
         case .review:
-            "Можно быстро проверить"
+            L10n.tr("focus.quick_to_review")
         case let .startTask(_, sameProject):
-            sameProject ? "тот же проект — переключаться легче" : "из Todo"
+            sameProject ? L10n.tr("focus.same_project_easier_to_switch") : L10n.tr("focus.from_to_do")
         }
     }
 
     nonisolated static func attendTitle(name: String, reason: AttentionReason) -> String {
         switch reason {
-        case .approval: "\(name) ждёт разрешения"
-        case .question: "\(name) ждёт ответа"
-        case .unseenCompletion: "\(name) — готово, не просмотрено"
+        case .approval: L10n.tr("focus.is_waiting_for_permission", "\(name)")
+        case .question: L10n.tr("focus.is_waiting_for_an_answer", "\(name)")
+        case .unseenCompletion: L10n.tr("focus.done_not_reviewed", "\(name)")
         }
     }
 
     nonisolated static func actionTitle(_ alternative: NextAlternative) -> String {
-        if case .startTask = alternative { "Начать" } else { "Перейти" }
+        if case .startTask = alternative { L10n.tr("focus.start") } else { L10n.tr("focus.open_session") }
     }
 
     nonisolated static func dotColor(_ alternative: NextAlternative) -> Color {

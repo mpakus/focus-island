@@ -26,17 +26,17 @@ public struct HookHealthReport: Equatable, Sendable, Identifiable {
         public var description: String {
             switch self {
             case .binaryNotFound:
-                "Hook binary not found at any candidate location."
+                L10n.tr("ui.hook_binary_not_found_at_any_candidate_location")
             case .binaryNotExecutable(let path):
-                "Hook binary exists but is not executable: \(path)"
+                L10n.tr("ui.hook_binary_exists_but_is_not_executable", "\(path)")
             case .configMalformedJSON(let path):
-                "Config file is not valid JSON: \(path)"
+                L10n.tr("ui.config_file_is_not_valid_json", "\(path)")
             case .staleCommandPath(let recorded, let configPath):
-                "Command path in \(configPath) points to missing binary: \(recorded)"
+                L10n.tr("ui.command_path_in_points_to_missing_binary", "\(configPath)", "\(recorded)")
             case .otherHooksDetected(let names):
-                "Other hooks coexist: \(names.joined(separator: ", "))"
+                L10n.tr("ui.other_hooks_coexist", "\(names.joined(separator: ", "))")
             case .manifestMissing(let expectedPath):
-                "Installation manifest missing: \(expectedPath)"
+                L10n.tr("ui.installation_manifest_missing", "\(expectedPath)")
             }
         }
 

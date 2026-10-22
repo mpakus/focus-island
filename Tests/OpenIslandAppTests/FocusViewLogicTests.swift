@@ -8,26 +8,26 @@ struct FocusViewLogicTests {
     @Test
     func stayInTaskHeaderWithPlanAndEstimate() {
         let progress = PlanProgress(completed: 2, total: 7, currentTitle: "обновляет хендлеры")
-        #expect(StayInTaskCard.header(progress: progress, remaining: 240, elapsed: 100) == "Шаг 3 из 7: обновляет хендлеры · по плану ещё ~4 мин")
+        #expect(StayInTaskCard.header(progress: progress, remaining: 240, elapsed: 100) == "Step 3 of 7: обновляет хендлеры · about 4 min left in the plan")
     }
 
     @Test
     func stayInTaskHeaderWithoutEstimateOrTitle() {
         let progress = PlanProgress(completed: 0, total: 3, currentTitle: nil)
-        #expect(StayInTaskCard.header(progress: progress, remaining: nil, elapsed: 30) == "Шаг 1 из 3")
+        #expect(StayInTaskCard.header(progress: progress, remaining: nil, elapsed: 30) == "Step 1 of 3")
     }
 
     @Test
     func stayInTaskHeaderClampsStepAndRoundsEstimateUp() {
         let progress = PlanProgress(completed: 3, total: 3, currentTitle: "финал")
-        #expect(StayInTaskCard.header(progress: progress, remaining: 20, elapsed: nil) == "Шаг 3 из 3: финал · по плану ещё ~1 мин")
+        #expect(StayInTaskCard.header(progress: progress, remaining: 20, elapsed: nil) == "Step 3 of 3: финал · about 1 min left in the plan")
     }
 
     @Test
     func stayInTaskHeaderWithoutPlan() {
-        #expect(StayInTaskCard.header(progress: nil, remaining: nil, elapsed: 400) == "Работает · 6 мин")
-        #expect(StayInTaskCard.header(progress: nil, remaining: nil, elapsed: 10) == "Работает · меньше минуты")
-        #expect(StayInTaskCard.header(progress: nil, remaining: nil, elapsed: nil) == "Работает")
+        #expect(StayInTaskCard.header(progress: nil, remaining: nil, elapsed: 400) == "Working · 6 min")
+        #expect(StayInTaskCard.header(progress: nil, remaining: nil, elapsed: 10) == "Working · less than a minute")
+        #expect(StayInTaskCard.header(progress: nil, remaining: nil, elapsed: nil) == "Working")
     }
 
     @Test
@@ -39,9 +39,9 @@ struct FocusViewLogicTests {
 
     @Test
     func switchTitleUsesEstimate() {
-        #expect(StayInTaskCard.switchTitle(remaining: 240) == "Или переключиться — 4 мин хватит")
-        #expect(StayInTaskCard.switchTitle(remaining: 10) == "Или переключиться — 1 мин хватит")
-        #expect(StayInTaskCard.switchTitle(remaining: nil) == "Или переключиться")
+        #expect(StayInTaskCard.switchTitle(remaining: 240) == "Or switch — 4 min is enough")
+        #expect(StayInTaskCard.switchTitle(remaining: 10) == "Or switch — 1 min is enough")
+        #expect(StayInTaskCard.switchTitle(remaining: nil) == "Or switch tasks")
     }
 
     @Test
@@ -53,27 +53,27 @@ struct FocusViewLogicTests {
 
     @Test
     func nudgeTitleFormatsSeconds() {
-        #expect(NudgeCard.title(target: "youtube.com", seconds: 25) == "Claude работает — ты на youtube.com уже 25 с")
-        #expect(NudgeCard.title(target: "Telegram", seconds: 0) == "Claude работает — ты в Telegram уже 0 с")
-        #expect(NudgeCard.title(target: "youtube.com", seconds: 125) == "Claude работает — ты на youtube.com уже 2 мин 5 с")
-        #expect(NudgeCard.title(target: "youtube.com", seconds: 120) == "Claude работает — ты на youtube.com уже 2 мин")
-        #expect(NudgeCard.title(target: nil, seconds: 30) == "Claude работает — ты отвлёкся")
+        #expect(NudgeCard.title(target: "youtube.com", seconds: 25) == "The agent is working — you've been on youtube.com for 25 s")
+        #expect(NudgeCard.title(target: "Telegram", seconds: 0) == "The agent is working — you've been in Telegram for 0 s")
+        #expect(NudgeCard.title(target: "youtube.com", seconds: 125) == "The agent is working — you've been on youtube.com for 2 min 5 s")
+        #expect(NudgeCard.title(target: "youtube.com", seconds: 120) == "The agent is working — you've been on youtube.com for 2 min")
+        #expect(NudgeCard.title(target: nil, seconds: 30) == "The agent is working — you got distracted")
     }
 
     @Test
     func nudgeSubtitleJoinsAvailableParts() {
-        #expect(NudgeCard.subtitle(project: "focus", task: "Рефакторинг auth", elapsed: 70) == "Сессия focus · «Рефакторинг auth» · 1:10")
-        #expect(NudgeCard.subtitle(project: "focus", task: nil, elapsed: nil) == "Сессия focus")
-        #expect(NudgeCard.subtitle(project: nil, task: nil, elapsed: nil) == "Сессия")
+        #expect(NudgeCard.subtitle(project: "focus", task: "Рефакторинг auth", elapsed: 70) == "Session focus · «Рефакторинг auth» · 1:10")
+        #expect(NudgeCard.subtitle(project: "focus", task: nil, elapsed: nil) == "Session focus")
+        #expect(NudgeCard.subtitle(project: nil, task: nil, elapsed: nil) == "Session")
     }
 
     @Test
     func returnSubtitleCombinesStepsMinutesAndAwayProject() {
         let progress = PlanProgress(completed: 7, total: 7, currentTitle: nil)
-        #expect(ReturnCard.subtitle(progress: progress, minutes: 6, awayProject: "billing") == "7 из 7 шагов · 6 мин · пока ты был в billing")
-        #expect(ReturnCard.subtitle(progress: nil, minutes: 6, awayProject: nil) == "6 мин")
-        #expect(ReturnCard.subtitle(progress: progress, minutes: nil, awayProject: nil) == "7 из 7 шагов")
-        #expect(ReturnCard.subtitle(progress: nil, minutes: nil, awayProject: "billing") == "пока ты был в billing")
+        #expect(ReturnCard.subtitle(progress: progress, minutes: 6, awayProject: "billing") == "7 of 7 steps · 6 min · while you were in billing")
+        #expect(ReturnCard.subtitle(progress: nil, minutes: 6, awayProject: nil) == "6 min")
+        #expect(ReturnCard.subtitle(progress: progress, minutes: nil, awayProject: nil) == "7 of 7 steps")
+        #expect(ReturnCard.subtitle(progress: nil, minutes: nil, awayProject: "billing") == "while you were in billing")
     }
 
     @Test
@@ -90,18 +90,18 @@ struct FocusViewLogicTests {
     @Test
     func reEntryBreadcrumbDescribesFocusTask() {
         let progress = PlanProgress(completed: 3, total: 7, currentTitle: nil)
-        #expect(ReEntryCard.breadcrumb(taskTitle: "Рефакторинг auth", progress: progress, hasQueuedPrompt: true, isRunning: true) == "Рефакторинг auth продолжается · шаг 4 из 7 · промпт в очереди · позову, когда закончит")
-        #expect(ReEntryCard.breadcrumb(taskTitle: "Рефакторинг auth", progress: nil, hasQueuedPrompt: false, isRunning: true) == "Рефакторинг auth продолжается · позову, когда закончит")
+        #expect(ReEntryCard.breadcrumb(taskTitle: "Рефакторинг auth", progress: progress, hasQueuedPrompt: true, isRunning: true) == "Рефакторинг auth continues · step 4 of 7 · prompt queued · I'll notify you when it's done")
+        #expect(ReEntryCard.breadcrumb(taskTitle: "Рефакторинг auth", progress: nil, hasQueuedPrompt: false, isRunning: true) == "Рефакторинг auth continues · I'll notify you when it's done")
         #expect(ReEntryCard.breadcrumb(taskTitle: "Рефакторинг auth", progress: progress, hasQueuedPrompt: true, isRunning: false) == nil)
         #expect(ReEntryCard.breadcrumb(taskTitle: nil, progress: progress, hasQueuedPrompt: true, isRunning: true) == nil)
     }
 
     @Test
     func reEntryAgoText() {
-        #expect(ReEntryCard.agoText(minutes: 40) == "40 мин назад")
-        #expect(ReEntryCard.agoText(minutes: 60) == "1 ч назад")
-        #expect(ReEntryCard.agoText(minutes: 135) == "2 ч 15 мин назад")
-        #expect(ReEntryCard.agoText(minutes: 0) == "только что")
+        #expect(ReEntryCard.agoText(minutes: 40) == "40 min ago")
+        #expect(ReEntryCard.agoText(minutes: 60) == "1 h ago")
+        #expect(ReEntryCard.agoText(minutes: 135) == "2 h 15 min ago")
+        #expect(ReEntryCard.agoText(minutes: 0) == "just now")
     }
 
     @Test
@@ -122,19 +122,19 @@ struct FocusViewLogicTests {
     @Test
     func alternativeCopy() {
         let since = Date(timeIntervalSince1970: 0)
-        #expect(StayInTaskCard.reason(.attend(sessionID: "a", reason: .approval, since: since)) == "Разрешение · дело на минуту")
-        #expect(StayInTaskCard.reason(.attend(sessionID: "a", reason: .question, since: since)) == "Вопрос · дело на минуту")
-        #expect(StayInTaskCard.reason(.startTask(taskID: "t", sameProject: true)) == "тот же проект — переключаться легче")
-        #expect(StayInTaskCard.attendTitle(name: "billing", reason: .question) == "billing ждёт ответа")
-        #expect(StayInTaskCard.attendTitle(name: "billing", reason: .approval) == "billing ждёт разрешения")
-        #expect(StayInTaskCard.actionTitle(.startTask(taskID: "t", sameProject: false)) == "Начать")
-        #expect(StayInTaskCard.actionTitle(.review(sessionID: "a")) == "Перейти")
+        #expect(StayInTaskCard.reason(.attend(sessionID: "a", reason: .approval, since: since)) == "Permission · takes a minute")
+        #expect(StayInTaskCard.reason(.attend(sessionID: "a", reason: .question, since: since)) == "Question · takes a minute")
+        #expect(StayInTaskCard.reason(.startTask(taskID: "t", sameProject: true)) == "same project — easier to switch")
+        #expect(StayInTaskCard.attendTitle(name: "billing", reason: .question) == "billing is waiting for an answer")
+        #expect(StayInTaskCard.attendTitle(name: "billing", reason: .approval) == "billing is waiting for permission")
+        #expect(StayInTaskCard.actionTitle(.startTask(taskID: "t", sameProject: false)) == "Start")
+        #expect(StayInTaskCard.actionTitle(.review(sessionID: "a")) == "Open session")
     }
 
     @Test
     func reEntryOriginLine() {
-        #expect(ReEntryCard.originLine(project: "billing", minutes: 40) == "billing · последний раз 40 мин назад")
-        #expect(ReEntryCard.originLine(project: nil, minutes: 40) == "последний раз 40 мин назад")
+        #expect(ReEntryCard.originLine(project: "billing", minutes: 40) == "billing · last seen 40 min ago")
+        #expect(ReEntryCard.originLine(project: nil, minutes: 40) == "last seen 40 min ago")
         #expect(ReEntryCard.originLine(project: "billing", minutes: nil) == "billing")
     }
 
@@ -156,17 +156,17 @@ struct FocusViewLogicTests {
 
     @Test
     func stalledAgeLabelUsesMinutesThenHours() {
-        #expect(WaitingOutsideSection.ageLabel(seconds: 25 * 60) == "25 м")
-        #expect(WaitingOutsideSection.ageLabel(seconds: 59 * 60 + 59) == "59 м")
-        #expect(WaitingOutsideSection.ageLabel(seconds: 3600) == "1 ч")
-        #expect(WaitingOutsideSection.ageLabel(seconds: 2 * 3600 + 1800) == "2 ч")
-        #expect(WaitingOutsideSection.ageLabel(seconds: -5) == "0 м")
+        #expect(WaitingOutsideSection.ageLabel(seconds: 25 * 60) == "25 min")
+        #expect(WaitingOutsideSection.ageLabel(seconds: 59 * 60 + 59) == "59 min")
+        #expect(WaitingOutsideSection.ageLabel(seconds: 3600) == "1 h")
+        #expect(WaitingOutsideSection.ageLabel(seconds: 2 * 3600 + 1800) == "2 h")
+        #expect(WaitingOutsideSection.ageLabel(seconds: -5) == "0 min")
     }
 
     @Test
     func dayStartPrimaryTitleUsesFirstSelected() {
-        #expect(DayStartCard.primaryTitle(selectedTitles: ["Рефакторинг auth", "Webhook"]) == "Начать с «Рефакторинг auth»")
-        #expect(DayStartCard.primaryTitle(selectedTitles: []) == "Начать день")
+        #expect(DayStartCard.primaryTitle(selectedTitles: ["Рефакторинг auth", "Webhook"]) == "Start with “Рефакторинг auth”")
+        #expect(DayStartCard.primaryTitle(selectedTitles: []) == "Start the day")
     }
 
     @Test
@@ -207,10 +207,10 @@ struct FocusViewLogicTests {
 
     @Test
     func dayStartYesterdayDetail() {
-        #expect(DayStartCard.yesterdayButtonTitle(group: .waiting) == "Продолжить")
-        #expect(DayStartCard.yesterdayButtonTitle(group: .review) == "Посмотреть")
-        #expect(DayStartCard.yesterdayButtonTitle(group: .parked) == "Вернуть")
-        #expect(DayStartCard.yesterdayButtonTitle(group: .idle) == "Продолжить")
+        #expect(DayStartCard.yesterdayButtonTitle(group: .waiting) == "Resume")
+        #expect(DayStartCard.yesterdayButtonTitle(group: .review) == "Review")
+        #expect(DayStartCard.yesterdayButtonTitle(group: .parked) == "Restore")
+        #expect(DayStartCard.yesterdayButtonTitle(group: .idle) == "Resume")
     }
 
     @Test
@@ -228,13 +228,13 @@ struct FocusViewLogicTests {
 
     @Test
     func overloadTitleAndChipText() {
-        #expect(OverloadCard.title(liveCount: 4) == "4-я сессия в задаче")
-        #expect(OverloadCard.subtitle(limit: 3) == "Обычно ты уверенно держишь 3. Дальше сессии начинают теряться — давай сначала разгрузим голову.")
-        #expect(OverloadCard.stateText(.waiting) == "ждёт")
-        #expect(OverloadCard.stateText(.running) == "работает")
-        #expect(OverloadCard.stateText(.review) == "готово")
-        #expect(OverloadCard.stateText(.idle) == "твой ход")
-        #expect(OverloadCard.stateText(.unbound) == "без задачи")
+        #expect(OverloadCard.title(liveCount: 4) == "Session 4 in this task")
+        #expect(OverloadCard.subtitle(limit: 3) == "You usually manage 3 comfortably. More sessions can be hard to track — clear a slot first.")
+        #expect(OverloadCard.stateText(.waiting) == "waiting")
+        #expect(OverloadCard.stateText(.running) == "working")
+        #expect(OverloadCard.stateText(.review) == "done")
+        #expect(OverloadCard.stateText(.idle) == "your turn")
+        #expect(OverloadCard.stateText(.unbound) == "no task")
     }
 
     @Test
@@ -245,8 +245,8 @@ struct FocusViewLogicTests {
         #expect(OnboardingCard.stage(hooksInstalled: false, taskAdded: false) == .connect)
         #expect(OnboardingCard.stage(hooksInstalled: true, taskAdded: false) == .firstTask)
         #expect(OnboardingCard.stage(hooksInstalled: true, taskAdded: true) == .started)
-        #expect(OnboardingCard.startedToast(sessionCount: 2) == "Задача в работе · 2 сессии внутри")
-        #expect(OnboardingCard.candidateDetail(cwd: nil, appName: nil) == "сессия агента")
+        #expect(OnboardingCard.startedToast(sessionCount: 2) == "Task in progress · 2 sessions included")
+        #expect(OnboardingCard.candidateDetail(cwd: nil, appName: nil) == "agent session")
         #expect(OnboardingCard.candidateDetail(cwd: "/tmp/api", appName: "Ghostty") == "/tmp/api · Ghostty")
         #expect(OnboardingCard.shortPath(NSHomeDirectory() + "/work/api") == "~/work/api")
         #expect(OnboardingCard.launchCommand(projectPath: nil) == "claude")
@@ -268,7 +268,7 @@ struct FocusViewLogicTests {
     func overloadWaitingDetailUsesNow() {
         let since = Date(timeIntervalSince1970: 1000)
         let row = HubRow(id: "a", group: .waiting, taskID: nil, title: "a", projectName: nil, detail: "", since: since, progress: nil)
-        #expect(OverloadCard.waitingDetail(row: row, now: since.addingTimeInterval(190)) == "ждёт 3 мин")
+        #expect(OverloadCard.waitingDetail(row: row, now: since.addingTimeInterval(190)) == "waiting 3 min")
     }
 
     @Test
@@ -295,12 +295,12 @@ struct FocusViewLogicTests {
 
     @Test
     func hubHeaderCountPluralizesSessions() {
-        #expect(SessionHubView.headerCount(live: 4, limit: 3) == "4 сессии · держишь 3")
-        #expect(SessionHubView.headerCount(live: 1, limit: 3) == "1 сессия · держишь 3")
-        #expect(SessionHubView.headerCount(live: 5, limit: 6) == "5 сессий · держишь 6")
-        #expect(SessionHubView.headerCount(live: 11, limit: 3) == "11 сессий · держишь 3")
-        #expect(SessionHubView.headerCount(live: 21, limit: 3) == "21 сессия · держишь 3")
-        #expect(SessionHubView.headerCount(live: 0, limit: 3) == "0 сессий · держишь 3")
+        #expect(SessionHubView.headerCount(live: 4, limit: 3) == "4 sessions · your limit 3")
+        #expect(SessionHubView.headerCount(live: 1, limit: 3) == "1 session · your limit 3")
+        #expect(SessionHubView.headerCount(live: 5, limit: 6) == "5 sessions · your limit 6")
+        #expect(SessionHubView.headerCount(live: 11, limit: 3) == "11 sessions · your limit 3")
+        #expect(SessionHubView.headerCount(live: 21, limit: 3) == "21 sessions · your limit 3")
+        #expect(SessionHubView.headerCount(live: 0, limit: 3) == "0 sessions · your limit 3")
     }
 
     @Test
@@ -314,17 +314,17 @@ struct FocusViewLogicTests {
         let groups = SessionHubView.groups(rows: rows)
         #expect(groups.map(\.group) == [.waiting, .running, .parked])
         #expect(groups[1].rows.map(\.id) == ["r", "r2"])
-        #expect(SessionHubView.groupCaption(.running, count: 2) == "Работают · 2")
+        #expect(SessionHubView.groupCaption(.running, count: 2) == "Working · 2")
     }
 
     @Test
     func hubRowActions() {
-        #expect(SessionHubView.actionTitle(group: .waiting) == "Ответить")
-        #expect(SessionHubView.actionTitle(group: .review) == "Посмотреть")
-        #expect(SessionHubView.actionTitle(group: .running) == "Перейти")
-        #expect(SessionHubView.actionTitle(group: .idle) == "Перейти")
-        #expect(SessionHubView.actionTitle(group: .unbound) == "Привязать")
-        #expect(SessionHubView.actionTitle(group: .parked) == "Вернуть")
+        #expect(SessionHubView.actionTitle(group: .waiting) == "Reply")
+        #expect(SessionHubView.actionTitle(group: .review) == "Review")
+        #expect(SessionHubView.actionTitle(group: .running) == "Open session")
+        #expect(SessionHubView.actionTitle(group: .idle) == "Open session")
+        #expect(SessionHubView.actionTitle(group: .unbound) == "Link")
+        #expect(SessionHubView.actionTitle(group: .parked) == "Restore")
         #expect(SessionHubView.isPrimary(row: hubRow("w1", .waiting), primaryID: "w1"))
         #expect(!SessionHubView.isPrimary(row: hubRow("w2", .waiting), primaryID: "w1"))
         #expect(!SessionHubView.isPrimary(row: hubRow("r", .running), primaryID: nil))
@@ -332,22 +332,22 @@ struct FocusViewLogicTests {
 
     @Test
     func hubDurationLabel() {
-        #expect(SessionHubView.durationLabel(seconds: 7800) == "2ч 10м")
-        #expect(SessionHubView.durationLabel(seconds: 7200) == "2ч")
-        #expect(SessionHubView.durationLabel(seconds: 360) == "6 мин")
-        #expect(SessionHubView.durationLabel(seconds: 59) == "0 мин")
-        #expect(SessionHubView.durationLabel(seconds: -5) == "0 мин")
+        #expect(SessionHubView.durationLabel(seconds: 7800) == "2h 10m")
+        #expect(SessionHubView.durationLabel(seconds: 7200) == "2h")
+        #expect(SessionHubView.durationLabel(seconds: 360) == "6 min")
+        #expect(SessionHubView.durationLabel(seconds: 59) == "0 min")
+        #expect(SessionHubView.durationLabel(seconds: -5) == "0 min")
     }
 
     @Test
     func hubFooterText() {
-        #expect(SessionHubView.footerText(focusSeconds: 7800, distractionSeconds: 360) == "Сегодня: фокус 2ч 10м · отвлечения 6 мин")
-        #expect(SessionHubView.footerText(focusSeconds: 0, distractionSeconds: 0) == "Сегодня: фокус 0 мин · отвлечения 0 мин")
+        #expect(SessionHubView.footerText(focusSeconds: 7800, distractionSeconds: 360) == "Today: focus 2h 10m · distractions 6 min")
+        #expect(SessionHubView.footerText(focusSeconds: 0, distractionSeconds: 0) == "Today: focus 0 min · distractions 0 min")
     }
 
     @Test
     func hubFocusTitleFallsBack() {
-        #expect(SessionHubView.focusTitle(nil) == "Не выбрана")
+        #expect(SessionHubView.focusTitle(nil) == "Not selected")
         #expect(SessionHubView.focusTitle("Рефакторинг auth") == "Рефакторинг auth")
     }
 
@@ -388,7 +388,7 @@ struct FocusViewLogicTests {
 
     @Test
     func boardTabTitles() {
-        #expect(BoardTab.allCases.map(\.title) == ["Доска", "Сегодня", "Неделя", "История"])
+        #expect(BoardTab.allCases.map(\.title) == ["Board", "Today", "Week", "History"])
     }
 
     @Test
@@ -403,25 +403,25 @@ struct FocusViewLogicTests {
     @Test
     func pastSummaryCountsOnlyNonLiveSessions() {
         let records = [record("a", start: 0, end: 1200), record("b", start: 2000, end: 2960), record("live", start: 4000, end: 9000)]
-        #expect(TaskCardView.pastSummary(records: records, live: ["live"]) == "ещё 2 сессии · 36 мин")
-        #expect(TaskCardView.pastSummary(records: [record("a", start: 0, end: 600)], live: []) == "ещё 1 сессия · 10 мин")
+        #expect(TaskCardView.pastSummary(records: records, live: ["live"]) == "2 more sessions · 36 min")
+        #expect(TaskCardView.pastSummary(records: [record("a", start: 0, end: 600)], live: []) == "1 more session · 10 min")
         #expect(TaskCardView.pastSummary(records: [record("live", start: 0, end: 600)], live: ["live"]) == nil)
         #expect(TaskCardView.pastSummary(records: [], live: []) == nil)
     }
 
     @Test
     func sessionsWordAgrees() {
-        #expect(TaskCardView.pastSummary(records: (0..<5).map { record("s\($0)", start: 0, end: 60) }, live: []) == "ещё 5 сессий · 5 мин")
-        #expect(TaskCardView.pastSummary(records: (0..<21).map { record("s\($0)", start: 0, end: 60) }, live: []) == "ещё 21 сессия · 21 мин")
+        #expect(TaskCardView.pastSummary(records: (0..<5).map { record("s\($0)", start: 0, end: 60) }, live: []) == "5 more sessions · 5 min")
+        #expect(TaskCardView.pastSummary(records: (0..<21).map { record("s\($0)", start: 0, end: 60) }, live: []) == "21 more sessions · 21 min")
     }
 
     @Test
     func boardDurationFormatting() {
-        #expect(BoardView.duration(0) == "0 мин")
-        #expect(BoardView.duration(20) == "1 мин")
-        #expect(BoardView.duration(52 * 60) == "52 мин")
-        #expect(BoardView.duration(65 * 60) == "1 ч 05 мин")
-        #expect(BoardView.duration(120 * 60) == "2 ч")
+        #expect(BoardView.duration(0) == "0 min")
+        #expect(BoardView.duration(20) == "1 min")
+        #expect(BoardView.duration(52 * 60) == "52 min")
+        #expect(BoardView.duration(65 * 60) == "1 h 05 min")
+        #expect(BoardView.duration(120 * 60) == "2 h")
     }
 
     @Test
@@ -429,11 +429,11 @@ struct FocusViewLogicTests {
         let rows = [hubRow("a", .running), hubRow("b", .running), hubRow("c", .waiting), hubRow("d", .review), hubRow("e", .idle)]
         let counts = BoardView.toolbarCounts(rows: rows)
         #expect(counts == BoardToolbarCounts(working: 2, waiting: 1, review: 1))
-        #expect(BoardView.workingLabel(2) == "2 работают")
-        #expect(BoardView.workingLabel(1) == "1 работает")
-        #expect(BoardView.waitingLabel(1) == "1 ждёт тебя")
-        #expect(BoardView.waitingLabel(3) == "3 ждут тебя")
-        #expect(BoardView.reviewLabel(1) == "1 готово")
+        #expect(BoardView.workingLabel(2) == "2 working")
+        #expect(BoardView.workingLabel(1) == "1 working")
+        #expect(BoardView.waitingLabel(1) == "1 waiting for you")
+        #expect(BoardView.waitingLabel(3) == "3 waiting for you")
+        #expect(BoardView.reviewLabel(1) == "1 done")
     }
 
     @Test
@@ -443,17 +443,17 @@ struct FocusViewLogicTests {
         let now = Date(timeIntervalSince1970: 1_000_000)
         let yesterday = now.addingTimeInterval(-86_400)
         let records = [record("a", start: 0, end: 1800), record("b", start: 0, end: 1800), record("c", start: 0, end: 1800)]
-        #expect(TaskCardView.doneCaption(doneAt: yesterday, records: records, now: now, calendar: calendar) == "вчера · 3 сессии · 1 ч 30 мин")
-        #expect(TaskCardView.doneCaption(doneAt: now, records: [], now: now, calendar: calendar) == "сегодня")
-        #expect(TaskCardView.doneCaption(doneAt: nil, records: records, now: now, calendar: calendar) == "3 сессии · 1 ч 30 мин")
-        #expect(TaskCardView.doneCaption(doneAt: yesterday, records: [record("a", start: 0, end: 1080)], now: now, calendar: calendar) == "вчера · 1 сессия · 18 мин")
+        #expect(TaskCardView.doneCaption(doneAt: yesterday, records: records, now: now, calendar: calendar) == "yesterday · 3 sessions · 1 h 30 min")
+        #expect(TaskCardView.doneCaption(doneAt: now, records: [], now: now, calendar: calendar) == "today")
+        #expect(TaskCardView.doneCaption(doneAt: nil, records: records, now: now, calendar: calendar) == "3 sessions · 1 h 30 min")
+        #expect(TaskCardView.doneCaption(doneAt: yesterday, records: [record("a", start: 0, end: 1080)], now: now, calendar: calendar) == "yesterday · 1 session · 18 min")
     }
 
     @Test
     func waitMinutesLabel() {
         let now = Date(timeIntervalSince1970: 10_000)
-        #expect(TaskCardView.waitLabel(since: now.addingTimeInterval(-180), now: now) == "3 м")
-        #expect(TaskCardView.waitLabel(since: now.addingTimeInterval(-10), now: now) == "0 м")
+        #expect(TaskCardView.waitLabel(since: now.addingTimeInterval(-180), now: now) == "3 min")
+        #expect(TaskCardView.waitLabel(since: now.addingTimeInterval(-10), now: now) == "0 min")
     }
 
     @Test
@@ -466,15 +466,15 @@ struct FocusViewLogicTests {
         let totals = TaskDetailView.timeTotals(spans: spans, now: t.addingTimeInterval(3300))
         #expect(totals.claudeSeconds == 1200)
         #expect(totals.totalSeconds == 1500)
-        #expect(TaskDetailView.timeSummary(totals) == "всего 25 мин · агенты 20 мин")
+        #expect(TaskDetailView.timeSummary(totals) == "total 25 min · agents 20 min")
         #expect(TaskDetailView.timeSummary(TaskTimeTotals(totalSeconds: 0, claudeSeconds: 0)) == nil)
     }
 
     @Test
     func detailCaptions() {
-        #expect(TaskDetailView.criteriaCaption(CriteriaProgress(done: 1, total: 2)) == "Критерий готовности · 1 из 2")
-        #expect(TaskDetailView.criteriaCaption(nil) == "Критерий готовности")
-        #expect(TaskDetailView.sessionsCaption(count: 3) == "Сессии · 3")
+        #expect(TaskDetailView.criteriaCaption(CriteriaProgress(done: 1, total: 2)) == "Completion criteria · 1 of 2")
+        #expect(TaskDetailView.criteriaCaption(nil) == "Completion criteria")
+        #expect(TaskDetailView.sessionsCaption(count: 3) == "Sessions · 3")
     }
 
     @Test
@@ -485,20 +485,20 @@ struct FocusViewLogicTests {
         let message = String(repeating: "я", count: 100)
         let rec = SessionRecord(id: "p", cwd: nil, projectName: nil, title: "p", firstPrompt: nil, lastPrompt: nil, lastAssistantMessage: message, startedAt: now.addingTimeInterval(-86_400 - 1440), lastActivityAt: now.addingTimeInterval(-86_400), endedAt: now.addingTimeInterval(-86_400), status: .ended, taskId: "t1", transcriptPath: nil)
         let subtitle = TaskDetailView.pastSubtitle(record: rec, now: now, calendar: calendar)
-        #expect(subtitle.hasPrefix("вчера, "))
-        #expect(subtitle.contains(" · 24 мин · "))
+        #expect(subtitle.hasPrefix("yesterday, "))
+        #expect(subtitle.contains(" · 24 min · "))
         #expect(subtitle.hasSuffix(String(repeating: "я", count: 60)))
         let bare = SessionRecord(id: "p", cwd: nil, projectName: nil, title: "p", firstPrompt: nil, lastPrompt: nil, lastAssistantMessage: nil, startedAt: now.addingTimeInterval(-600), lastActivityAt: now, endedAt: now, status: .ended, taskId: "t1", transcriptPath: nil)
-        #expect(TaskDetailView.pastSubtitle(record: bare, now: now, calendar: calendar).hasSuffix(" · 10 мин"))
+        #expect(TaskDetailView.pastSubtitle(record: bare, now: now, calendar: calendar).hasSuffix(" · 10 min"))
     }
 
     @Test
     func liveSessionSubtitle() {
         let progress = PlanProgress(completed: 2, total: 7, currentTitle: nil)
-        #expect(TaskDetailView.liveSubtitle(progress: progress, group: .running) == "сейчас · шаг 3 из 7")
-        #expect(TaskDetailView.liveSubtitle(progress: nil, group: .running) == "сейчас")
-        #expect(TaskDetailView.liveSubtitle(progress: nil, group: .waiting) == "ждёт ответа")
-        #expect(TaskDetailView.liveSubtitle(progress: nil, group: .review) == "закончил, не просмотрено")
+        #expect(TaskDetailView.liveSubtitle(progress: progress, group: .running) == "now · step 3 of 7")
+        #expect(TaskDetailView.liveSubtitle(progress: nil, group: .running) == "now")
+        #expect(TaskDetailView.liveSubtitle(progress: nil, group: .waiting) == "waiting for an answer")
+        #expect(TaskDetailView.liveSubtitle(progress: nil, group: .review) == "finished, not reviewed")
     }
 
     @Test
@@ -541,13 +541,13 @@ struct FocusViewLogicTests {
 
     @Test
     func daySummaryDurationFormatsHoursAndMinutes() {
-        #expect(DaySummaryFormatter.duration(19_200) == "5 ч 20 м")
-        #expect(DaySummaryFormatter.duration(2_880) == "48 м")
-        #expect(DaySummaryFormatter.duration(3_600) == "1 ч")
-        #expect(DaySummaryFormatter.duration(0) == "0 м")
-        #expect(DaySummaryFormatter.duration(-5) == "0 м")
-        #expect(DaySummaryFormatter.duration(29) == "0 м")
-        #expect(DaySummaryFormatter.duration(31) == "1 м")
+        #expect(DaySummaryFormatter.duration(19_200) == "5 h 20 min")
+        #expect(DaySummaryFormatter.duration(2_880) == "48 min")
+        #expect(DaySummaryFormatter.duration(3_600) == "1 h")
+        #expect(DaySummaryFormatter.duration(0) == "0 min")
+        #expect(DaySummaryFormatter.duration(-5) == "0 min")
+        #expect(DaySummaryFormatter.duration(29) == "0 min")
+        #expect(DaySummaryFormatter.duration(31) == "1 min")
     }
 
     @Test
@@ -555,7 +555,7 @@ struct FocusViewLogicTests {
         let calendar = daySummaryCalendar()
         let day = calendar.date(from: DateComponents(year: 2026, month: 10, day: 9, hour: 12))!
         let title = DaySummaryFormatter.title(day, calendar: calendar)
-        #expect(title == "Пятница, 9 октября")
+        #expect(title == "Friday, October 9")
         let first = calendar.date(from: DateComponents(year: 2026, month: 10, day: 9, hour: 9, minute: 14))!
         let last = calendar.date(from: DateComponents(year: 2026, month: 10, day: 9, hour: 18, minute: 40))!
         #expect(DaySummaryFormatter.range(first: first, last: last, calendar: calendar) == "09:14 – 18:40")
@@ -564,9 +564,9 @@ struct FocusViewLogicTests {
 
     @Test
     func daySummaryDistractionDetail() {
-        #expect(DaySummaryFormatter.distractionDetail(count: 4, returned: 3) == "4 раза, вернулся 3")
-        #expect(DaySummaryFormatter.distractionDetail(count: 1, returned: 0) == "1 раз, вернулся 0")
-        #expect(DaySummaryFormatter.distractionDetail(count: 5, returned: 5) == "5 раз, вернулся 5")
+        #expect(DaySummaryFormatter.distractionDetail(count: 4, returned: 3) == "4 times, returned 3")
+        #expect(DaySummaryFormatter.distractionDetail(count: 1, returned: 0) == "1 time, returned 0")
+        #expect(DaySummaryFormatter.distractionDetail(count: 5, returned: 5) == "5 times, returned 5")
         #expect(DaySummaryFormatter.distractionDetail(count: 0, returned: 0) == nil)
     }
 
@@ -603,9 +603,9 @@ struct FocusViewLogicTests {
 
     @Test
     func daySummaryOpenSubtitle() {
-        #expect(DaySummaryFormatter.openSubtitle(progress: CriteriaProgress(done: 1, total: 2), hasQueuedPrompt: true) == "критерий 1 из 2 · промпт в очереди")
-        #expect(DaySummaryFormatter.openSubtitle(progress: CriteriaProgress(done: 0, total: 3), hasQueuedPrompt: false) == "критерий 0 из 3")
-        #expect(DaySummaryFormatter.openSubtitle(progress: nil, hasQueuedPrompt: true) == "промпт в очереди")
+        #expect(DaySummaryFormatter.openSubtitle(progress: CriteriaProgress(done: 1, total: 2), hasQueuedPrompt: true) == "criteria 1 of 2 · prompt queued")
+        #expect(DaySummaryFormatter.openSubtitle(progress: CriteriaProgress(done: 0, total: 3), hasQueuedPrompt: false) == "criteria 0 of 3")
+        #expect(DaySummaryFormatter.openSubtitle(progress: nil, hasQueuedPrompt: true) == "prompt queued")
         #expect(DaySummaryFormatter.openSubtitle(progress: nil, hasQueuedPrompt: false) == nil)
     }
 
@@ -618,23 +618,23 @@ struct FocusViewLogicTests {
         let open = [summaryTask("b", "Рефакторинг auth", column: .inProgress, updatedAt: start)]
         let text = DaySummaryFormatter.markdown(report: summaryReport(), done: done, open: open, tomorrow: "Проверить алерты", day: day, calendar: calendar)
         let expected = """
-        # Пятница, 9 октября
+        # Friday, October 9
 
-        - Ты в работе: 5 ч 20 м
-        - Агенты работали: 3 ч 45 м
-        - Claude работал: 3 ч 45 м
-        - Codex работал: 0 м
-        - Сессии ждали тебя: 48 м
-        - Отвлечения: 11 м (4 раза, вернулся 3)
-        - Макс. параллельно: 4
+        - You working: 5 h 20 min
+        - Agents working: 3 h 45 min
+        - Claude working: 3 h 45 min
+        - Codex working: 0 min
+        - Sessions waiting for you: 48 min
+        - Distractions: 11 min (4 times, returned 3)
+        - Peak parallel sessions: 4
 
-        ## Сделано
+        ## Completed
         - Hero copy
 
-        ## Осталось открытым
+        ## Still open
         - Рефакторинг auth
 
-        ## Завтра начать с
+        ## Start tomorrow with
         Проверить алерты
         """
         #expect(text == expected)
@@ -645,10 +645,10 @@ struct FocusViewLogicTests {
         let calendar = daySummaryCalendar()
         let day = calendar.date(from: DateComponents(year: 2026, month: 10, day: 9, hour: 12))!
         let text = DaySummaryFormatter.markdown(report: summaryReport(), done: [], open: [], tomorrow: "  ", day: day, calendar: calendar)
-        #expect(!text.contains("## Сделано"))
-        #expect(!text.contains("## Осталось открытым"))
-        #expect(!text.contains("## Завтра начать с"))
-        #expect(text.hasPrefix("# Пятница, 9 октября"))
+        #expect(!text.contains("## Completed"))
+        #expect(!text.contains("## Still open"))
+        #expect(!text.contains("## Start tomorrow with"))
+        #expect(text.hasPrefix("# Friday, October 9"))
         let nilTomorrow = DaySummaryFormatter.markdown(report: summaryReport(), done: [], open: [], tomorrow: nil, day: day, calendar: calendar)
         #expect(nilTomorrow == text)
     }
@@ -659,7 +659,7 @@ struct FocusViewLogicTests {
         let day = calendar.date(from: DateComponents(year: 2026, month: 10, day: 9, hour: 12))!
         let quiet = DayReport(youSeconds: 60, claudeSeconds: 0, waitingSeconds: 0, distractionSeconds: 0, distractionCount: 0, returnedCount: 0, maxParallel: 0, firstAt: nil, lastAt: nil, lanes: [], distractionLane: [])
         let text = DaySummaryFormatter.markdown(report: quiet, done: [], open: [], tomorrow: nil, day: day, calendar: calendar)
-        #expect(text.contains("- Отвлечения: 0 м\n"))
+        #expect(text.contains("- Distractions: 0 min\n"))
     }
 
     @Test
@@ -697,9 +697,9 @@ struct FocusViewLogicTests {
         ])
         let report = DayReport(youSeconds: 1_800, claudeSeconds: 3_600, waitingSeconds: 600, distractionSeconds: 300, distractionCount: 1, returnedCount: 1, maxParallel: 1, firstAt: start, lastAt: start, lanes: [lane], distractionLane: [])
         let text = DayTimelineView.accessibilitySummary(report)
-        #expect(text.contains("Рефакторинг auth: Claude 1 ч, ты 30 м, ждал 10 м"))
-        #expect(text.contains("Отвлечения: 5 м"))
-        #expect(DayTimelineView.accessibilitySummary(summaryReport()) == "Нет данных за день")
+        #expect(text.contains("Рефакторинг auth: Claude 1 h, you 30 min, waiting 10 min"))
+        #expect(text.contains("Distractions: 5 min"))
+        #expect(DayTimelineView.accessibilitySummary(summaryReport()) == "No data for this day")
     }
 
     @Test
@@ -740,9 +740,9 @@ struct FocusViewLogicTests {
         let empty = TaskLane(id: "e", taskID: "e", title: "Пустая", segments: [])
         let full = TaskLane(id: "f", taskID: "f", title: "Полная", segments: [LaneSegment(kind: .claude, start: start, end: start.addingTimeInterval(600))])
         let report = DayReport(youSeconds: 0, claudeSeconds: 600, waitingSeconds: 0, distractionSeconds: 0, distractionCount: 0, returnedCount: 0, maxParallel: 1, firstAt: start, lastAt: start, lanes: [empty, full], distractionLane: [])
-        #expect(DayTimelineView.accessibilitySummary(report) == "Полная: Claude 10 м")
+        #expect(DayTimelineView.accessibilitySummary(report) == "Полная: Claude 10 min")
         let onlyEmpty = DayReport(youSeconds: 0, claudeSeconds: 0, waitingSeconds: 0, distractionSeconds: 0, distractionCount: 0, returnedCount: 0, maxParallel: 0, firstAt: start, lastAt: start, lanes: [empty], distractionLane: [])
-        #expect(DayTimelineView.accessibilitySummary(onlyEmpty) == "Нет данных за день")
+        #expect(DayTimelineView.accessibilitySummary(onlyEmpty) == "No data for this day")
     }
 
     @Test
@@ -782,20 +782,20 @@ struct FocusViewLogicTests {
 
     @Test
     func previousWeekDetailsFormatDeltas() {
-        #expect(WeekSummaryView.previousCount(6) == "прошлая неделя 6")
-        #expect(WeekSummaryView.previousCount(nil) == "прошлая неделя —")
-        #expect(WeekSummaryView.previousDuration(11_100) == "прошлая неделя 3 ч 5 м")
-        #expect(WeekSummaryView.previousDuration(nil) == "прошлая неделя —")
+        #expect(WeekSummaryView.previousCount(6) == "last week 6")
+        #expect(WeekSummaryView.previousCount(nil) == "last week —")
+        #expect(WeekSummaryView.previousDuration(11_100) == "last week 3 h 5 min")
+        #expect(WeekSummaryView.previousDuration(nil) == "last week —")
     }
 
     @Test
     func kpiDetailsHandleMissingData() {
-        #expect(WeekSummaryView.boundShareDetail(0.87) == "с задачей 87%")
-        #expect(WeekSummaryView.boundShareDetail(nil) == "с задачей —")
-        #expect(WeekSummaryView.averageWaitDetail(360) == "в среднем 6 мин на ответ")
-        #expect(WeekSummaryView.averageWaitDetail(10) == "в среднем 1 мин на ответ")
-        #expect(WeekSummaryView.averageWaitDetail(nil) == "нет данных")
-        #expect(WeekSummaryView.reactionValue(12.4) == "12 с")
+        #expect(WeekSummaryView.boundShareDetail(0.87) == "with a task 87%")
+        #expect(WeekSummaryView.boundShareDetail(nil) == "with a task —")
+        #expect(WeekSummaryView.averageWaitDetail(360) == "average 6 min to reply")
+        #expect(WeekSummaryView.averageWaitDetail(10) == "average 1 min to reply")
+        #expect(WeekSummaryView.averageWaitDetail(nil) == "no data")
+        #expect(WeekSummaryView.reactionValue(12.4) == "12 s")
         #expect(WeekSummaryView.reactionValue(nil) == "—")
     }
 
@@ -815,8 +815,8 @@ struct FocusViewLogicTests {
         let shares = WeekSummaryView.shareWidths(rows: rows, maxWidth: 90)
         #expect(shares == [90, 22.5, 0])
         #expect(WeekSummaryView.shareWidths(rows: [], maxWidth: 90).isEmpty)
-        #expect(WeekSummaryView.status(rows[0]) == "в работе")
-        #expect(WeekSummaryView.status(rows[1]) == "сделано")
+        #expect(WeekSummaryView.status(rows[0]) == "in progress")
+        #expect(WeekSummaryView.status(rows[1]) == "done")
         #expect(WeekSummaryView.status(rows[2]) == "—")
     }
 
@@ -825,23 +825,23 @@ struct FocusViewLogicTests {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
         let same = calendar.date(from: DateComponents(year: 2026, month: 10, day: 3)) ?? .now
-        #expect(WeekSummaryView.rangeTitle(start: same, calendar: calendar) == "3 – 9 октября")
+        #expect(WeekSummaryView.rangeTitle(start: same, calendar: calendar) == "October 3 – October 9")
         let cross = calendar.date(from: DateComponents(year: 2026, month: 9, day: 28)) ?? .now
-        #expect(WeekSummaryView.rangeTitle(start: cross, calendar: calendar) == "28 сентября – 4 октября")
+        #expect(WeekSummaryView.rangeTitle(start: cross, calendar: calendar) == "September 28 – October 4")
     }
 
     @Test
-    func dayLabelIsShortRussianWeekday() {
+    func dayLabelUsesSelectedLanguage() {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
         let friday = calendar.date(from: DateComponents(year: 2026, month: 10, day: 9)) ?? .now
-        #expect(WeekSummaryView.dayLabel(friday, calendar: calendar) == "пт")
+        #expect(WeekSummaryView.dayLabel(friday, calendar: calendar) == "fr")
     }
 
     @Test
     func historyActionTitleDependsOnLiveness() {
-        #expect(HistoryRow.actionTitle(isLive: true) == "Перейти")
-        #expect(HistoryRow.actionTitle(isLive: false) == "Продолжить")
+        #expect(HistoryRow.actionTitle(isLive: true) == "Open session")
+        #expect(HistoryRow.actionTitle(isLive: false) == "Resume")
     }
 
     @Test
@@ -852,17 +852,17 @@ struct FocusViewLogicTests {
         let today = calendar.startOfDay(for: now)
         let yesterday = calendar.date(byAdding: .day, value: -1, to: today) ?? today
         let older = calendar.date(byAdding: .day, value: -3, to: today) ?? today
-        #expect(HistoryView.dayTitle(today, now: now, calendar: calendar) == "Сегодня · пятница, 9 октября")
-        #expect(HistoryView.dayTitle(yesterday, now: now, calendar: calendar) == "Вчера · четверг, 8 октября")
-        #expect(HistoryView.dayTitle(older, now: now, calendar: calendar) == "Вторник, 6 октября")
+        #expect(HistoryView.dayTitle(today, now: now, calendar: calendar) == "Today · Friday, October 9")
+        #expect(HistoryView.dayTitle(yesterday, now: now, calendar: calendar) == "Yesterday · Thursday, October 8")
+        #expect(HistoryView.dayTitle(older, now: now, calendar: calendar) == "Tuesday, October 6")
     }
 
     @Test
     func settingsStepperBoundsAreClamped() {
         #expect(FocusSettingsPane.maxParallelRange == 1...6)
         #expect(FocusSettingsPane.stalledReminderRange == 5...60)
-        #expect(FocusSettingsPane.hooksTitle(installed: true) == "Хуки агентов настроены")
-        #expect(FocusSettingsPane.hooksTitle(installed: false) == "Подключите Claude Code или Codex")
+        #expect(FocusSettingsPane.hooksTitle(installed: true) == "Agent hooks configured")
+        #expect(FocusSettingsPane.hooksTitle(installed: false) == "Connect Claude Code or Codex")
         #expect(FocusSettingsPane.hooksPathText(path: "/Users/me/.claude/settings.json", home: "/Users/me") == "~/.claude/settings.json")
         #expect(FocusSettingsPane.hooksPathText(path: "/etc/x.json", home: "/Users/me") == "/etc/x.json")
         #expect(FocusSettingsPane.hooksPathText(path: "/Users/meow/x.json", home: "/Users/me") == "/Users/meow/x.json")
@@ -878,23 +878,23 @@ struct FocusViewLogicTests {
 
     @Test
     func pomodoroCaptions() {
-        #expect(PomodoroFormat.remainingCaption(plannedSeconds: 1500) == "осталось из 25 мин")
-        #expect(PomodoroFormat.cycleCaption(index: 2, cycle: 4) == "Помодоро 2 из 4")
-        #expect(PomodoroFormat.todayCaption(seconds: 12 * 60) == "сегодня по задаче 12 мин")
+        #expect(PomodoroFormat.remainingCaption(plannedSeconds: 1500) == "remaining of 25 min")
+        #expect(PomodoroFormat.cycleCaption(index: 2, cycle: 4) == "Pomodoro 2 of 4")
+        #expect(PomodoroFormat.todayCaption(seconds: 12 * 60) == "12 min on this task today")
         #expect(PomodoroFormat.todayCaption(seconds: 0) == nil)
-        #expect(PomodoroFormat.breakCaption(minutes: 5) == "потом перерыв 5 мин")
-        #expect(PomodoroFormat.startButtonTitle(minutes: 25) == "Начать · 25 мин")
-        #expect(PomodoroFormat.startButtonTitle(minutes: nil) == "Начать")
-        #expect(PomodoroFormat.quickStartTitle(minutes: 50) == "Начать 50 мин")
-        #expect(PomodoroFormat.pauseTitle(isPaused: false) == "Пауза")
-        #expect(PomodoroFormat.pauseTitle(isPaused: true) == "Продолжить")
+        #expect(PomodoroFormat.breakCaption(minutes: 5) == "then 5 min break")
+        #expect(PomodoroFormat.startButtonTitle(minutes: 25) == "Start · 25 min")
+        #expect(PomodoroFormat.startButtonTitle(minutes: nil) == "Start")
+        #expect(PomodoroFormat.quickStartTitle(minutes: 50) == "Start 50 min")
+        #expect(PomodoroFormat.pauseTitle(isPaused: false) == "Pause")
+        #expect(PomodoroFormat.pauseTitle(isPaused: true) == "Resume")
     }
 
     @Test
     func sessionSubtitleNamesBoundTask() {
         let bound = BindableSession(id: "a", title: "t", detail: "d", projectName: nil, boundTaskTitle: "Фикс", isSameProject: true, defaultSelected: false)
         let free = BindableSession(id: "b", title: "t", detail: "d", projectName: nil, boundTaskTitle: nil, isSameProject: true, defaultSelected: true)
-        #expect(PomodoroFormat.sessionTag(bound) == "у задачи «Фикс»")
+        #expect(PomodoroFormat.sessionTag(bound) == "for task “Фикс”")
         #expect(PomodoroFormat.sessionTag(free) == nil)
         #expect(StartTaskSheet.initialSelection([bound, free]) == ["b"])
     }
@@ -910,8 +910,8 @@ struct FocusViewLogicTests {
         #expect(StartTimerChoice.custom.minutes(custom: 40) == 40)
         #expect(StartTimerChoice.custom.minutes(custom: 2) == 5)
         #expect(StartTimerChoice.custom.minutes(custom: 500) == 120)
-        #expect(StartTimerChoice.custom.title == "Своё…")
-        #expect(StartTimerChoice.allCases.map(\.title) == ["Без таймера", "25 мин", "50 мин", "90 мин", "Своё…"])
+        #expect(StartTimerChoice.custom.title == "Custom…")
+        #expect(StartTimerChoice.allCases.map(\.title) == ["Without a timer", "25 min", "50 min", "90 min", "Custom…"])
     }
 
     @Test
@@ -960,17 +960,17 @@ struct FocusViewLogicTests {
     func replaceCaptionOnlyForOtherTasksPomodoro() {
         let running = PomodoroSnapshot(id: "p", taskID: "a", taskTitle: "A", phase: .focus, plannedSeconds: 1500, remainingSeconds: 900, progress: 0.4, isPaused: false, cycleIndex: 1, cycle: 4)
         let loose = PomodoroSnapshot(id: "q", taskID: nil, taskTitle: nil, phase: .break, plannedSeconds: 300, remainingSeconds: 100, progress: 0.6, isPaused: false, cycleIndex: 1, cycle: 4)
-        #expect(PomodoroFormat.replaceCaption(pomodoro: running, startingTaskID: "b") == "Сейчас идёт помодоро «A»")
+        #expect(PomodoroFormat.replaceCaption(pomodoro: running, startingTaskID: "b") == "Pomodoro “A” is running")
         #expect(PomodoroFormat.replaceCaption(pomodoro: running, startingTaskID: "a") == nil)
         #expect(PomodoroFormat.replaceCaption(pomodoro: nil, startingTaskID: "b") == nil)
-        #expect(PomodoroFormat.replaceCaption(pomodoro: loose, startingTaskID: "b") == "Сейчас идёт помодоро")
-        #expect(PomodoroFormat.replaceButtonTitle == "Заменить")
+        #expect(PomodoroFormat.replaceCaption(pomodoro: loose, startingTaskID: "b") == "A pomodoro is running")
+        #expect(PomodoroFormat.replaceButtonTitle == "Replace")
     }
 
     @Test
     func activeElsewhereCaptionNamesTask() {
-        #expect(PomodoroFormat.activeElsewhereCaption(taskTitle: "Фикс") == "Сейчас идёт помодоро «Фикс»")
-        #expect(PomodoroFormat.activeElsewhereCaption(taskTitle: nil) == "Сейчас идёт помодоро")
+        #expect(PomodoroFormat.activeElsewhereCaption(taskTitle: "Фикс") == "Pomodoro “Фикс” is running")
+        #expect(PomodoroFormat.activeElsewhereCaption(taskTitle: nil) == "A pomodoro is running")
     }
     @Test
     func pickTaskTodoCaption() {
@@ -990,20 +990,20 @@ struct FocusViewLogicTests {
 
     @Test
     func pomodoroEndHeadlineAndTitle() {
-        #expect(PomodoroEndCard.headline(cycleIndex: 1, cycle: 4) == "Фокус 1 из 4 готов")
-        #expect(PomodoroEndCard.title(minutes: 25, taskTitle: "Чат-бот") == "25 минут в «Чат-бот»")
-        #expect(PomodoroEndCard.title(minutes: 21, taskTitle: "X") == "21 минута в «X»")
-        #expect(PomodoroEndCard.title(minutes: 22, taskTitle: "X") == "22 минуты в «X»")
-        #expect(PomodoroEndCard.title(minutes: 25, taskTitle: "") == "25 минут фокуса")
+        #expect(PomodoroEndCard.headline(cycleIndex: 1, cycle: 4) == "Focus 1 of 4 complete")
+        #expect(PomodoroEndCard.title(minutes: 25, taskTitle: "Чат-бот") == "25 minutes on “Чат-бот”")
+        #expect(PomodoroEndCard.title(minutes: 21, taskTitle: "X") == "21 minutes on “X”")
+        #expect(PomodoroEndCard.title(minutes: 22, taskTitle: "X") == "22 minutes on “X”")
+        #expect(PomodoroEndCard.title(minutes: 25, taskTitle: "") == "25 minutes of focus")
     }
 
     @Test
     func pomodoroEndKpiValuesAndDistractionDetail() {
-        #expect(PomodoroEndCard.minutesValue(1260) == "21 мин")
-        #expect(PomodoroEndCard.minutesValue(0) == "0 мин")
-        #expect(PomodoroEndCard.distractionDetail(count: 1, returned: 1) == "1 раз, вернулся")
-        #expect(PomodoroEndCard.distractionDetail(count: 2, returned: 0) == "2 раза")
-        #expect(PomodoroEndCard.distractionDetail(count: 3, returned: 1) == "3 раза, вернулся 1")
+        #expect(PomodoroEndCard.minutesValue(1260) == "21 min")
+        #expect(PomodoroEndCard.minutesValue(0) == "0 min")
+        #expect(PomodoroEndCard.distractionDetail(count: 1, returned: 1) == "1 time, returned")
+        #expect(PomodoroEndCard.distractionDetail(count: 2, returned: 0) == "2 times")
+        #expect(PomodoroEndCard.distractionDetail(count: 3, returned: 1) == "3 times, returned 1")
         #expect(PomodoroEndCard.distractionDetail(count: 0, returned: 0) == nil)
     }
 
@@ -1011,19 +1011,19 @@ struct FocusViewLogicTests {
     func pomodoroEndWhileRunningItems() {
         let items = PomodoroEndCard.whileRunningItems(finishedSessionTitles: ["добавь проверку"], checkedCriteria: ["Бот отвечает"])
         #expect(items == [
-            PomodoroEndCard.Item(text: "«добавь проверку» — Claude закончил", isCriterion: false),
-            PomodoroEndCard.Item(text: "Критерий «Бот отвечает» отмечен", isCriterion: true)
+            PomodoroEndCard.Item(text: "“добавь проверку” — the agent finished", isCriterion: false),
+            PomodoroEndCard.Item(text: "Criterion “Бот отвечает” checked", isCriterion: true)
         ])
         #expect(PomodoroEndCard.whileRunningItems(finishedSessionTitles: [], checkedCriteria: []).isEmpty)
     }
 
     @Test
     func pomodoroEndButtonTitles() {
-        #expect(PomodoroEndCard.continueTitle(minutes: 50) == "Без перерыва — ещё 50 мин")
-        #expect(PomodoroEndCard.breakTitle(minutes: 10) == "☕ Начать перерыв · 10 мин")
-        #expect(PomodoroEndCard.breakHeadline(minutes: 10, secondsLeft: 4) == "Перерыв 10 мин начнётся через 4 с")
-        #expect(PomodoroEndCard.breakHeadline(minutes: 10, secondsLeft: nil) == "Перерыв 10 мин")
-        #expect(PomodoroEndCard.afterBreakCaption(focusMinutes: 50) == "потом фокус 50 мин")
+        #expect(PomodoroEndCard.continueTitle(minutes: 50) == "Skip break — another 50 min")
+        #expect(PomodoroEndCard.breakTitle(minutes: 10) == "☕ Start break · 10 min")
+        #expect(PomodoroEndCard.breakHeadline(minutes: 10, secondsLeft: 4) == "10 min break starts in 4 s")
+        #expect(PomodoroEndCard.breakHeadline(minutes: 10, secondsLeft: nil) == "10 min break")
+        #expect(PomodoroEndCard.afterBreakCaption(focusMinutes: 50) == "then 50 min of focus")
         #expect(PomodoroEndCard.countdownProgress(secondsLeft: 5) == 1)
         #expect(PomodoroEndCard.countdownProgress(secondsLeft: 0) == 0)
         #expect(PomodoroEndCard.prefill(note: "  Шаг  ") == "Шаг")
@@ -1032,11 +1032,11 @@ struct FocusViewLogicTests {
 
     @Test
     func breakEndTexts() {
-        #expect(BreakEndCard.title(taskTitle: "Чат-бот") == "Вернуться к «Чат-бот»")
-        #expect(BreakEndCard.title(taskTitle: "") == "Вернуться к задаче")
+        #expect(BreakEndCard.title(taskTitle: "Чат-бот") == "Return to “Чат-бот”")
+        #expect(BreakEndCard.title(taskTitle: "") == "Return to task")
         #expect(BreakEndCard.restedLine(finishedSessionTitles: []) == nil)
-        #expect(BreakEndCard.restedLine(finishedSessionTitles: ["a", "b"]) == "Пока отдыхал: Claude закончил «a», «b»")
-        #expect(BreakEndCard.extendTitle(minutes: 5) == "Ещё 5 мин отдыха")
+        #expect(BreakEndCard.restedLine(finishedSessionTitles: ["a", "b"]) == "While you rested, the agent finished «a», «b»")
+        #expect(BreakEndCard.extendTitle(minutes: 5) == "5 more min of rest")
         #expect(BreakEndCard.noteText(" ") == nil)
         #expect(BreakEndCard.noteText(" Шаг ") == "Шаг")
     }
@@ -1045,8 +1045,8 @@ struct FocusViewLogicTests {
     func hubTimerCaptionAndFooterWithPomodoros() {
         let focusSnap = PomodoroSnapshot(id: "p", taskID: "t", taskTitle: "T", phase: .focus, plannedSeconds: 1500, remainingSeconds: 1122, progress: 0.25, isPaused: false, cycleIndex: 1, cycle: 4)
         let breakSnap = PomodoroSnapshot(id: "b", taskID: "t", taskTitle: "T", phase: .break, plannedSeconds: 300, remainingSeconds: 192, progress: 0.36, isPaused: false, cycleIndex: 1, cycle: 4)
-        #expect(SessionHubView.timerCaption(focusSnap, breakMinutes: 10, focusMinutes: 50) == "Фокус 1 из 4 · из 25 мин · потом перерыв 10 мин")
-        #expect(SessionHubView.timerCaption(breakSnap, breakMinutes: 10, focusMinutes: 50) == "Перерыв · из 5 мин · потом фокус 50 мин")
+        #expect(SessionHubView.timerCaption(focusSnap, breakMinutes: 10, focusMinutes: 50) == "Focus 1 of 4 · of 25 min · then 10 min break")
+        #expect(SessionHubView.timerCaption(breakSnap, breakMinutes: 10, focusMinutes: 50) == "Break · of 5 min · then 50 min focus")
     }
 
     @Test
@@ -1056,8 +1056,8 @@ struct FocusViewLogicTests {
         #expect(SessionHubView.newSessionDetail(cwd: "/tmp/dashboard-metrics", prompt: "<system-reminder>ctx</system-reminder>\nДобавь метрики") == "· dashboard-metrics · «Добавь метрики»")
         #expect(SessionHubView.newSessionDetail(cwd: "/tmp/dashboard-metrics", prompt: "<system-reminder>") == "· dashboard-metrics")
         #expect(SessionHubView.newSessionDetail(cwd: "/tmp/p", prompt: String(repeating: "а", count: 70)) == "· p · «" + String(repeating: "а", count: 60) + "…»")
-        #expect(SessionHubView.footerText(focusSeconds: 1860, distractionSeconds: 0, pomodoroCount: 1) == "Сегодня: фокус 31 мин · помодоро 1 · отвлечения 0 мин")
-        #expect(SessionHubView.footerText(focusSeconds: 1860, distractionSeconds: 0, pomodoroCount: 0) == "Сегодня: фокус 31 мин · отвлечения 0 мин")
+        #expect(SessionHubView.footerText(focusSeconds: 1860, distractionSeconds: 0, pomodoroCount: 1) == "Today: focus 31 min · pomodoros 1 · distractions 0 min")
+        #expect(SessionHubView.footerText(focusSeconds: 1860, distractionSeconds: 0, pomodoroCount: 0) == "Today: focus 31 min · distractions 0 min")
     }
 
     @Test
@@ -1065,9 +1065,9 @@ struct FocusViewLogicTests {
         let calendar = daySummaryCalendar()
         let day = calendar.date(from: DateComponents(year: 2026, month: 10, day: 9, hour: 12))!
         let with = DaySummaryFormatter.markdown(report: summaryReport(), done: [], open: [], tomorrow: nil, day: day, pomodoroCount: 3, calendar: calendar)
-        #expect(with.contains("- Отвлечения: 11 м (4 раза, вернулся 3)\n- Помодоро: 3\n- Макс. параллельно: 4"))
+        #expect(with.contains("- Distractions: 11 min (4 times, returned 3)\n- Pomodoros: 3\n- Peak parallel sessions: 4"))
         let without = DaySummaryFormatter.markdown(report: summaryReport(), done: [], open: [], tomorrow: nil, day: day, pomodoroCount: 0, calendar: calendar)
-        #expect(!without.contains("Помодоро"))
+        #expect(!without.contains("Pomodoros"))
     }
 
     @Test
@@ -1083,13 +1083,13 @@ struct FocusViewLogicTests {
         #expect(PickTaskCard.todoSummary(titles: []) == "")
         #expect(PickTaskCard.todoSummary(titles: ["A"]) == "A")
         #expect(PickTaskCard.todoSummary(titles: ["A", "B"]) == "A · B")
-        #expect(PickTaskCard.todoSummary(titles: ["A", "B", "C"]) == "A · B · ещё 1")
-        #expect(PickTaskCard.todoSummary(titles: ["A", "B", "C", "D", "E"]) == "A · B · ещё 3")
+        #expect(PickTaskCard.todoSummary(titles: ["A", "B", "C"]) == "A · B · 1 more")
+        #expect(PickTaskCard.todoSummary(titles: ["A", "B", "C", "D", "E"]) == "A · B · 3 more")
     }
 
     @Test
     func pickTaskCaptionsAndExpansion() {
-        #expect(PickTaskCard.inProgressCaption(2) == "В работе · 2")
+        #expect(PickTaskCard.inProgressCaption(2) == "In progress · 2")
         #expect(PickTaskCard.showsTodoList(inProgressIsEmpty: true, userExpanded: false))
         #expect(!PickTaskCard.showsTodoList(inProgressIsEmpty: false, userExpanded: false))
         #expect(PickTaskCard.showsTodoList(inProgressIsEmpty: false, userExpanded: true))
@@ -1113,25 +1113,25 @@ struct FocusViewLogicTests {
         }
         let choices = [choice("b", bound: true), choice("s"), choice("t", other: "Фикс"), choice("o", same: false)]
         let sections = TaskSessionsPicker.sections(choices, projectName: "wb")
-        #expect(sections.map(\.title) == ["Привязаны · 1", "Открытые · проект wb", "Открытые · другие проекты"])
+        #expect(sections.map(\.title) == ["Linked · 1", "Open · project wb", "Open · other projects"])
         #expect(sections.map { $0.rows.map(\.id) } == [["b"], ["s", "t"], ["o"]])
-        #expect(TaskSessionsPicker.sections([choice("o", same: false)], projectName: nil).map(\.title) == ["Открытые"])
-        #expect(TaskSessionsPicker.applyTitle((add: ["s"], remove: [])) == "Добавить 1")
-        #expect(TaskSessionsPicker.applyTitle((add: [], remove: [])) == "Добавить 0")
-        #expect(TaskSessionsPicker.applyTitle((add: ["s"], remove: ["b"])) == "Сохранить")
-        #expect(TaskSessionsPicker.cancelTitle(hasBound: false) == "Позже")
-        #expect(TaskSessionsPicker.cancelTitle(hasBound: true) == "Отмена")
+        #expect(TaskSessionsPicker.sections([choice("o", same: false)], projectName: nil).map(\.title) == ["Open sessions"])
+        #expect(TaskSessionsPicker.applyTitle((add: ["s"], remove: [])) == "Add 1")
+        #expect(TaskSessionsPicker.applyTitle((add: [], remove: [])) == "Add 0")
+        #expect(TaskSessionsPicker.applyTitle((add: ["s"], remove: ["b"])) == "Save")
+        #expect(TaskSessionsPicker.cancelTitle(hasBound: false) == "Later")
+        #expect(TaskSessionsPicker.cancelTitle(hasBound: true) == "Cancel")
         #expect(TaskSessionsPicker.trailingLabel(choices[0]) == nil)
-        #expect(TaskSessionsPicker.trailingLabel(choices[1]) == "без задачи")
-        #expect(TaskSessionsPicker.trailingLabel(choices[2]) == "у задачи «Фикс»")
-        #expect(TaskSessionsPicker.footerHint((add: ["t"], remove: []), choices: choices) == "Сессия переедет из «Фикс» в эту задачу")
-        #expect(TaskSessionsPicker.footerHint((add: [], remove: ["b"]), choices: choices) == "Снятые сессии отвяжутся от задачи")
-        #expect(TaskSessionsPicker.footerHint((add: ["s"], remove: []), choices: choices) == "Сессию чужой задачи не трогаем, пока сам не отметишь")
+        #expect(TaskSessionsPicker.trailingLabel(choices[1]) == "no task")
+        #expect(TaskSessionsPicker.trailingLabel(choices[2]) == "for task “Фикс”")
+        #expect(TaskSessionsPicker.footerHint((add: ["t"], remove: []), choices: choices) == "This session will move from “Фикс” to this task")
+        #expect(TaskSessionsPicker.footerHint((add: [], remove: ["b"]), choices: choices) == "Deselected sessions will be unlinked from the task")
+        #expect(TaskSessionsPicker.footerHint((add: ["s"], remove: []), choices: choices) == "Sessions in other tasks stay there unless you select them")
     }
 
     @Test
     func closeTaskTexts() {
-        #expect(ClosedTaskBanner.text("A") == "«A» закрыта · перенесена в Done")
+        #expect(ClosedTaskBanner.text("A") == "“A” closed · moved to Done")
         #expect(TaskDetailView.showsCloseTask(column: .inProgress))
         #expect(TaskDetailView.showsCloseTask(column: .todo))
         #expect(!TaskDetailView.showsCloseTask(column: .done))
@@ -1140,23 +1140,23 @@ struct FocusViewLogicTests {
 
     @Test
     func hubFocusBlockTexts() {
-        #expect(SessionHubView.focusBlockCaption(3) == "Сессии задачи · 3")
-        #expect(PomodoroFormat.startFocusTitle(minutes: 50) == "▶ Начать фокус · 50 мин")
-        #expect(SessionHubView.hereDetail("ждёт ответа", isHere: true) == "ты здесь · ждёт ответа")
+        #expect(SessionHubView.focusBlockCaption(3) == "Task sessions · 3")
+        #expect(PomodoroFormat.startFocusTitle(minutes: 50) == "▶ Start focus · 50 min")
+        #expect(SessionHubView.hereDetail("ждёт ответа", isHere: true) == "you are here · ждёт ответа")
         #expect(SessionHubView.hereDetail("ждёт ответа", isHere: false) == "ждёт ответа")
-        #expect(SessionHubView.hereDetail("", isHere: true) == "ты здесь")
+        #expect(SessionHubView.hereDetail("", isHere: true) == "you are here")
     }
 
     @Test
     func timerLengthChoices() {
         #expect(PomodoroFormat.focusChoices == [25, 50, 90])
         #expect(PomodoroFormat.breakChoices == [5, 10, 15, 20])
-        #expect(PomodoroFormat.choiceTitle(50, defaultMinutes: 50) == "50 мин · по умолчанию")
-        #expect(PomodoroFormat.choiceTitle(25, defaultMinutes: 50) == "25 мин")
-        #expect(PomodoroFormat.breakButtonTitle(minutes: 10) == "Перерыв 10 мин")
+        #expect(PomodoroFormat.choiceTitle(50, defaultMinutes: 50) == "50 min · default")
+        #expect(PomodoroFormat.choiceTitle(25, defaultMinutes: 50) == "25 min")
+        #expect(PomodoroFormat.breakButtonTitle(minutes: 10) == "10 min break")
         #expect(PomodoroFormat.clampFocus(500) == 120)
         #expect(PomodoroFormat.clampFocus(2) == 5)
-        #expect(StartTimerChoice.allCases.map(\.title) == ["Без таймера", "25 мин", "50 мин", "90 мин", "Своё…"])
+        #expect(StartTimerChoice.allCases.map(\.title) == ["Without a timer", "25 min", "50 min", "90 min", "Custom…"])
         #expect(StartTimerChoice.initial(defaultMinutes: 50) == .m50)
         #expect(StartTimerChoice.initial(defaultMinutes: 90) == .m90)
         #expect(StartTimerChoice.m90.minutes(custom: 0) == 90)
@@ -1164,13 +1164,13 @@ struct FocusViewLogicTests {
 
     @Test
     func waitingOutsideTexts() {
-        #expect(WaitingOutsideSection.caption(2) == "Ждут вне задачи · 2")
-        #expect(WaitingOutsideSection.buttonTitle(2, expanded: false) == "Ждут вне задачи · 2 ▸")
-        #expect(WaitingOutsideSection.buttonTitle(2, expanded: true) == "Ждут вне задачи · 2 ▾")
-        #expect(WaitingOutsideSection.explainer(taskTitle: "Воронка") == "Claude в этих сессиях закончил и ждёт тебя. Они не относятся к «Воронка».")
-        #expect(WaitingOutsideSection.ownerText(taskTitle: nil) == "без задачи")
-        #expect(WaitingOutsideSection.ownerText(taskTitle: "Онбординг") == "у задачи «Онбординг»")
-        #expect(WaitingOutsideSection.addTitle(taskTitle: "Воронка") == "Добавить в «Воронка»")
+        #expect(WaitingOutsideSection.caption(2) == "Waiting outside task · 2")
+        #expect(WaitingOutsideSection.buttonTitle(2, expanded: false) == "Waiting outside task · 2 ▸")
+        #expect(WaitingOutsideSection.buttonTitle(2, expanded: true) == "Waiting outside task · 2 ▾")
+        #expect(WaitingOutsideSection.explainer(taskTitle: "Воронка") == "The agents in these sessions have finished and are waiting for you. They are not part of “Воронка”.")
+        #expect(WaitingOutsideSection.ownerText(taskTitle: nil) == "no task")
+        #expect(WaitingOutsideSection.ownerText(taskTitle: "Онбординг") == "for task “Онбординг”")
+        #expect(WaitingOutsideSection.addTitle(taskTitle: "Воронка") == "Add to “Воронка”")
     }
 
     @Test

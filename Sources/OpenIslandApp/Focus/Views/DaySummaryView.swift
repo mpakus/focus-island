@@ -1,3 +1,4 @@
+import OpenIslandCore
 import AppKit
 import FocusCore
 import Foundation
@@ -6,17 +7,17 @@ import SwiftUI
 enum DaySummaryFormatter {
     nonisolated static func duration(_ seconds: TimeInterval) -> String {
         let minutes = max(0, Int((seconds / 60).rounded()))
-        guard minutes >= 60 else { return "\(minutes) м" }
+        guard minutes >= 60 else { return L10n.tr("focus.min_55", "\(minutes)") }
         let rest = minutes % 60
-        return rest == 0 ? "\(minutes / 60) ч" : "\(minutes / 60) ч \(rest) м"
+        return rest == 0 ? L10n.tr("focus.h", "\(minutes / 60)") : L10n.tr("focus.h_min", "\(minutes / 60)", "\(rest)")
     }
 
     nonisolated static func title(_ day: Date, calendar: Calendar = .current) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.locale = LanguageManager.shared.locale
         formatter.calendar = calendar
         formatter.timeZone = calendar.timeZone
-        formatter.dateFormat = "EEEE, d MMMM"
+        formatter.setLocalizedDateFormatFromTemplate("EEEEdMMMM")
         let text = formatter.string(from: day)
         return text.prefix(1).uppercased() + text.dropFirst()
     }
@@ -31,10 +32,8 @@ enum DaySummaryFormatter {
 
     nonisolated static func distractionDetail(count: Int, returned: Int) -> String? {
         guard count > 0 else { return nil }
-        let mod10 = count % 10
-        let mod100 = count % 100
-        let word = (2...4).contains(mod10) && !(12...14).contains(mod100) ? "раза" : "раз"
-        return "\(count) \(word), вернулся \(returned)"
+        let word = L10n.tr(L10n.pluralKey(count, one: "common.times.one", few: "common.times.few", many: "common.times.many"))
+        return L10n.tr("focus.returned_244", "\(count)", "\(word)", "\(returned)")
     }
 
     nonisolated static func done(tasks: [FocusTask], dayStart: Date, dayEnd: Date) -> [FocusTask] {
@@ -54,8 +53,8 @@ enum DaySummaryFormatter {
 
     nonisolated static func openSubtitle(progress: CriteriaProgress?, hasQueuedPrompt: Bool) -> String? {
         var parts: [String] = []
-        if let progress, progress.total > 0 { parts.append("критерий \(progress.done) из \(progress.total)") }
-        if hasQueuedPrompt { parts.append("промпт в очереди") }
+        if let progress, progress.total > 0 { parts.append(L10n.tr("focus.criteria_of_245", "\(progress.done)", "\(progress.total)")) }
+        if hasQueuedPrompt { parts.append(L10n.tr("focus.prompt_queued")) }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
@@ -70,30 +69,30 @@ enum DaySummaryFormatter {
     }
 
     nonisolated static func markdown(report: DayReport, done: [FocusTask], open: [FocusTask], tomorrow: String?, day: Date, pomodoroCount: Int = 0, calendar: Calendar = .current) -> String {
-        var distraction = "- Отвлечения: \(duration(report.distractionSeconds))"
+        var distraction = L10n.tr("focus.distractions_246", "\(duration(report.distractionSeconds))")
         if let detail = distractionDetail(count: report.distractionCount, returned: report.returnedCount) {
             distraction += " (\(detail))"
         }
         var lines = [
-            "- Ты в работе: \(duration(report.youSeconds))",
-            "- Агенты работали: \(duration(report.agentSeconds))",
-            "- Claude работал: \(duration(report.claudeSeconds))",
-            "- Codex работал: \(duration(report.codexSeconds))",
-            "- Сессии ждали тебя: \(duration(report.waitingSeconds))",
+            L10n.tr("focus.you_working", "\(duration(report.youSeconds))"),
+            L10n.tr("focus.agents_working_248", "\(duration(report.agentSeconds))"),
+            L10n.tr("focus.claude_working", "\(duration(report.claudeSeconds))"),
+            L10n.tr("focus.codex_working", "\(duration(report.codexSeconds))"),
+            L10n.tr("focus.sessions_waiting_for_you", "\(duration(report.waitingSeconds))"),
             distraction
         ]
-        if pomodoroCount > 0 { lines.append("- Помодоро: \(pomodoroCount)") }
-        lines.append("- Макс. параллельно: \(report.maxParallel)")
+        if pomodoroCount > 0 { lines.append(L10n.tr("focus.pomodoros", "\(pomodoroCount)")) }
+        lines.append(L10n.tr("focus.peak_parallel_sessions", "\(report.maxParallel)"))
         let kpis = lines.joined(separator: "\n")
         var blocks = ["# \(title(day, calendar: calendar))", kpis]
         if !done.isEmpty {
-            blocks.append((["## Сделано"] + done.map { listItem($0.title) }).joined(separator: "\n"))
+            blocks.append(([L10n.tr("focus.completed_254")] + done.map { listItem($0.title) }).joined(separator: "\n"))
         }
         if !open.isEmpty {
-            blocks.append((["## Осталось открытым"] + open.map { listItem($0.title) }).joined(separator: "\n"))
+            blocks.append(([L10n.tr("focus.still_open")] + open.map { listItem($0.title) }).joined(separator: "\n"))
         }
         if let note = tomorrow?.trimmingCharacters(in: .whitespacesAndNewlines), !note.isEmpty {
-            blocks.append("## Завтра начать с\n\(note)")
+            blocks.append(L10n.tr("focus.start_tomorrow_with", "\(note)"))
         }
         return blocks.joined(separator: "\n\n")
     }
@@ -142,6 +141,7 @@ struct DaySummaryView: View {
                 try? await Task.sleep(for: .seconds(60))
             }
         }
+        .onChange(of: LanguageManager.shared.language) { _, _ in reload() }
         .onChange(of: focus.workRevision) { _, _ in reload() }
         .onChange(of: focus.board) { _, _ in reload() }
         .onChange(of: focus.pomodoroCountToday) { _, _ in reload() }
@@ -159,7 +159,7 @@ struct DaySummaryView: View {
                 Text(range).font(.system(size: 12)).foregroundStyle(FocusStyle.secondaryText)
             }
             Spacer(minLength: 0)
-            Button(copied ? "Скопировано" : "Скопировать в заметку", action: copy)
+            Button(copied ? L10n.tr("focus.copied") : L10n.tr("focus.copy_as_note"), action: copy)
                 .buttonStyle(FocusButtonStyle(kind: .secondary, height: 28, horizontalPadding: 12))
                 .disabled(report == nil)
         }
@@ -168,17 +168,17 @@ struct DaySummaryView: View {
     private var kpiRow: some View {
         let value = report
         return HStack(alignment: .top, spacing: 12) {
-            kpi("Ты в работе", value.map { DaySummaryFormatter.duration($0.youSeconds) } ?? "—")
-            kpi("Агенты работали", value.map { DaySummaryFormatter.duration($0.agentSeconds) } ?? "—")
-            kpi("Сессии ждали тебя", value.map { DaySummaryFormatter.duration($0.waitingSeconds) } ?? "—", color: FocusStyle.waitingText)
+            kpi(L10n.tr("focus.you_working_259"), value.map { DaySummaryFormatter.duration($0.youSeconds) } ?? "—")
+            kpi(L10n.tr("focus.agents_working"), value.map { DaySummaryFormatter.duration($0.agentSeconds) } ?? "—")
+            kpi(L10n.tr("focus.sessions_waiting_for_you_260"), value.map { DaySummaryFormatter.duration($0.waitingSeconds) } ?? "—", color: FocusStyle.waitingText)
             kpi(
-                "Отвлечения",
+                L10n.tr("focus.distractions"),
                 value.map { DaySummaryFormatter.duration($0.distractionSeconds) } ?? "—",
                 color: FocusStyle.distractionText,
                 detail: value.flatMap { DaySummaryFormatter.distractionDetail(count: $0.distractionCount, returned: $0.returnedCount) }
             )
-            kpi("Помодоро", value == nil ? "—" : "\(pomodoroCount)")
-            kpi("Макс. параллельно", value.map { "\($0.maxParallel)" } ?? "—", detail: "комфортно до \(focus.settings.maxParallelSessions)")
+            kpi(L10n.tr("focus.pomodoros_261"), value == nil ? "—" : "\(pomodoroCount)")
+            kpi(L10n.tr("focus.peak_parallel_sessions_262"), value.map { "\($0.maxParallel)" } ?? "—", detail: L10n.tr("focus.comfortable_up_to", "\(focus.settings.maxParallelSessions)"))
         }
     }
 
@@ -202,9 +202,9 @@ struct DaySummaryView: View {
 
     private var doneCard: some View {
         FocusBox(fill: FocusStyle.barBackground, spacing: 4) {
-            Text("Сделано · \(doneTasks.count)").font(.system(size: 14, weight: .bold))
+            Text(L10n.tr("focus.completed_264", "\(doneTasks.count)")).font(.system(size: 14, weight: .bold))
             if doneTasks.isEmpty {
-                emptyLine("Пока ничего не закрыто")
+                emptyLine(L10n.tr("focus.nothing_completed_yet"))
             }
             ForEach(doneTasks) { task in
                 HStack(spacing: 10) {
@@ -222,9 +222,9 @@ struct DaySummaryView: View {
 
     private var openCard: some View {
         FocusBox(fill: FocusStyle.barBackground, spacing: 4) {
-            Text("Осталось открытым · \(openTasks.count)").font(.system(size: 14, weight: .bold))
+            Text(L10n.tr("focus.still_open_266", "\(openTasks.count)")).font(.system(size: 14, weight: .bold))
             if openTasks.isEmpty {
-                emptyLine("Открытых задач нет")
+                emptyLine(L10n.tr("focus.no_open_tasks"))
             }
             ForEach(openTasks) { task in
                 HStack(spacing: 10) {
@@ -244,8 +244,8 @@ struct DaySummaryView: View {
 
     private var tomorrowCard: some View {
         FocusBox(fill: FocusStyle.barBackground, border: FocusStyle.tomorrowBorder, spacing: 8) {
-            Text("Завтра начать с").font(.system(size: 14, weight: .bold))
-            Text("Утром island покажет это первым").font(FocusStyle.secondaryFont).foregroundStyle(FocusStyle.secondaryText)
+            Text(L10n.tr("focus.start_tomorrow_with_268")).font(.system(size: 14, weight: .bold))
+            Text(L10n.tr("focus.island_will_show_this_first_in_the_morning")).font(FocusStyle.secondaryFont).foregroundStyle(FocusStyle.secondaryText)
             TextEditor(text: $note)
                 .focused($noteFocused)
                 .font(.system(size: 13))
@@ -255,7 +255,7 @@ struct DaySummaryView: View {
                 .frame(height: 64)
                 .background(RoundedRectangle(cornerRadius: FocusStyle.buttonRadius).fill(FocusStyle.fieldFill))
                 .overlay(RoundedRectangle(cornerRadius: FocusStyle.buttonRadius).stroke(FocusStyle.fieldBorder, lineWidth: 1))
-                .accessibilityLabel("Завтра начать с")
+                .accessibilityLabel(L10n.tr("focus.start_tomorrow_with_268"))
         }
     }
 

@@ -259,10 +259,10 @@ struct AppearanceSettingsPane: View {
         )
 
         HStack(spacing: 12) {
-            rightSlotCard(.currentTask, icon: { Text("Задача")
+            rightSlotCard(.currentTask, icon: { Text(L10n.tr("focus.task_127"))
                                       .font(.system(size: 11, weight: .medium))
                                       .foregroundStyle(V6Palette.paper.opacity(0.8)) },
-                          title: "Текущая задача")
+                          title: L10n.tr("focus.current_task"))
             rightSlotCard(.count,  icon: { CountBadgePreview(count: 3) },
                           title: lang.t("settings.appearance.rightSlot.count"))
             rightSlotCard(.agents, icon: { AgentsMiniGridPreview() },
@@ -322,8 +322,8 @@ struct AppearanceSettingsPane: View {
         )
 
         HStack(spacing: 12) {
-            centerLabelCard(.currentTask, sample: "Текущая задача")
-            centerLabelCard(.agentAction, sample: "Claude · editing")
+            centerLabelCard(.currentTask, sample: L10n.tr("focus.current_task"))
+            centerLabelCard(.agentAction, sample: L10n.tr("ui.claude_editing"))
             centerLabelCard(.sessionName,  sample: "open-island")
             centerLabelCard(.off,          sample: "—")
         }
@@ -332,7 +332,7 @@ struct AppearanceSettingsPane: View {
     private func centerLabelCard(_ option: IslandCenterLabel, sample: String) -> some View {
         let selected = editingPreferences.centerLabel == option
         let title: String = switch option {
-        case .currentTask: "Текущая задача"
+        case .currentTask: L10n.tr("focus.current_task")
         case .agentAction: lang.t("settings.appearance.centerLabel.agentAction")
         case .sessionName: lang.t("settings.appearance.centerLabel.sessionName")
         case .off:         lang.t("settings.appearance.centerLabel.off")
@@ -647,7 +647,7 @@ struct AppearanceSettingsPane: View {
         switch (previewMode, editingPreferences.centerLabel) {
         case (.idle, _):               return nil
         case (.waiting, _):            return lang.t("settings.appearance.preview.permissionNeeded")
-        case (.running, .currentTask): return "Текущая задача"
+        case (.running, .currentTask): return L10n.tr("focus.current_task")
         case (.running, .agentAction): return lang.t("settings.appearance.preview.agentEditing")
         case (.running, .sessionName): return "open-island"
         case (.running, .off):         return nil
@@ -657,7 +657,7 @@ struct AppearanceSettingsPane: View {
     private var previewRightContent: IslandRightSlotContent? {
         switch editingPreferences.rightSlot {
         case .none: return nil
-        case .currentTask: return .text("Текущая задача")
+        case .currentTask: return .text(L10n.tr("focus.current_task"))
         case .count: return .count(3)
         case .agents:
             return .agents(previewAgentCells)
@@ -756,7 +756,7 @@ struct AppearanceSettingsPane: View {
             ),
             .init(
                 id: "running",
-                title: "Claude · website",
+                title: L10n.tr("ui.claude_website"),
                 detail: lang.t("settings.appearance.preview.editingSessionListPreview"),
                 agent: "Claude",
                 agentShort: "claude",
@@ -772,7 +772,7 @@ struct AppearanceSettingsPane: View {
             ),
             .init(
                 id: "done",
-                title: "Claude · docs",
+                title: L10n.tr("ui.claude_docs"),
                 detail: lang.t("settings.appearance.preview.replyAvailable"),
                 agent: "Claude",
                 agentShort: "claude",

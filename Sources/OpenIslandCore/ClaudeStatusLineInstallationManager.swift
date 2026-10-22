@@ -69,17 +69,17 @@ public enum ClaudeStatusLineInstallationError: LocalizedError, Sendable {
         switch self {
         case let .existingStatusLineConflict(command):
             if let command, !command.isEmpty {
-                return "Claude Code already has a custom status line: \(command)"
+                return L10n.tr("core.claude_code_already_has_a_custom_status_line", "\(command)")
             }
-            return "Claude Code already has a custom status line."
+            return L10n.tr("core.claude_code_already_has_a_custom_status_line_13")
         case .invalidSettingsRoot:
-            return "Claude Code settings.json must contain a top-level object."
+            return L10n.tr("core.claude_code_settings_json_must_contain_a_top_level_object")
         case .wrappableCommandMissing:
-            return "No existing statusLine command was found to wrap."
+            return L10n.tr("core.no_existing_statusline_command_was_found_to_wrap")
         case let .wrapperWouldRecurse(command):
-            return "Refusing to wrap Focus Island's own status line script (\(command)); the wrapper would call itself forever."
+            return L10n.tr("core.refusing_to_wrap_focus_island_s_own_status_line_script_the_wrapper_would_ca", "\(command)")
         case .providedByOtherIsland:
-            return "Строку статуса уже использует Open Island — Focus её не трогает"
+            return L10n.tr("focus.open_island_already_uses_the_status_line_focus_leaves_it_unchanged")
         }
     }
 }

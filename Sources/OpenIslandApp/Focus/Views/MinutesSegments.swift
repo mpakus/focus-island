@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -14,14 +15,14 @@ struct MinutesSegments: View {
         HStack(spacing: 2) {
             ForEach(choices, id: \.self) { minutes in
                 segment("\(minutes)", isOn: selected == minutes) { onSelect(minutes) }
-                    .accessibilityLabel("\(minutes) минут")
+                    .accessibilityLabel(L10n.tr("focus.minutes_325", "\(minutes)"))
             }
             if let customRange {
-                segment(isCustom ? "\(selected)" : "Своё", isOn: isCustom) {
+                segment(isCustom ? "\(selected)" : L10n.tr("focus.custom"), isOn: isCustom) {
                     customMinutes = selected
                     showsCustom = true
                 }
-                .accessibilityLabel("Своя длительность")
+                .accessibilityLabel(L10n.tr("focus.custom_duration"))
                 .popover(isPresented: $showsCustom, arrowEdge: .bottom) {
                     popover(range: customRange)
                 }
@@ -48,13 +49,13 @@ struct MinutesSegments: View {
 
     private func popover(range: ClosedRange<Int>) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Stepper("\(customMinutes) мин", value: $customMinutes, in: range, step: 5)
+            Stepper(L10n.tr("focus.min", "\(customMinutes)"), value: $customMinutes, in: range, step: 5)
                 .monospacedDigit()
             HStack(spacing: 8) {
                 Spacer(minLength: 0)
-                Button("Отмена") { showsCustom = false }
+                Button(L10n.tr("focus.cancel_207")) { showsCustom = false }
                     .buttonStyle(FocusButtonStyle(kind: .secondary, height: 28))
-                Button("Готово") {
+                Button(L10n.tr("focus.done_328")) {
                     onSelect(min(range.upperBound, max(range.lowerBound, customMinutes)))
                     showsCustom = false
                 }

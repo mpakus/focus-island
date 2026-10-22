@@ -149,7 +149,7 @@ final class AppModel {
         }
     }
     var isBridgeReady = false
-    var lastActionMessage = "Waiting for agent hook events..." {
+    var lastActionMessage = L10n.tr("ui.waiting_for_agent_hook_events") {
         didSet {
             guard lastActionMessage != oldValue else {
                 return
@@ -252,8 +252,8 @@ final class AppModel {
 
             UserDefaults.standard.set(isSoundMuted, forKey: Self.soundMutedDefaultsKey)
             lastActionMessage = isSoundMuted
-                ? "Island sound notifications muted."
-                : "Island sound notifications enabled."
+                ? L10n.tr("ui.island_sound_notifications_muted")
+                : L10n.tr("ui.island_sound_notifications_enabled")
         }
     }
     var selectedSoundName: String = NotificationSoundService.defaultSoundName {
@@ -957,32 +957,32 @@ final class AppModel {
         [
             AcceptanceStep(
                 id: "bridge",
-                title: "Bridge ready",
-                detail: "The app must own the local socket and register as a bridge observer.",
+                title: L10n.tr("ui.bridge_ready"),
+                detail: L10n.tr("ui.the_app_must_own_the_local_socket_and_register_as_a_bridge_observer"),
                 isComplete: isBridgeReady
             ),
             AcceptanceStep(
                 id: "hooks",
-                title: "Agent hooks configured",
-                detail: "Configure Claude Code or Codex hooks in Settings → Setup.",
+                title: L10n.tr("ui.agent_hooks_configured"),
+                detail: L10n.tr("ui.configure_claude_code_or_codex_hooks_in_settings_setup"),
                 isComplete: hooks.claudeHooksInstalled || hooks.codexHooksConfigured
             ),
             AcceptanceStep(
                 id: "overlay",
-                title: "Island visible",
-                detail: "Show the overlay at least once so the notch/top-bar surface is visible.",
+                title: L10n.tr("ui.island_visible"),
+                detail: L10n.tr("ui.show_the_overlay_at_least_once_so_the_notch_top_bar_surface_is_visible"),
                 isComplete: isOverlayVisible
             ),
             AcceptanceStep(
                 id: "session",
-                title: "An agent session is observed",
-                detail: "Send a prompt in Claude Code or Codex and wait for a session row.",
+                title: L10n.tr("ui.an_agent_session_is_observed"),
+                detail: L10n.tr("ui.send_a_prompt_in_claude_code_or_codex_and_wait_for_a_session_row"),
                 isComplete: hasAnySession
             ),
             AcceptanceStep(
                 id: "jump",
-                title: "Jump target captured",
-                detail: "At least one session should include terminal jump metadata.",
+                title: L10n.tr("ui.jump_target_captured"),
+                detail: L10n.tr("ui.at_least_one_session_should_include_terminal_jump_metadata"),
                 isComplete: hasJumpableSession
             ),
         ]
@@ -1002,26 +1002,26 @@ final class AppModel {
 
     var acceptanceStatusTitle: String {
         if hasPassedAcceptanceFlow {
-            return "v0.1 acceptance passed"
+            return L10n.tr("ui.v0_1_acceptance_passed")
         }
 
         if isReadyForFirstAcceptance {
-            return "Ready for v0.1 acceptance"
+            return L10n.tr("ui.ready_for_v0_1_acceptance")
         }
 
-        return "v0.1 acceptance not ready"
+        return L10n.tr("ui.v0_1_acceptance_not_ready")
     }
 
     var acceptanceStatusSummary: String {
         if hasPassedAcceptanceFlow {
-            return "The current build has completed the first-run checklist end to end."
+            return L10n.tr("ui.the_current_build_has_completed_the_first_run_checklist_end_to_end")
         }
 
         if isReadyForFirstAcceptance {
-            return "You can start your first acceptance run now. Launch Claude Code or Codex and walk the last two steps."
+            return L10n.tr("ui.you_can_start_your_first_acceptance_run_now_launch_claude_code_or_codex_and")
         }
 
-        return "Finish the setup steps in the left column, then start Claude Code or Codex."
+        return L10n.tr("ui.finish_the_setup_steps_in_the_left_column_then_start_claude_code_or_codex")
     }
 
     func startIfNeeded(
@@ -1074,7 +1074,7 @@ final class AppModel {
             connectBridgeObserver()
         } catch {
             isBridgeReady = false
-            lastActionMessage = "Failed to start local bridge: \(error.localizedDescription)"
+            lastActionMessage = L10n.tr("ui.failed_to_start_local_bridge", "\(error.localizedDescription)")
             harnessRuntimeMonitor?.recordMilestone("bridgeStartFailed", message: lastActionMessage)
         }
     }
@@ -1102,7 +1102,7 @@ final class AppModel {
             stream = try client.connect()
         } catch {
             isBridgeReady = false
-            lastActionMessage = "Failed to connect bridge observer: \(error.localizedDescription)"
+            lastActionMessage = L10n.tr("ui.failed_to_connect_bridge_observer", "\(error.localizedDescription)")
             scheduleBridgeReconnect()
             return
         }
@@ -1115,12 +1115,12 @@ final class AppModel {
             do {
                 try await client.send(.registerClient(role: .observer))
                 self.isBridgeReady = true
-                self.lastActionMessage = "Bridge ready. Waiting for agent hook events."
+                self.lastActionMessage = L10n.tr("ui.bridge_ready_waiting_for_agent_hook_events")
                 self.harnessRuntimeMonitor?.recordMilestone("bridgeReady", message: self.lastActionMessage)
             } catch {
                 guard !Task.isCancelled else { return }
                 self.isBridgeReady = false
-                self.lastActionMessage = "Failed to register bridge observer: \(error.localizedDescription)"
+                self.lastActionMessage = L10n.tr("ui.failed_to_register_bridge_observer", "\(error.localizedDescription)")
                 self.harnessRuntimeMonitor?.recordMilestone(
                     "bridgeRegistrationFailed",
                     message: self.lastActionMessage
@@ -1139,7 +1139,7 @@ final class AppModel {
             // Mark as disconnected and schedule reconnection.
             guard !Task.isCancelled else { return }
             self.isBridgeReady = false
-            self.lastActionMessage = "Bridge observer disconnected. Reconnecting…"
+            self.lastActionMessage = L10n.tr("ui.bridge_observer_disconnected_reconnecting")
             self.harnessRuntimeMonitor?.recordMilestone("bridgeDisconnected", message: self.lastActionMessage)
             self.scheduleBridgeReconnect()
         }
@@ -1229,7 +1229,7 @@ final class AppModel {
             // the `CommandGroup(.appSettings)` button that opens the window.
             NSApp.sendAction(NSSelectorFromString("showSettingsWindow:"), to: nil, from: nil)
         }
-        if let window = NSApp.windows.first(where: { $0.title == "Open Island Settings" }) {
+        if let window = NSApp.windows.first(where: { $0.title == L10n.tr("ui.open_island_settings") }) {
             window.orderFrontRegardless()
             window.makeKey()
         }
@@ -1257,8 +1257,8 @@ final class AppModel {
         send(
             .resolvePermission(sessionID: session.id, resolution: permissionResolution(for: approved)),
             userMessage: approved
-                ? "Approving permission for \(session.title)."
-                : "Denying permission for \(session.title)."
+                ? L10n.tr("ui.approving_permission_for", "\(session.title)")
+                : L10n.tr("ui.denying_permission_for", "\(session.title)")
         )
     }
 
@@ -1269,7 +1269,7 @@ final class AppModel {
 
         send(
             .answerQuestion(sessionID: session.id, response: QuestionPromptResponse(answer: answer)),
-            userMessage: "Sending answer \"\(answer)\" for \(session.title)."
+            userMessage: L10n.tr("ui.sending_answer_for", "\(answer)", "\(session.title)")
         )
     }
 
@@ -1288,16 +1288,16 @@ final class AppModel {
             let hint = session.jumpTarget?.terminalApp.lowercased() ?? ""
             guard let bundle = aliases[hint],
                   let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundle).first else {
-                lastActionMessage = "Open Codex in its original client. Exact session navigation is not available."
+                lastActionMessage = L10n.tr("ui.open_codex_in_its_original_client_exact_session_navigation_is_not_available")
                 return
             }
             app.activate(options: [])
-            lastActionMessage = "Opened the terminal app. Select the Codex session there."
+            lastActionMessage = L10n.tr("ui.opened_the_terminal_app_select_the_codex_session_there")
             return
         }
         guard let jumpTarget = session.jumpTarget,
               jumpTarget.terminalApp.lowercased() != "unknown" else {
-            lastActionMessage = "Cannot jump: terminal app is unknown."
+            lastActionMessage = L10n.tr("ui.cannot_jump_terminal_app_is_unknown")
             return
         }
         if ClaudeDesktopSessionLocator.isClaudeDesktop(terminalApp: jumpTarget.terminalApp) {
@@ -1341,13 +1341,13 @@ final class AppModel {
                 self.jump(to: fallback)
                 return
             }
-            self.lastActionMessage = "Opened the Claude Code session in Claude."
+            self.lastActionMessage = L10n.tr("ui.opened_the_claude_code_session_in_claude")
         }
     }
 
     private func jump(to jumpTarget: JumpTarget?) {
         guard let jumpTarget else {
-            lastActionMessage = "No jump target is available yet."
+            lastActionMessage = L10n.tr("ui.no_jump_target_is_available_yet")
             return
         }
 
@@ -1378,7 +1378,7 @@ final class AppModel {
                     return
                 }
 
-                self?.lastActionMessage = "Jump failed: \(error.localizedDescription)"
+                self?.lastActionMessage = L10n.tr("ui.jump_failed", "\(error.localizedDescription)")
             }
         }
     }
@@ -1397,8 +1397,8 @@ final class AppModel {
         send(
             .resolvePermission(sessionID: session.id, resolution: resolution),
             userMessage: approved
-                ? "Approving permission for \(session.title)."
-                : "Denying permission for \(session.title)."
+                ? L10n.tr("ui.approving_permission_for", "\(session.title)")
+                : L10n.tr("ui.denying_permission_for", "\(session.title)")
         )
     }
 
@@ -1412,14 +1412,14 @@ final class AppModel {
 
         switch action {
         case .deny:
-            resolution = .deny(message: "Permission denied in Open Island.", interrupt: false)
-            message = "Denying permission for \(session.title)."
+            resolution = .deny(message: L10n.tr("ui.permission_denied_in_open_island"), interrupt: false)
+            message = L10n.tr("ui.denying_permission_for", "\(session.title)")
         case .allowOnce:
             resolution = .allowOnce()
-            message = "Approving permission for \(session.title)."
+            message = L10n.tr("ui.approving_permission_for", "\(session.title)")
         case let .allowWithUpdates(updates):
             resolution = .allowOnce(updatedPermissions: updates)
-            message = "Always allowing for \(session.title)."
+            message = L10n.tr("ui.always_allowing_for", "\(session.title)")
         }
 
         dismissNotificationSurfaceIfPresent(for: sessionID)
@@ -1451,7 +1451,7 @@ final class AppModel {
 
         send(
             .answerQuestion(sessionID: session.id, response: answer),
-            userMessage: "Sending answer for \(session.title)."
+            userMessage: L10n.tr("ui.sending_answer_for_169", "\(session.title)")
         )
     }
 
@@ -1461,7 +1461,7 @@ final class AppModel {
         synchronizeSelection()
         refreshOverlayPlacementIfVisible()
 
-        lastActionMessage = "Sending reply to \(session.title)…"
+        lastActionMessage = L10n.tr("ui.sending_reply_to", "\(session.title)")
 
         Task { [weak self] in
             let success = await Task.detached(priority: .userInitiated) {
@@ -1469,8 +1469,8 @@ final class AppModel {
             }.value
 
             self?.lastActionMessage = success
-                ? "Sent reply to \(session.title)."
-                : "Failed to send reply to \(session.title)."
+                ? L10n.tr("ui.sent_reply_to", "\(session.title)")
+                : L10n.tr("ui.failed_to_send_reply_to", "\(session.title)")
         }
     }
 
@@ -1486,7 +1486,7 @@ final class AppModel {
             do {
                 try await self.bridgeClient.send(command)
             } catch {
-                self.lastActionMessage = "Failed to send bridge command: \(error.localizedDescription)"
+                self.lastActionMessage = L10n.tr("ui.failed_to_send_bridge_command", "\(error.localizedDescription)")
             }
         }
     }
@@ -1496,7 +1496,7 @@ final class AppModel {
             return .allowOnce()
         }
 
-        return .deny(message: "Permission denied in Open Island.", interrupt: false)
+        return .deny(message: L10n.tr("ui.permission_denied_in_open_island"), interrupt: false)
     }
 
     func applyTrackedEvent(
@@ -1843,7 +1843,7 @@ final class AppModel {
     private func describe(_ event: AgentEvent) -> String {
         switch event {
         case let .sessionStarted(payload):
-            return "Session started: \(payload.title)"
+            return L10n.tr("ui.session_started", "\(payload.title)")
         case let .activityUpdated(payload):
             return payload.summary
         case let .permissionRequested(payload):
@@ -1853,17 +1853,17 @@ final class AppModel {
         case let .sessionCompleted(payload):
             return payload.summary
         case let .jumpTargetUpdated(payload):
-            return "Jump target updated to \(payload.jumpTarget.terminalApp)."
+            return L10n.tr("ui.jump_target_updated_to", "\(payload.jumpTarget.terminalApp)")
         case .codexSessionMetadataUpdated:
-            return "Codex session metadata updated."
+            return L10n.tr("ui.codex_session_metadata_updated")
         case let .claudeSessionMetadataUpdated(payload):
             if let currentTool = payload.claudeMetadata.currentTool {
-                return "Claude is running \(currentTool)."
+                return L10n.tr("ui.claude_is_running", "\(currentTool)")
             }
 
-            return payload.claudeMetadata.lastAssistantMessage ?? "Claude session metadata updated."
+            return payload.claudeMetadata.lastAssistantMessage ?? L10n.tr("ui.claude_session_metadata_updated")
         case let .actionableStateResolved(payload):
-            return "Actionable state resolved for session \(payload.sessionID)."
+            return L10n.tr("ui.actionable_state_resolved_for_session", "\(payload.sessionID)")
         }
     }
 

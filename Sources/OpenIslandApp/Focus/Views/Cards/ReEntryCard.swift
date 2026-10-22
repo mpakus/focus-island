@@ -18,7 +18,7 @@ struct ReEntryCard: View {
             } else {
                 HStack {
                     Spacer()
-                    Button("Позже") { focus.perform(.dismiss) }
+                    Button(L10n.tr("focus.later")) { focus.perform(.dismiss) }
                         .buttonStyle(FocusButtonStyle(kind: .quiet))
                 }
             }
@@ -45,7 +45,7 @@ struct ReEntryCard: View {
         return HStack(alignment: .center, spacing: 10) {
             StatusDot(color: session.map { FocusStyle.phaseColor($0.phase) } ?? FocusStyle.captionText)
             VStack(alignment: .leading, spacing: 1) {
-                Text("Возвращаешься к задаче")
+                Text(L10n.tr("focus.returning_to_your_task"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
                 Text(task?.title ?? focus.sessionTitle(sessionID))
@@ -68,7 +68,7 @@ struct ReEntryCard: View {
     private var noteBox: some View {
         if let note = task?.note?.trimmingCharacters(in: .whitespacesAndNewlines), !note.isEmpty {
             FocusBox(spacing: 6) {
-                FocusSectionCaption("Где ты остановился")
+                FocusSectionCaption(L10n.tr("focus.where_you_left_off"))
                 Text("«\(note)»").font(.system(size: 13)).lineLimit(6)
             }
         }
@@ -78,7 +78,7 @@ struct ReEntryCard: View {
     private var claudeBox: some View {
         if let message = focus.record(sessionID)?.lastAssistantMessage.map({ FocusText.truncated($0, limit: FocusText.cardMessageLimit) }), !message.isEmpty {
             FocusBox(spacing: 6) {
-                FocusSectionCaption("Что сделал Claude")
+                FocusSectionCaption(L10n.tr("focus.what_the_agent_did"))
                 Text(message).font(.system(size: 13)).lineLimit(8)
             }
         }
@@ -88,13 +88,13 @@ struct ReEntryCard: View {
     private var waitingBox: some View {
         if isWaiting {
             FocusBox(fill: FocusStyle.waiting.opacity(0.12), border: FocusStyle.waiting.opacity(0.35), spacing: 6) {
-                FocusSectionCaption("Ждёт от тебя", color: FocusStyle.waitingText)
+                FocusSectionCaption(L10n.tr("focus.waiting_for_you_191"), color: FocusStyle.waitingText)
                 HStack(spacing: 10) {
                     Text(Self.waitingDetail(session))
                         .font(FocusStyle.monoFont)
                         .lineLimit(2)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    Button("Открыть терминал") { focus.perform(.confirmJump(sessionID: sessionID)) }
+                    Button(L10n.tr("focus.open_terminal")) { focus.perform(.confirmJump(sessionID: sessionID)) }
                         .buttonStyle(FocusButtonStyle(kind: .primary))
                         .keyboardShortcut(.defaultAction)
                 }
@@ -137,38 +137,38 @@ struct ReEntryCard: View {
 
     private var footer: some View {
         HStack(spacing: 8) {
-            Button("Перейти") { focus.perform(.confirmJump(sessionID: sessionID)) }
+            Button(L10n.tr("focus.open_session")) { focus.perform(.confirmJump(sessionID: sessionID)) }
                 .buttonStyle(FocusButtonStyle(kind: .primary))
                 .keyboardShortcut(.defaultAction)
             Spacer(minLength: 0)
-            Button("Позже") { focus.perform(.dismiss) }
+            Button(L10n.tr("focus.later")) { focus.perform(.dismiss) }
                 .buttonStyle(FocusButtonStyle(kind: .quiet))
         }
     }
 
     nonisolated static func breadcrumb(taskTitle: String?, progress: PlanProgress?, hasQueuedPrompt: Bool, isRunning: Bool) -> String? {
         guard isRunning, let taskTitle, !taskTitle.isEmpty else { return nil }
-        var parts = ["\(taskTitle) продолжается"]
+        var parts = [L10n.tr("focus.continues", "\(taskTitle)")]
         if let progress {
-            parts.append("шаг \(min(progress.total, progress.completed + 1)) из \(progress.total)")
+            parts.append(L10n.tr("focus.step_of_194", "\(min(progress.total, progress.completed + 1))", "\(progress.total)"))
         }
-        if hasQueuedPrompt { parts.append("промпт в очереди") }
-        parts.append("позову, когда закончит")
+        if hasQueuedPrompt { parts.append(L10n.tr("focus.prompt_queued")) }
+        parts.append(L10n.tr("focus.i_ll_notify_you_when_it_s_done"))
         return parts.joined(separator: " · ")
     }
 
     nonisolated static func agoText(minutes: Int) -> String {
-        if minutes < 1 { return "только что" }
-        if minutes < 60 { return "\(minutes) мин назад" }
+        if minutes < 1 { return L10n.tr("focus.just_now") }
+        if minutes < 60 { return L10n.tr("focus.min_ago", "\(minutes)") }
         let hours = minutes / 60
         let rest = minutes % 60
-        return rest == 0 ? "\(hours) ч назад" : "\(hours) ч \(rest) мин назад"
+        return rest == 0 ? L10n.tr("focus.h_ago", "\(hours)") : L10n.tr("focus.h_min_ago", "\(hours)", "\(rest)")
     }
 
     nonisolated static func originLine(project: String?, minutes: Int?) -> String {
         var parts: [String] = []
         if let project, !project.isEmpty { parts.append(project) }
-        if let minutes { parts.append("последний раз \(agoText(minutes: minutes))") }
+        if let minutes { parts.append(L10n.tr("focus.last_seen", "\(agoText(minutes: minutes))")) }
         return parts.joined(separator: " · ")
     }
 
@@ -176,8 +176,8 @@ struct ReEntryCard: View {
         guard let session else { return "" }
         if session.phase == .waitingForApproval {
             let request = session.permissionRequest
-            return [request?.summary, request?.toolName, request?.title].compactMap { $0 }.first { !$0.isEmpty } ?? "Разрешение"
+            return [request?.summary, request?.toolName, request?.title].compactMap { $0 }.first { !$0.isEmpty } ?? L10n.tr("focus.permission_11")
         }
-        return session.questionPrompt?.title ?? "Вопрос"
+        return session.questionPrompt?.title ?? L10n.tr("focus.question")
     }
 }

@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -12,7 +13,7 @@ struct FocusSettingsPane: View {
     nonisolated static let stalledReminderRange = FocusSettings.stalledReminderRange
 
     nonisolated static func hooksTitle(installed: Bool) -> String {
-        installed ? "Хуки агентов настроены" : "Подключите Claude Code или Codex"
+        installed ? L10n.tr("focus.agent_hooks_configured") : L10n.tr("focus.connect_claude_code_or_codex")
     }
 
     nonisolated static func hooksPathText(path: String, home: String) -> String {
@@ -29,71 +30,71 @@ struct FocusSettingsPane: View {
                         .foregroundStyle(hooksInstalled ? FocusStyle.working : FocusStyle.waiting)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(Self.hooksTitle(installed: hooksInstalled)).fontWeight(.semibold)
-                        Text("Claude Code и Codex — установка и проверка в Setup")
+                        Text(L10n.tr("focus.claude_code_and_codex_installation_and_checks_in_setup"))
                             .font(FocusStyle.secondaryFont)
                             .foregroundStyle(FocusStyle.secondaryText)
                     }
                     Spacer()
-                    Button("Настроить агентов", action: configureAgents)
+                    Button(L10n.tr("focus.configure_agents"), action: configureAgents)
                 }
             }
             if let backup = focus.storeRecoveredBackupURL {
-                Text("База Focus была повреждена и пересоздана. Копия: \(backup.path)")
+                Text(L10n.tr("focus.the_focus_database_was_damaged_and_recreated_backup", "\(backup.path)"))
                     .foregroundStyle(.orange)
             }
             if focus.storeIsInMemoryFallback {
-                Text("Не удалось открыть базу Focus — изменения не сохранятся после выхода")
+                Text(L10n.tr("focus.could_not_open_the_focus_database_changes_will_be_lost_when_you_quit"))
                     .foregroundStyle(.orange)
             }
-            Section("Что дальше?") {
-                Toggle("Показывать подсказку, пока агент работает", isOn: $focus.settings.nextActionEnabled)
-                Stepper("Через \(Int(focus.settings.nextActionDelay)) с", value: $focus.settings.nextActionDelay, in: 5...120, step: 5)
+            Section(L10n.tr("focus.what_s_next")) {
+                Toggle(L10n.tr("focus.show_hints_while_the_agent_works"), isOn: $focus.settings.nextActionEnabled)
+                Stepper(L10n.tr("focus.after_s", "\(Int(focus.settings.nextActionDelay))"), value: $focus.settings.nextActionDelay, in: 5...120, step: 5)
             }
-            Section("Фокус-таймер") {
-                Stepper("Фокус \(focus.settings.pomodoroFocusMinutes) мин", value: $focus.settings.pomodoroFocusMinutes, in: FocusSettings.pomodoroFocusRange, step: 5)
-                Stepper("Перерыв \(focus.settings.pomodoroBreakMinutes) мин", value: $focus.settings.pomodoroBreakMinutes, in: FocusSettings.pomodoroBreakRange)
-                Stepper("Помодоро в цикле: \(focus.settings.pomodoroCycle)", value: $focus.settings.pomodoroCycle, in: FocusSettings.pomodoroCycleRange)
-                Toggle("Начинать перерыв автоматически", isOn: $focus.settings.autoBreakEnabled)
-                Toggle("Звук начала перерыва", isOn: $focus.settings.breakSoundEnabled)
+            Section(L10n.tr("focus.focus_timer")) {
+                Stepper(L10n.tr("focus.focus_min", "\(focus.settings.pomodoroFocusMinutes)"), value: $focus.settings.pomodoroFocusMinutes, in: FocusSettings.pomodoroFocusRange, step: 5)
+                Stepper(L10n.tr("focus.min_break", "\(focus.settings.pomodoroBreakMinutes)"), value: $focus.settings.pomodoroBreakMinutes, in: FocusSettings.pomodoroBreakRange)
+                Stepper(L10n.tr("focus.pomodoros_per_cycle", "\(focus.settings.pomodoroCycle)"), value: $focus.settings.pomodoroCycle, in: FocusSettings.pomodoroCycleRange)
+                Toggle(L10n.tr("focus.start_breaks_automatically"), isOn: $focus.settings.autoBreakEnabled)
+                Toggle(L10n.tr("focus.play_sound_when_a_break_starts"), isOn: $focus.settings.breakSoundEnabled)
                     .disabled(!focus.settings.autoBreakEnabled)
-                Text("Отсчёт 5 секунд после конца фокуса. Без автоперерыва карточка ждёт нажатия.")
+                Text(L10n.tr("focus.a_5_second_countdown_follows_focus_without_auto_break_the_card_waits_f"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text("Новые значения — со следующего помодоро")
+                Text(L10n.tr("focus.new_values_apply_to_the_next_pomodoro"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Section("Сессии") {
-                Stepper("Комфортно держу параллельно: \(focus.settings.maxParallelSessions)", value: $focus.settings.maxParallelSessions, in: Self.maxParallelRange)
-                Stepper("Напомнить о ждущей сессии через \(focus.settings.stalledReminderMinutes) мин", value: $focus.settings.stalledReminderMinutes, in: Self.stalledReminderRange)
-                Toggle("Утренний экран «Начало дня»", isOn: $focus.settings.dayStartEnabled)
+            Section(L10n.tr("focus.sessions_299")) {
+                Stepper(L10n.tr("focus.comfortable_parallel_sessions", "\(focus.settings.maxParallelSessions)"), value: $focus.settings.maxParallelSessions, in: Self.maxParallelRange)
+                Stepper(L10n.tr("focus.remind_me_about_waiting_sessions_after_min", "\(focus.settings.stalledReminderMinutes)"), value: $focus.settings.stalledReminderMinutes, in: Self.stalledReminderRange)
+                Toggle(L10n.tr("focus.show_the_morning_start_the_day_screen"), isOn: $focus.settings.dayStartEnabled)
             }
-            Section("Отвлечения") {
-                Toggle("Замечать отвлечения", isOn: $focus.settings.distractionEnabled)
-                Stepper("Порог \(Int(focus.settings.distractionThreshold)) с", value: $focus.settings.distractionThreshold, in: 5...300, step: 5)
-                Toggle("Звук напоминания", isOn: $focus.settings.nudgeSoundEnabled)
-                Text("Приложения (bundle id, по одному в строке)").font(.caption)
+            Section(L10n.tr("focus.distractions")) {
+                Toggle(L10n.tr("focus.detect_distractions"), isOn: $focus.settings.distractionEnabled)
+                Stepper(L10n.tr("focus.threshold_s", "\(Int(focus.settings.distractionThreshold))"), value: $focus.settings.distractionThreshold, in: 5...300, step: 5)
+                Toggle(L10n.tr("focus.play_reminder_sound"), isOn: $focus.settings.nudgeSoundEnabled)
+                Text(L10n.tr("focus.apps_bundle_id_one_per_line")).font(.caption)
                 TextEditor(text: $appsText).frame(minHeight: 60)
-                Text("Домены (по одному в строке)").font(.caption)
+                Text(L10n.tr("focus.domains_one_per_line")).font(.caption)
                 TextEditor(text: $domainsText).frame(minHeight: 100)
                 HStack {
-                    Button("Сохранить стоп-лист") {
+                    Button(L10n.tr("focus.save_blocklist")) {
                         focus.settings.stopList = StopList(appBundleIDs: appLines(appsText), domains: lines(domainsText))
                     }
-                    Button("По умолчанию") {
+                    Button(L10n.tr("focus.defaults")) {
                         focus.settings.stopList = .default
                         loadStopList()
                     }
                 }
-                Text("Для чтения адреса вкладки Safari/Chrome/Arc нужно разрешение «Автоматизация» в Системных настройках → Конфиденциальность. Без него учитываются только приложения.")
+                Text(L10n.tr("focus.reading_safari_chrome_or_arc_tab_addresses_requires_automation_permiss"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Section("Терминал и доска") {
-                Picker("Терминал для Resume", selection: $focus.settings.resumeTerminal) {
+            Section(L10n.tr("focus.terminal_and_board")) {
+                Picker(L10n.tr("focus.terminal_for_resume"), selection: $focus.settings.resumeTerminal) {
                     ForEach(ResumeTerminal.allCases) { Text($0.title).tag($0) }
                 }
-                Picker("Хоткей доски", selection: $focus.settings.boardHotKey) {
+                Picker(L10n.tr("focus.board_shortcut"), selection: $focus.settings.boardHotKey) {
                     ForEach(BoardHotKey.allCases) { Text($0.title).tag($0) }
                 }
             }

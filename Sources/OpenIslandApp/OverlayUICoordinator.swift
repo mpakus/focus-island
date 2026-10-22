@@ -175,7 +175,7 @@ final class OverlayUICoordinator {
             },
             onPlacementResolved: { [weak self] in
                 guard let self, let overlayPlacementDiagnostics else { return }
-                self.onStatusMessage?("Overlay showing on \(overlayPlacementDiagnostics.targetScreenName) as \(overlayPlacementDiagnostics.modeDescription.lowercased()).")
+                self.onStatusMessage?(L10n.tr("core.overlay_showing_on_as", "\(overlayPlacementDiagnostics.targetScreenName)", "\(overlayPlacementDiagnostics.modeDescription.lowercased())"))
             }
         )
     }

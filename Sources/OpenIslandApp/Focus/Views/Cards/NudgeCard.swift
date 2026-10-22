@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -12,13 +13,13 @@ struct NudgeCard: View {
             }
             suggestionBox
             HStack(spacing: 8) {
-                Button("Вернуться в терминал") { focus.perform(.returnToWork) }
+                Button(L10n.tr("focus.return_to_terminal")) { focus.perform(.returnToWork) }
                     .buttonStyle(FocusButtonStyle(kind: .primary, height: 32))
                     .keyboardShortcut(.defaultAction)
-                Button("Отложить 5 мин") { focus.perform(.snoozeDistraction) }
+                Button(L10n.tr("focus.snooze_5_min")) { focus.perform(.snoozeDistraction) }
                     .buttonStyle(FocusButtonStyle(kind: .secondary, height: 32))
                 Spacer(minLength: 0)
-                Button("Мне это нужно") { focus.perform(.allowDistraction) }
+                Button(L10n.tr("focus.i_need_this")) { focus.perform(.allowDistraction) }
                     .buttonStyle(FocusButtonStyle(kind: .quiet, height: 32))
             }
         }
@@ -60,7 +61,7 @@ struct NudgeCard: View {
     private var suggestionBox: some View {
         if let suggestion = focus.nudgeSuggestionState {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Пока ждёшь, можно")
+                Text(L10n.tr("focus.while_you_wait_you_can"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
                 Text(suggestionTitle(suggestion))
@@ -79,28 +80,28 @@ struct NudgeCard: View {
         case let .attend(id, reason, _):
             StayInTaskCard.attendTitle(name: focus.hubRows.first { $0.id == id }?.projectName ?? focus.sessionTitle(id), reason: reason)
         case let .review(id):
-            "Просмотреть результат: \(focus.hubRows.first { $0.id == id }?.projectName ?? focus.sessionTitle(id))"
+            L10n.tr("focus.review_the_result", "\(focus.hubRows.first { $0.id == id }?.projectName ?? focus.sessionTitle(id))")
         case let .startTask(taskID, _):
             focus.board.task(id: taskID)?.title ?? ""
         }
     }
 
     nonisolated static func title(target: String?, seconds: Int) -> String {
-        guard let target, !target.isEmpty else { return "Claude работает — ты отвлёкся" }
-        let preposition = target.contains(".") ? "на" : "в"
-        return "Claude работает — ты \(preposition) \(target) уже \(duration(seconds))"
+        guard let target, !target.isEmpty else { return L10n.tr("focus.the_agent_is_working_you_got_distracted") }
+        let preposition = target.contains(".") ? L10n.tr("focus.on") : L10n.tr("focus.in")
+        return L10n.tr("focus.the_agent_is_working_you_ve_been_for", "\(preposition)", "\(target)", "\(duration(seconds))")
     }
 
     nonisolated static func duration(_ seconds: Int) -> String {
         let seconds = max(0, seconds)
-        guard seconds >= 60 else { return "\(seconds) с" }
+        guard seconds >= 60 else { return L10n.tr("focus.s", "\(seconds)") }
         let minutes = seconds / 60
         let rest = seconds % 60
-        return rest == 0 ? "\(minutes) мин" : "\(minutes) мин \(rest) с"
+        return rest == 0 ? L10n.tr("focus.min", "\(minutes)") : L10n.tr("focus.min_s", "\(minutes)", "\(rest)")
     }
 
     nonisolated static func subtitle(project: String?, task: String?, elapsed: TimeInterval?) -> String {
-        var parts = [project.map { "Сессия \($0)" } ?? "Сессия"]
+        var parts = [project.map { L10n.tr("focus.session_108", "\($0)") } ?? L10n.tr("focus.session_109")]
         if let task, !task.isEmpty { parts.append("«\(task)»") }
         if let elapsed { parts.append(FocusText.clock(elapsed)) }
         return parts.joined(separator: " · ")

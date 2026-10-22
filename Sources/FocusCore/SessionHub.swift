@@ -49,13 +49,13 @@ public enum HubGroup: Int, CaseIterable, Sendable {
 
     public var title: String {
         switch self {
-        case .waiting: "Ждут тебя"
-        case .review: "Закончил, проверь"
-        case .running: "Работают"
-        case .idle: "Твой ход"
-        case .unbound: "Без задачи"
-        case .parked: "На паузе"
-        case .done: "Завершённые"
+        case .waiting: L10n.tr("focus.waiting_for_you")
+        case .review: L10n.tr("focus.finished_review")
+        case .running: L10n.tr("focus.working")
+        case .idle: L10n.tr("focus.your_turn")
+        case .unbound: L10n.tr("focus.no_task")
+        case .parked: L10n.tr("focus.paused")
+        case .done: L10n.tr("focus.completed")
         }
     }
 }
@@ -128,7 +128,7 @@ public enum SessionHub {
             let prompt = (PromptText.clean(record?.firstPrompt) ?? PromptText.clean(session.initialUserPromptText))?
                 .split(whereSeparator: \.isWhitespace)
                 .joined(separator: " ")
-            let name = projectName ?? "без проекта"
+            let name = projectName ?? L10n.tr("focus.no_project")
             if let prompt, !prompt.isEmpty {
                 title = "\(name) · «\(String(prompt.prefix(promptPreviewLength)))»"
             } else {
@@ -157,28 +157,28 @@ public enum SessionHub {
                 let subject = [request?.summary, request?.toolName, request?.title]
                     .compactMap { $0 }
                     .first { !$0.isEmpty }
-                what = subject.map { "Разрешение \($0)" } ?? "Разрешение"
+                what = subject.map { L10n.tr("focus.permission", "\($0)") } ?? L10n.tr("focus.permission_11")
             } else {
-                what = session.questionPrompt?.title ?? "Вопрос"
+                what = session.questionPrompt?.title ?? L10n.tr("focus.question")
             }
-            return "\(what) · ждёт \(minutes) мин"
+            return L10n.tr("focus.waiting_min", "\(what)", "\(minutes)")
         case .review:
-            return "\(session.tool.shortName) закончил \(minutes) мин назад"
+            return L10n.tr("focus.finished_min_ago", "\(session.tool.shortName)", "\(minutes)")
         case .running:
-            guard let progress else { return "\(minutes) мин в работе" }
+            guard let progress else { return L10n.tr("focus.working_for_min", "\(minutes)") }
             let step = min(progress.total, progress.completed + 1)
-            var parts = ["Шаг \(step) из \(progress.total)"]
+            var parts = [L10n.tr("focus.step_of", "\(step)", "\(progress.total)")]
             if let current = progress.currentTitle { parts.append(current) }
-            parts.append("\(minutes) мин")
+            parts.append(L10n.tr("focus.min", "\(minutes)"))
             return parts.joined(separator: " · ")
         case .idle:
-            return session.phase == .idle ? session.summary : "\(session.tool.shortName) закончил \(minutes) мин назад"
+            return session.phase == .idle ? session.summary : L10n.tr("focus.finished_min_ago", "\(session.tool.shortName)", "\(minutes)")
         case .unbound:
-            return "Нет активности \(minutes) мин"
+            return L10n.tr("focus.no_activity_for_min", "\(minutes)")
         case .parked:
-            return "На паузе · \(minutes) мин"
+            return L10n.tr("focus.paused_min", "\(minutes)")
         case .done:
-            return "Завершена"
+            return L10n.tr("focus.completed_20")
         }
     }
 }

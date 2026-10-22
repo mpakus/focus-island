@@ -58,7 +58,7 @@ struct SessionHubView: View {
                 .foregroundStyle(FocusStyle.link)
                 .accessibilityHidden(true)
             HStack(spacing: 4) {
-                Text("Новая сессия")
+                Text(L10n.tr("focus.new_session_348"))
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(FocusStyle.primaryText)
                 Text(Self.newSessionDetail(cwd: focus.sessionCWD(sessionID), prompt: focus.session(sessionID)?.initialUserPromptText))
@@ -67,7 +67,7 @@ struct SessionHubView: View {
             }
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
-            Button("В эту задачу") { focus.bind(sessionID: sessionID, taskID: task.id) }
+            Button(L10n.tr("focus.add_to_this_task")) { focus.bind(sessionID: sessionID, taskID: task.id) }
                 .buttonStyle(FocusButtonStyle(kind: .primary, height: 28))
             Button {
                 focus.skipBinding(sessionID: sessionID)
@@ -79,7 +79,7 @@ struct SessionHubView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(FocusStyle.secondaryText)
-            .accessibilityLabel("Без задачи")
+            .accessibilityLabel(L10n.tr("focus.no_task"))
         }
         .padding(.leading, 12)
         .padding(.trailing, 10)
@@ -115,7 +115,7 @@ struct SessionHubView: View {
                     onDismiss: { focus.dismissAllDoneSuggestion(taskID: task.id) }
                 )
             } else if rows.isEmpty {
-                Text("Нет сессий — открой Claude Code или Codex и добавь сессию сюда")
+                Text(L10n.tr("focus.no_sessions_open_claude_code_or_codex_and_add_a_session_here"))
                     .font(.system(size: 13))
                     .foregroundStyle(FocusStyle.secondaryText)
                     .padding(.vertical, 4)
@@ -150,10 +150,10 @@ struct SessionHubView: View {
                 .frame(width: 36, height: 36)
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Фокус не идёт")
+                    Text(L10n.tr("focus.focus_is_not_running"))
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(FocusStyle.primaryText)
-                    Text("Подсказки и отвлечения будут считаться по этой задаче")
+                    Text(L10n.tr("focus.hints_and_distractions_will_be_tracked_for_this_task"))
                         .font(FocusStyle.secondaryFont)
                         .foregroundStyle(FocusStyle.secondaryText)
                         .lineLimit(1)
@@ -206,7 +206,7 @@ struct SessionHubView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if isBreak {
-                Button("Закончить перерыв") { focus.finishBreakEarly() }
+                Button(L10n.tr("focus.end_break")) { focus.finishBreakEarly() }
                     .buttonStyle(FocusButtonStyle(kind: .secondary, height: 28))
             } else {
                 Button(PomodoroFormat.pauseTitle(isPaused: snapshot.isPaused)) {
@@ -217,7 +217,7 @@ struct SessionHubView: View {
                     }
                 }
                 .buttonStyle(FocusButtonStyle(kind: .secondary, height: 28))
-                Button("Стоп") { focus.stopPomodoro() }
+                Button(L10n.tr("focus.stop")) { focus.stopPomodoro() }
                     .buttonStyle(FocusButtonStyle(kind: .quiet, height: 28, horizontalPadding: 6))
             }
         }
@@ -234,7 +234,7 @@ struct SessionHubView: View {
 
     private func focusActions(_ task: FocusTask, hasSessions: Bool) -> some View {
         HStack(spacing: 8) {
-            Button("+ Добавить сессию") { focus.openTaskSessions(taskID: task.id) }
+            Button(L10n.tr("focus.add_session")) { focus.openTaskSessions(taskID: task.id) }
                 .buttonStyle(FocusButtonStyle(kind: hasSessions ? .secondary : .primary, height: 28))
             if !focus.waitingOutside.isEmpty {
                 Button(WaitingOutsideSection.buttonTitle(focus.waitingOutside.count, expanded: focus.waitingOutsideExpanded)) {
@@ -246,7 +246,7 @@ struct SessionHubView: View {
             Button {
                 focus.closeTask(taskID: task.id, showPicker: true)
             } label: {
-                Label("Закрыть задачу", systemImage: "checkmark")
+                Label(L10n.tr("focus.close_task"), systemImage: "checkmark")
             }
             .buttonStyle(FocusButtonStyle(kind: .done, height: 28))
         }
@@ -255,7 +255,7 @@ struct SessionHubView: View {
     private var header: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 1) {
-                Text("Задача")
+                Text(L10n.tr("focus.task_127"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
                 Text(Self.focusTitle(focus.currentTask?.title))
@@ -265,7 +265,7 @@ struct SessionHubView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if focus.currentTask != nil {
-                Button("Сменить") { focus.openPickTask() }
+                Button(L10n.tr("focus.change")) { focus.openPickTask() }
                     .buttonStyle(FocusButtonStyle(kind: .quiet, height: 28, horizontalPadding: 6))
             }
             if focus.currentTask != nil {
@@ -289,7 +289,7 @@ struct SessionHubView: View {
                     .contentShape(RoundedRectangle(cornerRadius: FocusStyle.buttonRadius))
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Настройки")
+            .accessibilityLabel(L10n.tr("focus.settings"))
         }
     }
 
@@ -370,9 +370,9 @@ struct SessionHubView: View {
             }
             buttons(row, primaryID: primaryID)
             if focus.session(row.id)?.codexMetadata?.isStale == true {
-                Button("Dismiss") { focus.dismissUnconfirmedCodexSession(row.id) }
+                Button(L10n.tr("ui.dismiss")) { focus.dismissUnconfirmedCodexSession(row.id) }
                     .buttonStyle(.borderless)
-                    .help("Stop monitoring this unconfirmed Codex session; keep its history")
+                    .help(L10n.tr("ui.stop_monitoring_this_unconfirmed_codex_session_keep_its_history"))
             }
             if unbindable, let taskID = row.taskID {
                 SessionMoreMenu(focus: focus, sessionID: row.id, taskID: taskID)
@@ -410,7 +410,7 @@ struct SessionHubView: View {
         case .unbound:
             Button(Self.actionTitle(group: row.group)) { focus.requestBinding(sessionID: row.id) }
                 .buttonStyle(FocusButtonStyle(kind: .secondary, height: 28))
-            Button("Закрыть") { focus.perform(.park(sessionID: row.id)) }
+            Button(L10n.tr("focus.close")) { focus.perform(.park(sessionID: row.id)) }
                 .buttonStyle(FocusButtonStyle(kind: .quiet, height: 28))
         case .parked:
             Button(Self.actionTitle(group: row.group)) { focus.perform(.unpark(sessionID: row.id)) }
@@ -431,12 +431,12 @@ struct SessionHubView: View {
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(FocusStyle.secondaryText)
                     .accessibilityHidden(true)
-                Text("Сессий нет — запусти claude в терминале")
+                Text(L10n.tr("focus.no_sessions_start_claude_code_or_codex_in_your_terminal"))
                     .font(.system(size: 13))
                     .foregroundStyle(FocusStyle.secondaryText)
                     .lineLimit(2)
             }
-            Button("Начать день") { focus.openDayStart() }
+            Button(L10n.tr("focus.start_the_day")) { focus.openDayStart() }
                 .buttonStyle(FocusButtonStyle(kind: .quiet, height: 28, horizontalPadding: 0))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -456,7 +456,7 @@ struct SessionHubView: View {
                 .foregroundStyle(FocusStyle.secondaryText)
                 .lineLimit(1)
             Spacer(minLength: 0)
-            Button("Сводка дня") {
+            Button(L10n.tr("focus.daily_summary")) {
                 NotificationCenter.default.post(name: .focusOpenBoard, object: nil, userInfo: Self.daySummaryUserInfo)
             }
             .buttonStyle(.plain)
@@ -486,14 +486,14 @@ struct SessionHubView: View {
     }
 
     nonisolated static func focusBlockCaption(_ count: Int) -> String {
-        "Сессии задачи · \(count)"
+        L10n.tr("focus.task_sessions", "\(count)")
     }
 
 
 
     nonisolated static func hereDetail(_ detail: String, isHere: Bool) -> String {
         guard isHere else { return detail }
-        return detail.isEmpty ? "ты здесь" : "ты здесь · \(detail)"
+        return detail.isEmpty ? L10n.tr("focus.you_are_here") : L10n.tr("focus.you_are_here_363", "\(detail)")
     }
 
     nonisolated static func liveCount(rows: [HubRow]) -> Int {
@@ -501,7 +501,7 @@ struct SessionHubView: View {
     }
 
     nonisolated static func headerCount(live: Int, limit: Int) -> String {
-        "\(FocusCoordinator.sessionCountText(live)) · держишь \(limit)"
+        L10n.tr("focus.your_limit", "\(FocusCoordinator.sessionCountText(live))", "\(limit)")
     }
 
     nonisolated static func groups(rows: [HubRow]) -> [HubSection] {
@@ -517,11 +517,11 @@ struct SessionHubView: View {
 
     nonisolated static func actionTitle(group: HubGroup) -> String {
         switch group {
-        case .waiting: "Ответить"
-        case .running, .idle: "Перейти"
-        case .review: "Посмотреть"
-        case .unbound: "Привязать"
-        case .parked, .done: "Вернуть"
+        case .waiting: L10n.tr("focus.reply")
+        case .running, .idle: L10n.tr("focus.open_session")
+        case .review: L10n.tr("focus.review")
+        case .unbound: L10n.tr("focus.link")
+        case .parked, .done: L10n.tr("focus.restore")
         }
     }
 
@@ -530,29 +530,29 @@ struct SessionHubView: View {
     }
 
     nonisolated static func focusTitle(_ title: String?) -> String {
-        guard let title, !title.isEmpty else { return "Не выбрана" }
+        guard let title, !title.isEmpty else { return L10n.tr("focus.not_selected_367") }
         return title
     }
 
     nonisolated static func durationLabel(seconds: TimeInterval) -> String {
         let minutes = max(0, Int(seconds / 60))
-        guard minutes >= 60 else { return "\(minutes) мин" }
+        guard minutes >= 60 else { return L10n.tr("focus.min", "\(minutes)") }
         let rest = minutes % 60
-        return rest == 0 ? "\(minutes / 60)ч" : "\(minutes / 60)ч \(rest)м"
+        return rest == 0 ? L10n.tr("focus.h_368", "\(minutes / 60)") : L10n.tr("focus.h_m", "\(minutes / 60)", "\(rest)")
     }
 
     nonisolated static func footerText(focusSeconds: TimeInterval, distractionSeconds: TimeInterval, pomodoroCount: Int = 0) -> String {
-        var parts = ["Сегодня: фокус \(durationLabel(seconds: focusSeconds))"]
-        if pomodoroCount > 0 { parts.append("помодоро \(pomodoroCount)") }
-        parts.append("отвлечения \(durationLabel(seconds: distractionSeconds))")
+        var parts = [L10n.tr("focus.today_focus", "\(durationLabel(seconds: focusSeconds))")]
+        if pomodoroCount > 0 { parts.append(L10n.tr("focus.pomodoros_371", "\(pomodoroCount)")) }
+        parts.append(L10n.tr("focus.distractions_372", "\(durationLabel(seconds: distractionSeconds))"))
         return parts.joined(separator: " · ")
     }
 
     nonisolated static func timerCaption(_ snapshot: PomodoroSnapshot, breakMinutes: Int, focusMinutes: Int) -> String {
         let planned = snapshot.plannedSeconds / 60
         switch snapshot.phase {
-        case .focus: return "Фокус \(snapshot.cycleIndex) из \(snapshot.cycle) · из \(planned) мин · потом перерыв \(breakMinutes) мин"
-        case .break: return "Перерыв · из \(planned) мин · потом фокус \(focusMinutes) мин"
+        case .focus: return L10n.tr("focus.focus_of_of_min_then_min_break", "\(snapshot.cycleIndex)", "\(snapshot.cycle)", "\(planned)", "\(breakMinutes)")
+        case .break: return L10n.tr("focus.break_of_min_then_min_focus", "\(planned)", "\(focusMinutes)")
         }
     }
 

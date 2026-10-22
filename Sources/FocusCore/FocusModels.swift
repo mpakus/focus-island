@@ -12,10 +12,10 @@ public enum BoardColumn: String, Codable, CaseIterable, Sendable, Identifiable {
 
     public var title: String {
         switch self {
-        case .backlog: "Backlog"
-        case .todo: "Todo"
-        case .inProgress: "In progress"
-        case .done: "Done"
+        case .backlog: L10n.tr("ui.backlog")
+        case .todo: L10n.tr("ui.todo_191")
+        case .inProgress: L10n.tr("ui.in_progress")
+        case .done: L10n.tr("ui.done")
         }
     }
 }

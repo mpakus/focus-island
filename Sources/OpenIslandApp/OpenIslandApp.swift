@@ -104,13 +104,13 @@ struct OpenIslandApp: App {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
-        Window("Open Island Settings", id: "settings") {
+        Window(L10n.tr("ui.open_island_settings"), id: "settings") {
             SettingsWindowContent(model: appDelegate.model)
         }
         .windowResizability(.contentMinSize)
         .commands {
             CommandGroup(replacing: .appSettings) {
-                Button("Settings…") {
+                Button(L10n.tr("common.settingsMenu")) {
                     openWindow(id: "settings")
                     appDelegate.model.showSettings()
                 }

@@ -87,7 +87,7 @@ struct SessionHubTests {
         let result = rows(sessions, records: [record("bound", taskId: "t1")], tasks: [task("t1")])
         #expect(Set(result.map(\.id)) == ["seen", "bound"])
         #expect(result.allSatisfy { $0.group == .idle })
-        #expect(result.first { $0.id == "seen" }?.detail == "Claude закончил 5 мин назад")
+        #expect(result.first { $0.id == "seen" }?.detail == "Claude finished 5 min ago")
     }
 
     @Test
@@ -110,7 +110,7 @@ struct SessionHubTests {
         var orphan = record("b", projectName: "")
         orphan.cwd = nil
         let none = rows([session("b", .running, cwd: nil, prompt: "hi")], records: [orphan])
-        #expect(none.first?.title == "без проекта · «hi»")
+        #expect(none.first?.title == "no project · «hi»")
     }
 
     @Test
@@ -119,7 +119,7 @@ struct SessionHubTests {
         let byID = Dictionary(uniqueKeysWithValues: result.map { ($0.id, $0) })
         #expect(byID["a"]?.group == .idle)
         #expect(byID["b"]?.group == .unbound)
-        #expect(byID["b"]?.detail == "Нет активности 30 мин")
+        #expect(byID["b"]?.detail == "No activity for 30 min")
     }
 
     @Test
@@ -147,7 +147,7 @@ struct SessionHubTests {
         let noPrompt = rows([session("c", .running)], records: [record("c")])
         #expect(noPrompt.first?.title == "proj")
         let noProject = rows([session("d", .running, cwd: nil, prompt: "hi")])
-        #expect(noProject.first?.title == "без проекта · «hi»")
+        #expect(noProject.first?.title == "no project · «hi»")
     }
 
     @Test
@@ -169,19 +169,19 @@ struct SessionHubTests {
         ]
         let sessions = [approval, question, session("d", .completed, updatedMinutes: -12), session("r", .running, updatedMinutes: -4, tasks: plan), session("p", .running, updatedMinutes: -2), session("x", .running, updatedMinutes: -1)]
         let byID = Dictionary(uniqueKeysWithValues: rows(sessions, records: [record("x", parked: true)], unseen: ["d"]).map { ($0.id, $0) })
-        #expect(byID["a"]?.detail == "Разрешение Bash(npm test) · ждёт 3 мин")
-        #expect(byID["q"]?.detail == "Какой вариант? · ждёт 7 мин")
-        #expect(byID["d"]?.detail == "Claude закончил 12 мин назад")
-        #expect(byID["r"]?.detail == "Шаг 2 из 3 · обновляет хендлеры · 4 мин")
+        #expect(byID["a"]?.detail == "Permission Bash(npm test) · waiting 3 min")
+        #expect(byID["q"]?.detail == "Какой вариант? · waiting 7 min")
+        #expect(byID["d"]?.detail == "Claude finished 12 min ago")
+        #expect(byID["r"]?.detail == "Step 2 of 3 · обновляет хендлеры · 4 min")
         #expect(byID["r"]?.progress?.total == 3)
-        #expect(byID["p"]?.detail == "2 мин в работе")
+        #expect(byID["p"]?.detail == "Working for 2 min")
         #expect(byID["a"]?.since == now(-3))
     }
 
     @Test
     func futureUpdatedAtClampsToZeroMinutes() {
         let result = rows([session("a", .completed, updatedMinutes: 5)], unseen: ["a"])
-        #expect(result.first?.detail == "Claude закончил 0 мин назад")
+        #expect(result.first?.detail == "Claude finished 0 min ago")
     }
 
     @Test
@@ -193,7 +193,7 @@ struct SessionHubTests {
         let result = rows([session("d", .completed), session("o", .running)], records: [done, orphan], tasks: [task("t1")])
         let byID = Dictionary(uniqueKeysWithValues: result.map { ($0.id, $0) })
         #expect(byID["d"]?.group == .done)
-        #expect(byID["d"]?.detail == "Завершена")
+        #expect(byID["d"]?.detail == "Completed")
         #expect(byID["o"]?.group != .done)
         #expect(HubGroup.done.isSettled && HubGroup.parked.isSettled && !HubGroup.idle.isSettled)
         #expect(OverloadPolicy.evaluate(rows: [byID["d"]!], limit: 0, taskID: byID["d"]!.taskID) == nil)

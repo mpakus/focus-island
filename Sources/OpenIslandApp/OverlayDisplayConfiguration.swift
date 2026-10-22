@@ -1,3 +1,4 @@
+import OpenIslandCore
 import AppKit
 
 struct OverlayDisplayOption: Identifiable, Equatable, Codable, Sendable {
@@ -68,7 +69,7 @@ enum OverlayDisplayPreferencePolicy {
         let unavailableOption = OverlayDisplayOption(
             id: selectionID,
             title: rememberedSelectionTitle ?? selectionID,
-            subtitle: "Unavailable",
+            subtitle: L10n.tr("ui.unavailable"),
             isAvailable: false
         )
         return OverlayDisplayPreferenceReconciliation(
@@ -99,7 +100,7 @@ struct OverlayPlacementDiagnostics {
     }
 
     var modeDescription: String {
-        mode.rawValue
+        mode == .notch ? L10n.tr("ui.notch_area") : L10n.tr("ui.top_bar_fallback")
     }
 
     var screenFrameDescription: String {
@@ -115,7 +116,7 @@ struct OverlayPlacementDiagnostics {
     }
 
     var safeAreaDescription: String {
-        "top \(Int(safeAreaInsets.top)) · left \(Int(safeAreaInsets.left)) · bottom \(Int(safeAreaInsets.bottom)) · right \(Int(safeAreaInsets.right))"
+        L10n.tr("ui.top_left_bottom_right", "\(Int(safeAreaInsets.top))", "\(Int(safeAreaInsets.left))", "\(Int(safeAreaInsets.bottom))", "\(Int(safeAreaInsets.right))")
     }
 
     private static func format(_ rect: NSRect) -> String {
@@ -189,14 +190,14 @@ enum OverlayDisplayResolver {
 
         if preferredScreenID != nil {
             if let notchScreen = screens.first(where: isNotched) {
-                return (notchScreen, "manual missing, auto fallback")
+                return (notchScreen, L10n.tr("ui.manual_missing_auto_fallback"))
             }
 
             if let mainScreen = NSScreen.main {
-                return (mainScreen, "manual missing, main fallback")
+                return (mainScreen, L10n.tr("ui.manual_missing_main_fallback"))
             }
 
-            return (screens[0], "manual missing, first-display fallback")
+            return (screens[0], L10n.tr("ui.manual_missing_first_display_fallback"))
         }
 
         if let notchScreen = screens.first(where: isNotched) {
@@ -221,7 +222,7 @@ enum OverlayDisplayResolver {
     }
 
     private static func screenKindDescription(for screen: NSScreen) -> String {
-        placementMode(for: screen) == .notch ? "Built-in notch" : "Top-bar fallback"
+        placementMode(for: screen) == .notch ? L10n.tr("ui.built_in_notch") : L10n.tr("ui.top_bar_fallback_130")
     }
 
     /// Returns a string that identifies the physical display backing `screen`

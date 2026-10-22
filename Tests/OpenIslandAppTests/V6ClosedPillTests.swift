@@ -93,9 +93,9 @@ struct V6ClosedPillTests {
     func leftSlotProgressForSingleLive() {
         let progress = PlanProgress(completed: 2, total: 7, currentTitle: "x")
         let rows = [hubRow("a", .running, progress: progress), hubRow("p", .parked)]
-        #expect(FocusEars.leftSlot(rows: rows) == .progress("шаг 3/7"))
+        #expect(FocusEars.leftSlot(rows: rows) == .progress("step 3/7"))
         let finished = PlanProgress(completed: 7, total: 7, currentTitle: nil)
-        #expect(FocusEars.leftSlot(rows: [hubRow("a", .running, progress: finished)]) == .progress("шаг 7/7"))
+        #expect(FocusEars.leftSlot(rows: [hubRow("a", .running, progress: finished)]) == .progress("step 7/7"))
     }
 
     @Test
@@ -109,8 +109,8 @@ struct V6ClosedPillTests {
     func rightSlotPrefersToastThenStalledThenTask() {
         let stalled = StalledBadge(title: "Webhook retries", minutes: 15)
         #expect(FocusEars.rightSlot(toast: "Промпт в буфере", stalled: stalled, taskTitle: "T", elapsedMinutes: 4) == .alert("Промпт в буфере"))
-        #expect(FocusEars.rightSlot(toast: nil, stalled: stalled, taskTitle: "T", elapsedMinutes: 4) == .alert("Webhook retries ждёт 15м"))
-        #expect(FocusEars.rightSlot(toast: nil, stalled: nil, taskTitle: "T", elapsedMinutes: 4) == .text("T · 4м"))
+        #expect(FocusEars.rightSlot(toast: nil, stalled: stalled, taskTitle: "T", elapsedMinutes: 4) == .alert("Webhook retries waiting 15m"))
+        #expect(FocusEars.rightSlot(toast: nil, stalled: nil, taskTitle: "T", elapsedMinutes: 4) == .text("T · 4m"))
         #expect(FocusEars.rightSlot(toast: nil, stalled: nil, taskTitle: "T", elapsedMinutes: 0) == .text("T"))
         #expect(FocusEars.rightSlot(toast: nil, stalled: nil, taskTitle: "T", elapsedMinutes: nil) == .text("T"))
         #expect(FocusEars.rightSlot(toast: nil, stalled: nil, taskTitle: nil, elapsedMinutes: 4) == nil)
@@ -120,7 +120,7 @@ struct V6ClosedPillTests {
     func alertOverridesCountAndAgentsButNotNone() {
         let stalled = StalledBadge(title: "W", minutes: 12)
         for pref in [IslandRightSlot.currentTask, .count, .agents] {
-            #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: stalled) == .alert("W ждёт 12м"))
+            #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: stalled) == .alert("W waiting 12m"))
             #expect(FocusEars.alertOverride(preference: pref, toast: "T", stalled: stalled) == .alert("T"))
             #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: nil) == nil)
         }
@@ -133,12 +133,12 @@ struct V6ClosedPillTests {
         let end = FocusCard.pomodoroEnd(pomodoroID: "p")
         let breakEnd = FocusCard.breakEnd(pomodoroID: "p")
         for pref in [IslandRightSlot.currentTask, .count, .agents] {
-            #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: stalled, card: end) == .alert("☕ Перерыв 10"))
-            #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: stalled, card: end, breakCountdown: 4) == .alert("☕ Перерыв через 4"))
-            #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: nil, card: end, breakMinutes: 15) == .alert("☕ Перерыв 15"))
+            #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: stalled, card: end) == .alert("☕ Break 10"))
+            #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: stalled, card: end, breakCountdown: 4) == .alert("☕ Break in 4"))
+            #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: nil, card: end, breakMinutes: 15) == .alert("☕ Break 15"))
             #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: nil, card: breakEnd, focusMinutes: 50) == .startFocus(50))
             #expect(FocusEars.alertOverride(preference: pref, toast: "T", stalled: nil, card: end) == .alert("T"))
-            #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: stalled, card: .dayStart) == .alert("W ждёт 12м"))
+            #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: stalled, card: .dayStart) == .alert("W waiting 12m"))
             #expect(FocusEars.alertOverride(preference: pref, toast: nil, stalled: nil, card: .dayStart) == nil)
         }
         #expect(FocusEars.alertOverride(preference: .none, toast: nil, stalled: nil, card: end) == nil)
@@ -148,8 +148,8 @@ struct V6ClosedPillTests {
 
     @Test
     func newSessionWithoutTaskShowsQuietHint() {
-        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 3, isOnBreak: false, runningCount: 0, newSessionPending: true) == .hint("✦ Новая сессия · задача?"))
-        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 3, isOnBreak: false, runningCount: 0) == .hint("Выбрать задачу · Todo 3"))
+        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 3, isOnBreak: false, runningCount: 0, newSessionPending: true) == .hint("✦ New session · task?"))
+        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 3, isOnBreak: false, runningCount: 0) == .hint("Choose task · To do 3"))
         #expect(FocusEars.taskSlot(taskTitle: "A", elapsedMinutes: 5, todoCount: 0, isOnBreak: false, runningCount: 0, focusMinutes: 50, newSessionPending: true) == .startFocus(50))
     }
 
@@ -176,17 +176,17 @@ struct V6ClosedPillTests {
     func pomodoroEarTextForFocusAndBreak() {
         #expect(FocusEars.pomodoroText(PomodoroEar(phase: .focus, remainingSeconds: 1122, progress: 0.25, isPaused: false)) == "18:42")
         #expect(FocusEars.pomodoroText(PomodoroEar(phase: .focus, remainingSeconds: 478, progress: 0.7, isPaused: true)) == "07:58")
-        #expect(FocusEars.pomodoroText(PomodoroEar(phase: .break, remainingSeconds: 192, progress: 0.3, isPaused: false)) == "Перерыв 3:12")
+        #expect(FocusEars.pomodoroText(PomodoroEar(phase: .break, remainingSeconds: 192, progress: 0.3, isPaused: false)) == "Break 3:12")
     }
 
     @Test
     func taskEarShowsHintWithoutTaskAndClaudeWorkingOnBreak() {
-        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 3, isOnBreak: false, runningCount: 0) == .hint("Выбрать задачу · Todo 3"))
-        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 0, isOnBreak: false, runningCount: 2) == .hint("Доска пуста"))
-        #expect(FocusEars.taskSlot(taskTitle: "T", elapsedMinutes: 4, todoCount: 3, isOnBreak: false, runningCount: 1) == .text("T · 4м"))
-        #expect(FocusEars.taskSlot(taskTitle: "T", elapsedMinutes: 4, todoCount: 3, isOnBreak: true, runningCount: 1) == .status("Claude работает · 1"))
+        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 3, isOnBreak: false, runningCount: 0) == .hint("Choose task · To do 3"))
+        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 0, isOnBreak: false, runningCount: 2) == .hint("Board is empty"))
+        #expect(FocusEars.taskSlot(taskTitle: "T", elapsedMinutes: 4, todoCount: 3, isOnBreak: false, runningCount: 1) == .text("T · 4m"))
+        #expect(FocusEars.taskSlot(taskTitle: "T", elapsedMinutes: 4, todoCount: 3, isOnBreak: true, runningCount: 1) == .status("Agent working · 1"))
         #expect(FocusEars.taskSlot(taskTitle: "T", elapsedMinutes: nil, todoCount: 3, isOnBreak: true, runningCount: 0) == .text("T"))
-        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 2, isOnBreak: true, runningCount: 2) == .status("Claude работает · 2"))
+        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 2, isOnBreak: true, runningCount: 2) == .status("Agent working · 2"))
     }
 
     @Test
@@ -216,7 +216,7 @@ struct V6ClosedPillTests {
         let combined = V6LeftSlotView.intrinsicWidth(of: .pomodoro(focusEar, base: summary))
         #expect(combined == timerOnly + 8 + V6LeftSlotView.intrinsicWidth(of: summary))
         let breakEar = PomodoroEar(phase: .break, remainingSeconds: 192, progress: 0.3, isPaused: false)
-        #expect(V6LeftSlotView.intrinsicWidth(of: .pomodoro(breakEar, base: nil)) == CGFloat(12) * 7)
+        #expect(V6LeftSlotView.intrinsicWidth(of: .pomodoro(breakEar, base: nil)) == CGFloat(10) * 7)
         #expect(V6ClosedPill.macbookEarWidth(for: nil, leftSlot: .pomodoro(focusEar, base: summary)) == combined + 30 + 16)
     }
 
@@ -241,9 +241,9 @@ struct V6ClosedPillTests {
     func taskEarHidesHintWhileTasklessPomodoroRuns() {
         #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 3, isOnBreak: false, runningCount: 0, pomodoroActive: true) == nil)
         #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 3, isOnBreak: true, runningCount: 0, pomodoroActive: true) == nil)
-        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 3, isOnBreak: true, runningCount: 1, pomodoroActive: true) == .status("Claude работает · 1"))
+        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 3, isOnBreak: true, runningCount: 1, pomodoroActive: true) == .status("Agent working · 1"))
         #expect(FocusEars.taskSlot(taskTitle: "T", elapsedMinutes: nil, todoCount: 3, isOnBreak: false, runningCount: 0, pomodoroActive: true) == .text("T"))
-        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 3, isOnBreak: false, runningCount: 0, pomodoroActive: false) == .hint("Выбрать задачу · Todo 3"))
+        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 3, isOnBreak: false, runningCount: 0, pomodoroActive: false) == .hint("Choose task · To do 3"))
     }
 
     private func snapshot(_ phase: PomodoroPhase, remaining: Int, progress: Double) -> PomodoroSnapshot {
@@ -258,12 +258,12 @@ struct V6ClosedPillTests {
     func taskWithoutTimerOffersFocusStartInEar() {
         #expect(FocusEars.taskSlot(taskTitle: "Воронка", elapsedMinutes: nil, todoCount: 0, isOnBreak: false, runningCount: 0, pomodoroActive: false, focusMinutes: 50) == .startFocus(50))
         #expect(FocusEars.taskSlot(taskTitle: "Воронка", elapsedMinutes: nil, todoCount: 0, isOnBreak: false, runningCount: 0, pomodoroActive: true, focusMinutes: 50) == .text("Воронка"))
-        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 0, isOnBreak: false, runningCount: 0, inProgressCount: 2) == .hint("Выбрать задачу"))
-        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 0, isOnBreak: false, runningCount: 0, inProgressCount: 0) == .hint("Доска пуста"))
+        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 0, isOnBreak: false, runningCount: 0, inProgressCount: 2) == .hint("Choose task"))
+        #expect(FocusEars.taskSlot(taskTitle: nil, elapsedMinutes: nil, todoCount: 0, isOnBreak: false, runningCount: 0, inProgressCount: 0) == .hint("Board is empty"))
         #expect(FocusEars.clickStartsFocus(rightSlot: .startFocus(50)) == 50)
         #expect(FocusEars.clickStartsFocus(rightSlot: .hint("Выбрать задачу")) == nil)
         #expect(!FocusEars.clickOpensPickTask(rightSlot: .startFocus(50)))
-        #expect(FocusEars.startFocusText(50) == "▶ Фокус 50")
+        #expect(FocusEars.startFocusText(50) == "▶ Focus 50")
     }
 
     @Test
@@ -277,7 +277,7 @@ struct V6ClosedPillTests {
         }
         #expect(base == .waitingOutside(2, quiet: true))
         #expect(FocusEars.leftSlot(preference: .currentTask, rows: rows, pomodoro: nil, waitingOutside: 0) == nil)
-        #expect(FocusEars.waitingOutsideText(2, quiet: false) == "2 ждут")
+        #expect(FocusEars.waitingOutsideText(2, quiet: false) == "2 waiting")
         #expect(FocusEars.waitingOutsideText(2, quiet: true) == "2")
         #expect(FocusEars.clickShowsWaitingOutside(leftSlot: .waitingOutside(2, quiet: false)))
         #expect(!FocusEars.clickShowsWaitingOutside(leftSlot: nil))

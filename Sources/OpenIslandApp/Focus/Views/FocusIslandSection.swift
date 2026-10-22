@@ -90,7 +90,7 @@ struct FocusIslandSection: View {
     }
 
     nonisolated static func boardButtonTitle(_ hotKey: BoardHotKey) -> String {
-        hotKey == .off ? "Доска" : "Доска " + hotKey.title
+        hotKey == .off ? L10n.tr("focus.board") : L10n.tr("focus.board_281") + hotKey.title
     }
 }
 
@@ -109,7 +109,7 @@ struct ClosedTaskBanner: View {
                 .foregroundStyle(FocusStyle.tagText)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Button("Вернуть", action: onReopen)
+            Button(L10n.tr("focus.restore"), action: onReopen)
                 .buttonStyle(FocusButtonStyle(kind: .quiet, height: 24, horizontalPadding: 6))
         }
         .padding(.horizontal, 12)
@@ -118,6 +118,6 @@ struct ClosedTaskBanner: View {
     }
 
     nonisolated static func text(_ title: String) -> String {
-        "«\(title)» закрыта · перенесена в Done"
+        L10n.tr("focus.closed_moved_to_done", "\(title)")
     }
 }

@@ -124,8 +124,8 @@ struct PlanProgressBar: View {
         .frame(width: width, height: 4)
         .frame(maxWidth: width == nil ? .infinity : nil)
         .accessibilityElement()
-        .accessibilityLabel("Прогресс плана")
-        .accessibilityValue("\(progress.completed) из \(progress.total)")
+        .accessibilityLabel(L10n.tr("focus.plan_progress"))
+        .accessibilityValue(L10n.tr("focus.of", "\(progress.completed)", "\(progress.total)"))
     }
 }
 
@@ -236,7 +236,7 @@ struct CriteriaChecklist: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(criterion.text)
-                    .accessibilityValue(criterion.done ? "выполнено" : "не выполнено")
+                    .accessibilityValue(criterion.done ? L10n.tr("focus.completed_316") : L10n.tr("focus.not_completed"))
                     Text(criterion.text)
                         .font(.system(size: 13))
                         .foregroundStyle(criterion.done ? FocusStyle.secondaryText : FocusStyle.primaryText)
@@ -249,12 +249,12 @@ struct CriteriaChecklist: View {
                         Image(systemName: "xmark").font(.system(size: 10, weight: .semibold)).foregroundStyle(FocusStyle.captionText)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Удалить пункт")
+                    .accessibilityLabel(L10n.tr("focus.delete_item"))
                 }
             }
             if allowsAdd {
                 HStack(spacing: 10) {
-                    TextField("+ добавить пункт", text: $newText)
+                    TextField(L10n.tr("focus.add_item"), text: $newText)
                         .textFieldStyle(.plain)
                         .font(.system(size: 13))
                         .onSubmit(add)

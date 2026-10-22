@@ -246,7 +246,7 @@ struct FocusCoordinatorCardTests {
         await c.performAsync(.sendQueuedPrompt(sessionID: "s1"), now: t0.addingTimeInterval(40))
         #expect(h.clipboard.items == ["дальше"])
         #expect(h.jumps.ids == ["s1"])
-        #expect(c.toast == "Промпт в буфере — вставь ⌘V")
+        #expect(c.toast == "Prompt copied — paste with ⌘V")
         #expect(c.queuedPrompt(sessionID: "s1")?.text == "дальше")
         #expect(c.card == nil)
         c.tick(now: t0.addingTimeInterval(43))

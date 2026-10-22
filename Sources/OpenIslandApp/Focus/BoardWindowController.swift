@@ -1,3 +1,4 @@
+import OpenIslandCore
 import AppKit
 import SwiftUI
 
@@ -7,6 +8,10 @@ final class BoardWindowController {
 
     private var window: NSWindow?
     private let state = BoardWindowState()
+
+    func refreshTitle() {
+        window?.title = L10n.tr("focus.focus_island_board")
+    }
 
     func show(focus: FocusCoordinator, tab: BoardTab? = nil) {
         if let tab {
@@ -19,7 +24,7 @@ final class BoardWindowController {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "Focus Island — доска"
+            window.title = L10n.tr("focus.focus_island_board")
             window.isReleasedWhenClosed = false
             window.contentView = NSHostingView(rootView: BoardRootView(focus: focus, state: state))
             window.center()
@@ -27,6 +32,7 @@ final class BoardWindowController {
             self.window = window
         }
         focus.boardDidAppear()
+        refreshTitle()
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
     }

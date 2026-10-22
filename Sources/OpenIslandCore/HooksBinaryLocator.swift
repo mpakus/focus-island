@@ -26,6 +26,7 @@ public enum ManagedHooksBinary {
             at: resolvedDestinationURL.deletingLastPathComponent(),
             withIntermediateDirectories: true
         )
+        try installResources(nextTo: resolvedDestinationURL, fileManager: fileManager)
 
         if resolvedSourceURL != resolvedDestinationURL {
             if fileManager.fileExists(atPath: resolvedDestinationURL.path) {
@@ -49,6 +50,8 @@ public enum ManagedHooksBinary {
         guard fileManager.fileExists(atPath: installedURL.path) else {
             return false
         }
+        // Translations can change even when the helper binary is identical.
+        try installResources(nextTo: installedURL, fileManager: fileManager)
 
         let sourceData = try Data(contentsOf: sourceURL)
         let installedData = try Data(contentsOf: installedURL)
@@ -60,6 +63,26 @@ public enum ManagedHooksBinary {
         try fileManager.copyItem(at: sourceURL, to: installedURL)
         try fileManager.setAttributes([.posixPermissions: 0o755], ofItemAtPath: installedURL.path)
         return true
+    }
+
+    private static func installResources(nextTo binaryURL: URL, fileManager: FileManager) throws {
+        let source = ResourceBundle.bundle.bundleURL.standardizedFileURL
+        let destination = binaryURL.deletingLastPathComponent()
+            .appendingPathComponent(ResourceBundle.name + ".bundle").standardizedFileURL
+        guard source != destination else { return }
+        guard let files = fileManager.enumerator(at: source, includingPropertiesForKeys: [.isRegularFileKey]) else {
+            throw CocoaError(.fileReadUnknown)
+        }
+        for case let file as URL in files {
+            guard try file.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true else { continue }
+            let relativePath = String(file.path.dropFirst(source.path.count + 1))
+            let target = destination.appendingPathComponent(relativePath)
+            let data = try Data(contentsOf: file)
+            if (try? Data(contentsOf: target)) == data { continue }
+            try fileManager.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+            // Replace each catalog atomically so a concurrent hook never reads a partial file.
+            try data.write(to: target, options: .atomic)
+        }
     }
 
     private static func installDirectory(fileManager: FileManager) -> URL {

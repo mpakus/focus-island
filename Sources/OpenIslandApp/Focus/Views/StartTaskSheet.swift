@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -6,15 +7,15 @@ enum PomodoroFormat {
     nonisolated static let breakChoices = [5, 10, 15, 20]
 
     nonisolated static func choiceTitle(_ minutes: Int, defaultMinutes: Int) -> String {
-        minutes == defaultMinutes ? "\(minutes) мин · по умолчанию" : "\(minutes) мин"
+        minutes == defaultMinutes ? L10n.tr("focus.min_default", "\(minutes)") : L10n.tr("focus.min", "\(minutes)")
     }
 
     nonisolated static func startFocusTitle(minutes: Int) -> String {
-        "▶ Начать фокус · \(minutes) мин"
+        L10n.tr("focus.start_focus_min", "\(minutes)")
     }
 
     nonisolated static func breakButtonTitle(minutes: Int) -> String {
-        "Перерыв \(minutes) мин"
+        L10n.tr("focus.min_break", "\(minutes)")
     }
 
     nonisolated static func clampFocus(_ minutes: Int) -> Int {
@@ -27,45 +28,45 @@ enum PomodoroFormat {
     }
 
     nonisolated static func remainingCaption(plannedSeconds: Int) -> String {
-        "осталось из \(plannedSeconds / 60) мин"
+        L10n.tr("focus.remaining_of_min", "\(plannedSeconds / 60)")
     }
 
     nonisolated static func cycleCaption(index: Int, cycle: Int) -> String {
-        "Помодоро \(index) из \(cycle)"
+        L10n.tr("focus.pomodoro_of", "\(index)", "\(cycle)")
     }
 
     nonisolated static func todayCaption(seconds: TimeInterval) -> String? {
         guard seconds > 0 else { return nil }
-        return "сегодня по задаче \(FocusText.roundedUpMinutes(seconds)) мин"
+        return L10n.tr("focus.min_on_this_task_today", "\(FocusText.roundedUpMinutes(seconds))")
     }
 
     nonisolated static func breakCaption(minutes: Int) -> String {
-        "потом перерыв \(minutes) мин"
+        L10n.tr("focus.then_min_break", "\(minutes)")
     }
 
     nonisolated static func startButtonTitle(minutes: Int?) -> String {
-        guard let minutes else { return "Начать" }
-        return "Начать · \(minutes) мин"
+        guard let minutes else { return L10n.tr("focus.start") }
+        return L10n.tr("focus.start_min", "\(minutes)")
     }
 
     nonisolated static func quickStartTitle(minutes: Int) -> String {
-        "Начать \(minutes) мин"
+        L10n.tr("focus.start_min_382", "\(minutes)")
     }
 
     nonisolated static func pauseTitle(isPaused: Bool) -> String {
-        isPaused ? "Продолжить" : "Пауза"
+        isPaused ? L10n.tr("focus.resume") : L10n.tr("focus.pause_383")
     }
 
     nonisolated static func sessionTag(_ session: BindableSession) -> String? {
-        session.boundTaskTitle.map { "у задачи «\($0)»" }
+        session.boundTaskTitle.map { L10n.tr("focus.for_task", "\($0)") }
     }
 
     nonisolated static func activeElsewhereCaption(taskTitle: String?) -> String {
-        guard let taskTitle else { return "Сейчас идёт помодоро" }
-        return "Сейчас идёт помодоро «\(taskTitle)»"
+        guard let taskTitle else { return L10n.tr("focus.a_pomodoro_is_running") }
+        return L10n.tr("focus.pomodoro_is_running", "\(taskTitle)")
     }
 
-    nonisolated static let replaceButtonTitle = "Заменить"
+    nonisolated static var replaceButtonTitle: String { L10n.tr("focus.replace") }
 
     nonisolated static func replaceCaption(pomodoro: PomodoroSnapshot?, startingTaskID: String) -> String? {
         guard let pomodoro, pomodoro.taskID != startingTaskID else { return nil }
@@ -87,11 +88,11 @@ enum StartTimerChoice: CaseIterable, Hashable, Sendable {
 
     var title: String {
         switch self {
-        case .none: "Без таймера"
-        case .m25: "25 мин"
-        case .m50: "50 мин"
-        case .m90: "90 мин"
-        case .custom: "Своё…"
+        case .none: L10n.tr("focus.without_a_timer")
+        case .m25: L10n.tr("focus.25_min")
+        case .m50: L10n.tr("focus.50_min")
+        case .m90: L10n.tr("focus.90_min")
+        case .custom: L10n.tr("focus.custom_391")
         }
     }
 
@@ -161,9 +162,9 @@ struct StartTaskSheet: View {
             Button(PomodoroFormat.replaceButtonTitle, role: .destructive) {
                 finish(action, minutes: minutes)
             }
-            Button("Отмена", role: .cancel) {}
+            Button(L10n.tr("focus.cancel_207"), role: .cancel) {}
         } message: { _ in
-            Text("Текущее помодоро будет остановлено, фокусной станет эта задача.")
+            Text(L10n.tr("focus.the_current_pomodoro_will_stop_and_this_task_will_become_the_focus"))
         }
     }
 
@@ -175,7 +176,7 @@ struct StartTaskSheet: View {
         HStack(spacing: 6) {
             Image(systemName: "timer")
                 .font(.system(size: 12))
-            Text("\(caption) — «Начать» его остановит")
+            Text(L10n.tr("focus.start_will_stop_it", "\(caption)"))
                 .font(FocusStyle.secondaryFont)
                 .lineLimit(2)
         }
@@ -198,7 +199,7 @@ struct StartTaskSheet: View {
 
     private func header(_ task: FocusTask?) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            FocusSectionCaption("Задача в работе", color: FocusStyle.working)
+            FocusSectionCaption(L10n.tr("focus.task_in_progress"), color: FocusStyle.working)
             Text(task?.title ?? "")
                 .font(FocusStyle.titleFont)
                 .foregroundStyle(FocusStyle.primaryText)
@@ -218,9 +219,9 @@ struct StartTaskSheet: View {
 
     private var sessionsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            FocusSectionCaption("Привязать открытые сессии")
+            FocusSectionCaption(L10n.tr("focus.link_open_sessions"))
             if sessions.isEmpty {
-                Text("Открытых сессий нет")
+                Text(L10n.tr("focus.no_open_sessions"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
             } else {
@@ -276,12 +277,12 @@ struct StartTaskSheet: View {
             .contentShape(RoundedRectangle(cornerRadius: 9))
         }
         .buttonStyle(.plain)
-        .accessibilityValue(isOn ? "выбрано" : "не выбрано")
+        .accessibilityValue(isOn ? L10n.tr("focus.selected") : L10n.tr("focus.not_selected"))
     }
 
     private func timerSection(minutes: Int?) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            FocusSectionCaption("Фокус-таймер · необязательно")
+            FocusSectionCaption(L10n.tr("focus.focus_timer_optional"))
             HStack(spacing: 0) {
                 ForEach(StartTimerChoice.allCases, id: \.self) { item in
                     Button {
@@ -303,7 +304,7 @@ struct StartTaskSheet: View {
             .background(RoundedRectangle(cornerRadius: 8).fill(FocusStyle.segmentFill))
             if choice == .custom {
                 Stepper(value: $customMinutes, in: FocusSettings.pomodoroFocusRange, step: 5) {
-                    Text("\(customMinutes) мин")
+                    Text(L10n.tr("focus.min", "\(customMinutes)"))
                         .font(.system(size: 13))
                         .foregroundStyle(FocusStyle.primaryText)
                         .monospacedDigit()
@@ -320,7 +321,7 @@ struct StartTaskSheet: View {
     private func buttons(minutes: Int?) -> some View {
         HStack(spacing: 8) {
             Spacer()
-            Button("Позже") { dismiss() }
+            Button(L10n.tr("focus.later")) { dismiss() }
                 .buttonStyle(FocusButtonStyle(kind: .secondary))
             Button(PomodoroFormat.startButtonTitle(minutes: minutes)) {
                 request(.start, minutes: minutes)

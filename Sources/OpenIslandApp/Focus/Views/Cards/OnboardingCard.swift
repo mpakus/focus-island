@@ -43,7 +43,7 @@ struct OnboardingCard: View {
             StepDots(current: 1)
             VStack(alignment: .leading, spacing: 3) {
                 Text("Focus Island").font(FocusStyle.titleFont)
-                Text("Держит в голове сессии Claude Code, Codex и задачи, чтобы ты не держал. Подключись — и заведём первую задачу.")
+                Text(L10n.tr("focus.keep_track_of_claude_code_and_codex_sessions_and_tasks_connect_an_agen"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
                     .lineLimit(3)
@@ -51,20 +51,20 @@ struct OnboardingCard: View {
             }
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Claude Code и Codex").font(.system(size: 13, weight: .semibold)).lineLimit(1)
-                    Text("Выбери агентов в Setup. Там можно установить, проверить и удалить хуки.")
+                    Text(L10n.tr("focus.claude_code_and_codex")).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                    Text(L10n.tr("focus.choose_agents_in_setup_install_check_or_remove_their_hooks_there"))
                         .font(FocusStyle.secondaryFont)
                         .foregroundStyle(FocusStyle.secondaryText)
                         .lineLimit(2)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Button("Подключить", action: configureAgents)
+                Button(L10n.tr("focus.connect"), action: configureAgents)
                     .buttonStyle(FocusButtonStyle(kind: .primary))
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .background(RoundedRectangle(cornerRadius: FocusStyle.cardRadius).fill(FocusStyle.surface))
-            footer(caption: "Всё хранится только на этом Mac", buttonTitle: "Позже")
+            footer(caption: L10n.tr("focus.everything_stays_on_this_mac"), buttonTitle: L10n.tr("focus.later"))
         }
     }
 
@@ -74,13 +74,13 @@ struct OnboardingCard: View {
         return VStack(alignment: .leading, spacing: 12) {
             StepDots(current: 2)
             VStack(alignment: .leading, spacing: 3) {
-                Text("Над чем работаешь сейчас?").font(FocusStyle.titleFont)
-                Text("Одна задача в фокусе. Остров будет держать её сессии и время, а ты — только код.")
+                Text(L10n.tr("focus.what_are_you_working_on")).font(FocusStyle.titleFont)
+                Text(L10n.tr("focus.one_task_in_focus_island_tracks_its_sessions_and_time_so_you_can_focus"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
                     .lineLimit(2)
             }
-            TextField("Например: перевести auth на токены", text: $taskText)
+            TextField(L10n.tr("focus.for_example_switch_auth_to_tokens"), text: $taskText)
                 .textFieldStyle(.plain)
                 .font(.system(size: 15))
                 .padding(.horizontal, 14)
@@ -88,7 +88,7 @@ struct OnboardingCard: View {
                 .background(RoundedRectangle(cornerRadius: 10).fill(FocusStyle.surface))
                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(typing ? FocusStyle.link : FocusStyle.hairline, lineWidth: 1))
                 .onSubmit { start(candidates: candidates) }
-                .accessibilityLabel("Название задачи")
+                .accessibilityLabel(L10n.tr("focus.task_name"))
                 .onChange(of: typing) { _, isTyping in
                     if isTyping, anchorID == nil {
                         selected = OnboardingCard.preselection(candidates: candidates, anchorID: nil)
@@ -96,41 +96,41 @@ struct OnboardingCard: View {
                 }
             if typing {
                 if !candidates.isEmpty {
-                    FocusSectionCaption("Сессии в эту задачу")
+                    FocusSectionCaption(L10n.tr("focus.sessions_for_this_task"))
                     ForEach(candidates) { candidate in
                         candidateToggle(candidate)
                     }
                 }
                 HStack(spacing: 8) {
-                    Text("Готово, когда")
+                    Text(L10n.tr("focus.done_when"))
                         .font(FocusStyle.secondaryFont)
                         .foregroundStyle(FocusStyle.secondaryText)
                         .fixedSize()
-                    TextField("необязательно", text: $criterionText)
+                    TextField(L10n.tr("focus.optional"), text: $criterionText)
                         .textFieldStyle(.plain)
                         .font(.system(size: 12))
                         .onSubmit { start(candidates: candidates) }
-                        .accessibilityLabel("Готово, когда")
+                        .accessibilityLabel(L10n.tr("focus.done_when"))
                 }
                 .padding(.horizontal, 10)
                 .frame(height: 32)
                 .background(RoundedRectangle(cornerRadius: 8).fill(FocusStyle.surface))
                 HStack(spacing: 8) {
-                    Button("Пропустить") { focus.dismissOnboarding() }
+                    Button(L10n.tr("focus.skip")) { focus.dismissOnboarding() }
                         .buttonStyle(FocusButtonStyle(kind: .quiet, height: 28, horizontalPadding: 6))
                     Spacer(minLength: 0)
-                    Button("Начать задачу") { start(candidates: candidates) }
+                    Button(L10n.tr("focus.start_task")) { start(candidates: candidates) }
                         .buttonStyle(FocusButtonStyle(kind: .primary, height: 34, horizontalPadding: 18))
                         .keyboardShortcut(.defaultAction)
                 }
             } else {
                 if !candidates.isEmpty {
-                    FocusSectionCaption("Или продолжи то, что уже идёт")
+                    FocusSectionCaption(L10n.tr("focus.or_continue_work_already_in_progress"))
                     ForEach(candidates.prefix(FocusCoordinator.firstTaskSuggestionLimit)) { candidate in
                         suggestionRow(candidate, candidates: candidates)
                     }
                 }
-                footer(caption: "Автоматизацию macOS спросит сам, когда впервые перейдёшь в сессию", buttonTitle: "Пропустить")
+                footer(caption: L10n.tr("focus.macos_will_ask_for_automation_permission_the_first_time_you_open_a_ses"), buttonTitle: L10n.tr("focus.skip"))
             }
         }
     }
@@ -158,10 +158,10 @@ struct OnboardingCard: View {
                 .background(RoundedRectangle(cornerRadius: FocusStyle.smallRadius).fill(FocusStyle.working.opacity(0.12)))
             }
             VStack(alignment: .leading, spacing: 1) {
-                Text("В фокусе")
+                Text(L10n.tr("focus.in_focus_126"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
-                Text(task?.title ?? "Задача")
+                Text(task?.title ?? L10n.tr("focus.task_127"))
                     .font(FocusStyle.titleFont)
                     .lineLimit(2)
             }
@@ -179,18 +179,18 @@ struct OnboardingCard: View {
                     }
                     focus.dismissOnboarding()
                 } label: {
-                    Text("▶ Фокус \(minutes) минут")
+                    Text(L10n.tr("focus.focus_for_minutes", "\(minutes)"))
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(FocusButtonStyle(kind: .primary, height: 38))
                 .font(.system(size: 15, weight: .semibold))
                 .keyboardShortcut(.defaultAction)
-                Text(rows.isEmpty ? "Можно начать фокус и сейчас — сессии подтянутся по ходу" : "Пока идёт фокус, агент зовёт только по делу. Потом перерыв \(focus.settings.pomodoroBreakMinutes) минут.")
+                Text(rows.isEmpty ? L10n.tr("focus.you_can_start_now_sessions_will_appear_as_you_work") : L10n.tr("focus.during_focus_the_agent_only_interrupts_when_needed_then_take_a_minute_", "\(focus.settings.pomodoroBreakMinutes)"))
                     .font(.system(size: 11))
                     .foregroundStyle(FocusStyle.captionText)
                     .lineLimit(2)
             }
-            footer(caption: "Доска со всеми задачами — \(focus.settings.boardHotKey.title)", buttonTitle: "Без таймера")
+            footer(caption: L10n.tr("focus.all_tasks_on_the_board", "\(focus.settings.boardHotKey.title)"), buttonTitle: L10n.tr("focus.without_a_timer"))
         }
     }
 
@@ -210,7 +210,7 @@ struct OnboardingCard: View {
             if let status = SessionStatusKind.of(candidate.group) {
                 SessionStatusBadge(kind: status)
             }
-            Button("Взять") {
+            Button(L10n.tr("focus.choose")) {
                 anchorID = candidate.id
                 selected = Self.preselection(candidates: candidates, anchorID: candidate.id)
                 taskText = candidate.title
@@ -262,7 +262,7 @@ struct OnboardingCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(candidate.title)
-        .accessibilityValue(isOn ? "в задаче" : "не в задаче")
+        .accessibilityValue(isOn ? L10n.tr("focus.in_task") : L10n.tr("focus.not_in_task"))
     }
 
     private func startedRow(_ row: HubRow) -> some View {
@@ -296,11 +296,11 @@ struct OnboardingCard: View {
                     .overlay(Circle().stroke(FocusStyle.link.opacity(0.25), lineWidth: 5))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Жду первую сессию \(agent.displayName)")
+                    Text(L10n.tr("focus.waiting_for_the_first_session", "\(agent.displayName)"))
                         .font(.system(size: 13, weight: .semibold))
                     Text(agent == .codex
-                         ? "Запусти codex в терминале, проверь доверие в /hooks и отправь запрос — сессия появится здесь."
-                         : "Запусти claude в терминале, IDE или Claude.app — сессия сама попадёт в эту задачу.")
+                         ? L10n.tr("focus.run_codex_in_your_terminal_review_trust_in_hooks_and_send_a_prompt_the")
+                         : L10n.tr("focus.run_claude_in_your_terminal_ide_or_claude_app_the_session_will_join_th"))
                         .font(FocusStyle.secondaryFont)
                         .foregroundStyle(FocusStyle.secondaryText)
                         .lineLimit(2)
@@ -320,7 +320,7 @@ struct OnboardingCard: View {
                     .lineLimit(1)
                     .truncationMode(.head)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Button("Скопировать") {
+                Button(L10n.tr("focus.copy")) {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(command, forType: .string)
                 }
@@ -366,7 +366,7 @@ struct OnboardingCard: View {
     }
 
     nonisolated static func startedToast(sessionCount: Int) -> String {
-        "Задача в работе · \(FocusCoordinator.sessionCountText(sessionCount)) внутри"
+        L10n.tr("focus.task_in_progress_included", "\(FocusCoordinator.sessionCountText(sessionCount))")
     }
 
     nonisolated static func candidateDetail(cwd: String?, appName: String?) -> String {
@@ -377,7 +377,7 @@ struct OnboardingCard: View {
         if let appName, !appName.isEmpty {
             parts.append(appName)
         }
-        return parts.isEmpty ? "сессия агента" : parts.joined(separator: " · ")
+        return parts.isEmpty ? L10n.tr("focus.agent_session_140") : parts.joined(separator: " · ")
     }
 
     nonisolated static func shortPath(_ path: String) -> String {
@@ -405,12 +405,12 @@ private struct StepDots: View {
                     .fill(index < current ? FocusStyle.working : index == current ? FocusStyle.link : Color.white.opacity(0.18))
                     .frame(width: index == current ? 18 : 6, height: 6)
             }
-            Text("Шаг \(current) из \(total)")
+            Text(L10n.tr("focus.step_of", "\(current)", "\(total)"))
                 .font(.system(size: 11))
                 .foregroundStyle(FocusStyle.captionText)
                 .padding(.leading, 4)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Шаг \(current) из \(total)")
+        .accessibilityLabel(L10n.tr("focus.step_of", "\(current)", "\(total)"))
     }
 }

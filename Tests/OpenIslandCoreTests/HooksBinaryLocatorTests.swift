@@ -3,6 +3,26 @@ import Testing
 @testable import OpenIslandCore
 
 struct HooksBinaryLocatorTests {
+    @Test func managedHookInstallationCopiesAndRepairsStandaloneTranslations() throws {
+        let root = temporaryRootURL(named: "managed-hook-localization")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let source = root.appendingPathComponent("source/OpenIslandHooks")
+        let destination = root.appendingPathComponent("installed/OpenIslandHooks")
+        try makeExecutable(at: source, contents: "fixture helper")
+        try ManagedHooksBinary.install(from: source, to: destination)
+        let resources = destination.deletingLastPathComponent().appendingPathComponent("OpenIsland_OpenIslandCore.bundle")
+        for language in ["en", "es", "ru"] {
+            let catalog = resources.appendingPathComponent("\(language).lproj/Localizable.strings")
+            #expect(FileManager.default.fileExists(atPath: catalog.path))
+        }
+        let spanish = resources.appendingPathComponent("es.lproj/Localizable.strings")
+        let original = try Data(contentsOf: spanish)
+        try FileManager.default.removeItem(at: spanish)
+        try ManagedHooksBinary.install(from: destination, to: destination)
+        #expect(try Data(contentsOf: spanish) == original)
+        #expect(try String(contentsOf: destination, encoding: .utf8) == "fixture helper")
+    }
+
     @Test
     func locateFindsBundledHelperBinaryInsideAppBundle() throws {
         let rootURL = temporaryRootURL(named: "hooks-binary-locator")

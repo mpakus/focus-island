@@ -179,6 +179,7 @@ struct IslandPanelView: View {
         }
         .ignoresSafeArea()
         .preferredColorScheme(.dark)
+        .environment(\.locale, model.lang.locale)
         .alert(model.lang.t("island.quit.confirmTitle"), isPresented: $showingQuitConfirmation) {
             Button(model.lang.t("island.quit.confirmAction"), role: .destructive) {
                 model.quitApplication()
@@ -1489,11 +1490,11 @@ private struct IslandSessionRow: View {
 
     private var notificationCompletedPromptLineText: String? {
         if let prompt = session.latestUserPromptText?.trimmedForNotificationCard, !prompt.isEmpty {
-            return "You: \(prompt)"
+            return L10n.tr("ui.you", "\(prompt)")
         }
 
         if let prompt = session.initialUserPromptText?.trimmedForNotificationCard, !prompt.isEmpty {
-            return "You: \(prompt)"
+            return L10n.tr("ui.you", "\(prompt)")
         }
 
         return nil
@@ -1600,11 +1601,11 @@ private struct IslandSessionRow: View {
     private var actionableBody: some View {
         if !session.supportsInlineInteraction && session.phase.requiresAttention {
             VStack(alignment: .leading, spacing: 8) {
-                Text(session.permissionRequest?.summary ?? "Review and respond in Codex.")
+                Text(session.permissionRequest?.summary ?? L10n.tr("ui.review_and_respond_in_codex"))
                 if let command = session.currentCommandPreviewText {
                     Text(command).font(.system(.caption, design: .monospaced)).lineLimit(2)
                 }
-                Button("Open app for Codex", action: onJump)
+                Button(L10n.tr("ui.open_app_for_codex"), action: onJump)
             }
             .padding(12)
         } else {
@@ -1787,7 +1788,7 @@ private struct IslandSessionRow: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 if needsAction {
-                    Text("НУЖНО ОТ ТЕБЯ")
+                    Text(L10n.tr("focus.your_input_needed"))
                         .font(.system(size: 9.5, weight: .semibold))
                         .foregroundStyle(IslandDesignPalette.Status.tint(for: .waitingForAnswer))
                 }
@@ -1806,10 +1807,10 @@ private struct IslandSessionRow: View {
 
     private func completionSummaryActions(hasMore: Bool) -> some View {
         HStack(spacing: 8) {
-            Button("Перейти") { onJump() }
+            Button(L10n.tr("focus.open_session")) { onJump() }
                 .buttonStyle(IslandCompactButtonStyle(tint: Color(red: 0.39, green: 0.66, blue: 1)))
             if hasMore {
-                Button(showsFullAnswer ? "Свернуть ▴" : "Весь ответ ▾") {
+                Button(showsFullAnswer ? L10n.tr("focus.collapse_463") : L10n.tr("focus.full_reply")) {
                     withAnimation(.easeInOut(duration: 0.2)) { showsFullAnswer.toggle() }
                 }
                 .buttonStyle(.plain)
@@ -1895,12 +1896,12 @@ private struct IslandSessionRow: View {
     private var commandLabel: String {
         switch session.currentToolName {
         case "exec_command", "Bash": return "Bash"
-        case "AskUserQuestion": return "Question"
-        case "ExitPlanMode": return "Plan"
-        case "apply_patch": return "Patch"
-        case "write_stdin": return "Input"
+        case "AskUserQuestion": return L10n.tr("ui.question")
+        case "ExitPlanMode": return L10n.tr("ui.plan")
+        case "apply_patch": return L10n.tr("ui.patch")
+        case "write_stdin": return L10n.tr("ui.input")
         case let value?: return AgentSession.currentToolDisplayName(for: value)
-        case nil: return "Command"
+        case nil: return L10n.tr("ui.command")
         }
     }
 
@@ -1932,7 +1933,7 @@ private struct IslandSessionRow: View {
         if seconds < 60 { return "\(seconds)s" }
         let minutes = seconds / 60
         let secs = seconds % 60
-        return "\(minutes)m \(secs)s"
+        return L10n.tr("ui.m_s", "\(minutes)", "\(secs)")
     }
 
     private func taskSummary(_ tasks: [ClaudeTaskInfo]) -> String {
@@ -2042,7 +2043,7 @@ private struct IslandSessionRow: View {
     /// Prompt line for manually expanded inactive rows (bypasses time-based filter).
     private var expandedPromptLineText: String? {
         guard detailOverride == true, let prompt = session.spotlightPromptText else { return nil }
-        return "You: \(prompt)"
+        return L10n.tr("ui.you", "\(prompt)")
     }
 
     /// Activity line for manually expanded inactive rows (bypasses time-based filter).
@@ -2053,7 +2054,7 @@ private struct IslandSessionRow: View {
         if let assistantMessage = trimmed, !assistantMessage.isEmpty {
             return assistantMessage
         }
-        return session.jumpTarget != nil ? "Ready" : "Completed"
+        return session.jumpTarget != nil ? L10n.tr("ui.ready") : L10n.tr("ui.completed")
     }
 
     private func handlePrimaryTap() {
@@ -2080,7 +2081,7 @@ private struct IslandSessionRow: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(isOpen ? "Collapse session detail" : "Expand session detail")
+        .accessibilityLabel(isOpen ? L10n.tr("ui.collapse_session_detail") : L10n.tr("ui.expand_session_detail"))
     }
 
     private func detailToggleFillOpacity(isOpen: Bool) -> Double {

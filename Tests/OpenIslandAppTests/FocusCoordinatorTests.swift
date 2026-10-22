@@ -449,9 +449,9 @@ struct FocusCoordinatorTests {
 struct FocusIslandSectionTests {
     @Test
     func boardButtonTitleFollowsHotKey() {
-        #expect(FocusIslandSection.boardButtonTitle(.optionCommandB) == "Доска ⌥⌘B")
-        #expect(FocusIslandSection.boardButtonTitle(.controlOptionB) == "Доска ⌃⌥B")
-        #expect(FocusIslandSection.boardButtonTitle(.off) == "Доска")
+        #expect(FocusIslandSection.boardButtonTitle(.optionCommandB) == "Board ⌥⌘B")
+        #expect(FocusIslandSection.boardButtonTitle(.controlOptionB) == "Board ⌃⌥B")
+        #expect(FocusIslandSection.boardButtonTitle(.off) == "Board")
     }
 }
 

@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import Foundation
 import SwiftUI
@@ -45,7 +46,7 @@ struct DayTimelineView: View {
     }
 
     nonisolated static func accessibilitySummary(_ report: DayReport) -> String {
-        guard !(report.lanes.isEmpty && report.distractionLane.isEmpty) else { return "Нет данных за день" }
+        guard !(report.lanes.isEmpty && report.distractionLane.isEmpty) else { return L10n.tr("focus.no_data_for_this_day") }
         var parts: [String] = report.lanes.compactMap { lane in
             func total(_ kind: ActivityKind) -> TimeInterval {
                 lane.segments.filter { $0.kind == kind }.reduce(0) { $0 + $1.end.timeIntervalSince($1.start) }
@@ -53,14 +54,14 @@ struct DayTimelineView: View {
             var pieces: [String] = []
             if total(.claude) > 0 { pieces.append("Claude \(DaySummaryFormatter.duration(total(.claude)))") }
             if total(.codex) > 0 { pieces.append("Codex \(DaySummaryFormatter.duration(total(.codex)))") }
-            if total(.you) > 0 { pieces.append("ты \(DaySummaryFormatter.duration(total(.you)))") }
-            if total(.waiting) > 0 { pieces.append("ждал \(DaySummaryFormatter.duration(total(.waiting)))") }
+            if total(.you) > 0 { pieces.append(L10n.tr("focus.you", "\(DaySummaryFormatter.duration(total(.you)))")) }
+            if total(.waiting) > 0 { pieces.append(L10n.tr("focus.waiting_272", "\(DaySummaryFormatter.duration(total(.waiting)))")) }
             return pieces.isEmpty ? nil : "\(lane.title): \(pieces.joined(separator: ", "))"
         }
         if report.distractionSeconds > 0 {
-            parts.append("Отвлечения: \(DaySummaryFormatter.duration(report.distractionSeconds))")
+            parts.append(L10n.tr("focus.distractions_273", "\(DaySummaryFormatter.duration(report.distractionSeconds))"))
         }
-        return parts.isEmpty ? "Нет данных за день" : parts.joined(separator: ". ")
+        return parts.isEmpty ? L10n.tr("focus.no_data_for_this_day") : parts.joined(separator: ". ")
     }
 
     nonisolated static func hourLabel(_ date: Date, calendar: Calendar) -> String {
@@ -81,7 +82,7 @@ struct DayTimelineView: View {
         let axis = Self.axis(first: report.firstAt, last: report.lastAt, calendar: calendar)
         FocusBox(fill: FocusStyle.barBackground, spacing: 10) {
             HStack(spacing: 16) {
-                Text("Как прошёл день по задачам")
+                Text(L10n.tr("focus.your_day_by_task"))
                     .font(.system(size: 14, weight: .bold))
                     .frame(maxWidth: .infinity, alignment: .leading)
                 legend
@@ -91,9 +92,9 @@ struct DayTimelineView: View {
                 ForEach(report.lanes) { lane in
                     laneRow(title: lane.title, segments: lane.segments, axis: axis, dim: false)
                 }
-                laneRow(title: "Отвлечения", segments: report.distractionLane, axis: axis, dim: true)
+                laneRow(title: L10n.tr("focus.distractions"), segments: report.distractionLane, axis: axis, dim: true)
             } else {
-                Text("Пока нет данных за этот день")
+                Text(L10n.tr("focus.no_data_for_this_day_yet"))
                     .font(.system(size: 13))
                     .foregroundStyle(FocusStyle.secondaryText)
             }
@@ -105,11 +106,11 @@ struct DayTimelineView: View {
 
     private var legend: some View {
         HStack(spacing: 16) {
-            legendItem("Claude работает", kind: .claude)
-            legendItem("Codex работает", kind: .codex)
-            legendItem("ты в задаче", kind: .you)
-            legendItem("ждёт тебя", kind: .waiting)
-            legendItem("отвлечение", kind: .distraction)
+            legendItem(L10n.tr("focus.claude_working_276"), kind: .claude)
+            legendItem(L10n.tr("focus.codex_working_277"), kind: .codex)
+            legendItem(L10n.tr("focus.you_on_task_278"), kind: .you)
+            legendItem(L10n.tr("focus.waiting_for_you_279"), kind: .waiting)
+            legendItem(L10n.tr("focus.distraction"), kind: .distraction)
         }
     }
 

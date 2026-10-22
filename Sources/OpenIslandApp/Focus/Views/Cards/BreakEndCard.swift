@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -17,7 +18,7 @@ struct BreakEndCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 1) {
-                FocusSectionCaption("Перерыв окончен", color: FocusStyle.link)
+                FocusSectionCaption(L10n.tr("focus.break_finished"), color: FocusStyle.link)
                 Text(Self.title(taskTitle: summary?.taskTitle ?? focus.currentTask?.title ?? ""))
                     .font(FocusStyle.titleFont)
                     .lineLimit(2)
@@ -30,7 +31,7 @@ struct BreakEndCard: View {
                     .lineLimit(2)
             }
             HStack(spacing: 8) {
-                Button("Без таймера") { focus.endBreakWithoutTimer() }
+                Button(L10n.tr("focus.without_a_timer")) { focus.endBreakWithoutTimer() }
                     .buttonStyle(FocusButtonStyle(kind: .secondary))
                 Spacer(minLength: 0)
                 Button(Self.extendTitle(minutes: Self.extendMinutes)) { focus.extendBreak(minutes: Self.extendMinutes) }
@@ -60,7 +61,7 @@ struct BreakEndCard: View {
             }
             if let note = Self.noteText(summary?.note) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text("Следующий шаг")
+                    Text(L10n.tr("focus.next_step"))
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(FocusStyle.link)
                     Text("· " + note)
@@ -69,7 +70,7 @@ struct BreakEndCard: View {
                         .lineLimit(3)
                 }
             }
-            Text("Перейду в сессию задачи, где Claude ждёт тебя")
+            Text(L10n.tr("focus.open_a_task_session_that_is_waiting_for_you"))
                 .font(FocusStyle.secondaryFont)
                 .foregroundStyle(FocusStyle.secondaryText)
                 .lineLimit(1)
@@ -91,7 +92,7 @@ struct BreakEndCard: View {
     }
 
     nonisolated static func title(taskTitle: String) -> String {
-        taskTitle.isEmpty ? "Вернуться к задаче" : "Вернуться к «\(taskTitle)»"
+        taskTitle.isEmpty ? L10n.tr("focus.return_to_task") : L10n.tr("focus.return_to", "\(taskTitle)")
     }
 
     nonisolated static func noteText(_ note: String?) -> String? {
@@ -101,10 +102,10 @@ struct BreakEndCard: View {
 
     nonisolated static func restedLine(finishedSessionTitles: [String]) -> String? {
         guard !finishedSessionTitles.isEmpty else { return nil }
-        return "Пока отдыхал: Claude закончил " + finishedSessionTitles.map { "«\($0)»" }.joined(separator: ", ")
+        return L10n.tr("focus.while_you_rested_the_agent_finished") + finishedSessionTitles.map { "«\($0)»" }.joined(separator: ", ")
     }
 
     nonisolated static func extendTitle(minutes: Int) -> String {
-        "Ещё \(minutes) мин отдыха"
+        L10n.tr("focus.more_min_of_rest", "\(minutes)")
     }
 }

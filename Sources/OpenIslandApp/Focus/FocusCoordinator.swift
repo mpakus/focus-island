@@ -103,7 +103,7 @@ final class FocusCoordinator {
     static let breakCountdownFreshness: TimeInterval = 60
     static let breakSoundName = "Glass"
     static let todaySummaryInterval: TimeInterval = 60
-    static let clipboardToast = "Промпт в буфере — вставь ⌘V"
+    static var clipboardToast: String { L10n.tr("focus.prompt_copied_paste_with_v") }
     static let stalledBadgeMinutes = 10
     static let onboardingTaskAddedKey = "focus.onboarding.taskAdded"
     static let onboardingDismissedKey = "focus.onboarding.dismissed"
@@ -112,7 +112,7 @@ final class FocusCoordinator {
     static let recoveredEndCardWindow: TimeInterval = 2 * 3600
 
     static func slotToast(projectName: String) -> String {
-        "Освободился слот — вернуть \(projectName)?"
+        L10n.tr("focus.a_slot_is_free_resume", "\(projectName)")
     }
 
     private(set) var board = BoardSnapshot(tasks: [])
@@ -831,7 +831,7 @@ final class FocusCoordinator {
 
     func createTaskForSession(sessionID: String, now: Date = .now) {
         let record = try? history.session(id: sessionID)
-        let title = PromptText.clean(record?.firstPrompt) ?? record?.projectName ?? "Новая задача"
+        let title = PromptText.clean(record?.firstPrompt) ?? record?.projectName ?? L10n.tr("focus.new_task")
         attempt { try boardService.createTaskForSession(sessionID: sessionID, title: title, projectPath: record?.cwd) }
         pendingBindingSessionIDs.removeAll { $0 == sessionID }
         reload()
@@ -1008,28 +1008,24 @@ final class FocusCoordinator {
 
     nonisolated static func sessionStateText(rows allRows: [HubRow], now: Date) -> String {
         let rows = allRows.filter { $0.group != .done }
-        guard !rows.isEmpty else { return "нет сессий — добавишь следующим шагом" }
+        guard !rows.isEmpty else { return L10n.tr("focus.no_sessions_add_them_next") }
         let ranked: [(groups: Set<HubGroup>, label: String)] = [
-            ([.waiting], "ждёт"),
-            ([.review, .idle, .unbound], "твой ход"),
-            ([.running], "работает"),
-            ([.parked], "на паузе")
+            ([.waiting], L10n.tr("focus.waiting")),
+            ([.review, .idle, .unbound], L10n.tr("focus.your_turn_27")),
+            ([.running], L10n.tr("focus.working_28")),
+            ([.parked], L10n.tr("focus.paused_29"))
         ]
         let count = sessionCountText(rows.count)
         for rank in ranked {
             guard let oldest = rows.filter({ rank.groups.contains($0.group) }).map(\.since).min() else { continue }
             let minutes = max(0, Int(now.timeIntervalSince(oldest) / 60))
-            return "\(count) · \(rank.label) \(minutes) мин"
+            return L10n.tr("focus.min_30", "\(count)", "\(rank.label)", "\(minutes)")
         }
         return count
     }
 
     nonisolated static func sessionCountText(_ count: Int) -> String {
-        let mod10 = count % 10
-        let mod100 = count % 100
-        if mod10 == 1 && mod100 != 11 { return "\(count) сессия" }
-        if (2...4).contains(mod10) && !(12...14).contains(mod100) { return "\(count) сессии" }
-        return "\(count) сессий"
+        return L10n.tr(L10n.pluralKey(count, one: "focus.session", few: "focus.sessions", many: "focus.sessions_33"), "\(count)")
     }
 
     @discardableResult
@@ -1996,7 +1992,7 @@ final class FocusCoordinator {
         if let projectName, !projectName.isEmpty {
             return projectName
         }
-        return "Сессия агента"
+        return L10n.tr("focus.agent_session")
     }
 
     nonisolated static let firstTaskTitleLimit = 60

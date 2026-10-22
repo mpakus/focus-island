@@ -33,7 +33,8 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "OpenIslandCore"
+            name: "OpenIslandCore",
+            resources: [.process("Resources")]
         ),
         .target(
             name: "FocusCore",
@@ -56,9 +57,6 @@ let package = Package(
                 "OpenIslandCore",
                 "FocusCore",
                 .product(name: "MarkdownUI", package: "swift-markdown-ui"),
-            ],
-            resources: [
-                .process("Resources"),
             ]
         ),
         .testTarget(

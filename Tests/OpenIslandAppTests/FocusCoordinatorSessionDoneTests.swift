@@ -96,21 +96,21 @@ struct FocusCoordinatorSessionDoneTests {
         #expect(SessionDoneFormat.confirmsDone(group: .running))
         #expect(SessionDoneFormat.confirmsDone(group: .waiting))
         #expect(!SessionDoneFormat.confirmsDone(group: .idle))
-        #expect(SessionDoneFormat.sectionTitle(count: 2, expanded: false) == "Завершённые · 2 ▸")
-        #expect(SessionDoneFormat.noticeText("Онбординг") == "«Онбординг» завершена")
-        #expect(TaskDetailView.doneDetail(record: SessionRecord(id: "x", cwd: nil, projectName: nil, title: "x", firstPrompt: nil, lastPrompt: nil, lastAssistantMessage: nil, startedAt: t0, lastActivityAt: t0, endedAt: nil, status: .live, taskId: nil, transcriptPath: nil, doneAt: t0.addingTimeInterval(70 * 60))) == "1 ч 10 мин")
+        #expect(SessionDoneFormat.sectionTitle(count: 2, expanded: false) == "Completed · 2 ▸")
+        #expect(SessionDoneFormat.noticeText("Онбординг") == "“Онбординг” completed")
+        #expect(TaskDetailView.doneDetail(record: SessionRecord(id: "x", cwd: nil, projectName: nil, title: "x", firstPrompt: nil, lastPrompt: nil, lastAssistantMessage: nil, startedAt: t0, lastActivityAt: t0, endedAt: nil, status: .live, taskId: nil, transcriptPath: nil, doneAt: t0.addingTimeInterval(70 * 60))) == "1 h 10 min")
     }
 
     @Test
     func statusBadgeSaysWhatClaudeIsDoing() {
-        #expect(SessionStatusKind.of(.running)?.title == "Работает")
-        #expect(SessionStatusKind.of(.waiting)?.title == "Ждёт ответа")
-        #expect(SessionStatusKind.of(.idle)?.title == "Твой ход")
-        #expect(SessionStatusKind.of(.review)?.title == "Твой ход")
-        #expect(SessionStatusKind.of(.done)?.title == "Завершена")
-        #expect(SessionStatusKind.of(.parked)?.title == "На паузе")
+        #expect(SessionStatusKind.of(.running)?.title == "Working")
+        #expect(SessionStatusKind.of(.waiting)?.title == "Waiting for an answer")
+        #expect(SessionStatusKind.of(.idle)?.title == "Your turn")
+        #expect(SessionStatusKind.of(.review)?.title == "Your turn")
+        #expect(SessionStatusKind.of(.done)?.title == "Completed")
+        #expect(SessionStatusKind.of(.parked)?.title == "Paused")
         #expect(SessionStatusKind.of(.unbound) == nil)
-        #expect(HubGroup.done.title == "Завершённые")
-        #expect(FocusEars.yourTurnText(2) == "2 твой ход")
+        #expect(HubGroup.done.title == "Completed")
+        #expect(FocusEars.yourTurnText(2) == "2 your turn")
     }
 }

@@ -186,7 +186,7 @@ struct FocusCoordinatorTriggerTests {
         c.sessionsDidChange([four[0], four[2], four[3]], now: t0.addingTimeInterval(4))
         #expect(c.toast == FocusCoordinator.clipboardToast)
         c.tick(now: t0.addingTimeInterval(8))
-        #expect(c.toast == "Освободился слот — вернуть proj?")
+        #expect(c.toast == "A slot is free — resume proj?")
     }
 
     @Test
@@ -208,7 +208,7 @@ struct FocusCoordinatorTriggerTests {
         c.perform(.park(sessionID: "s4"), now: t0.addingTimeInterval(1))
         #expect(c.toast == nil)
         c.sessionsDidChange(Array(four.dropFirst()), now: t0.addingTimeInterval(2))
-        #expect(c.toast == "Освободился слот — вернуть proj?")
+        #expect(c.toast == "A slot is free — resume proj?")
         c.tick(now: t0.addingTimeInterval(10))
         #expect(c.toast == nil)
         c.sessionsDidChange(Array(four.dropFirst(2)), now: t0.addingTimeInterval(11))

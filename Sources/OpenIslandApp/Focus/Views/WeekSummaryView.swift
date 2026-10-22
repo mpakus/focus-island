@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -29,29 +30,29 @@ struct WeekSummaryView: View {
     }
 
     nonisolated static func previousCount(_ value: Int?) -> String {
-        "прошлая неделя \(value.map(String.init) ?? "—")"
+        L10n.tr("focus.last_week", "\(value.map(String.init) ?? "—")")
     }
 
     nonisolated static func previousDuration(_ seconds: TimeInterval?) -> String {
-        "прошлая неделя \(seconds.map(DaySummaryFormatter.duration) ?? "—")"
+        L10n.tr("focus.last_week", "\(seconds.map(DaySummaryFormatter.duration) ?? "—")")
     }
 
     nonisolated static func boundShareDetail(_ share: Double?) -> String {
-        "с задачей \(share.map { "\(Int(($0 * 100).rounded()))%" } ?? "—")"
+        L10n.tr("focus.with_a_task", "\(share.map { "\(Int(($0 * 100).rounded()))%" } ?? "—")")
     }
 
     nonisolated static func averageWaitDetail(_ seconds: TimeInterval?) -> String {
-        guard let seconds else { return "нет данных" }
-        return "в среднем \(FocusText.roundedUpMinutes(seconds)) мин на ответ"
+        guard let seconds else { return L10n.tr("focus.no_data") }
+        return L10n.tr("focus.average_min_to_reply", "\(FocusText.roundedUpMinutes(seconds))")
     }
 
     nonisolated static func reactionValue(_ seconds: Double?) -> String {
-        seconds.map { "\(Int($0.rounded())) с" } ?? "—"
+        seconds.map { L10n.tr("focus.s", "\(Int($0.rounded()))") } ?? "—"
     }
 
     nonisolated static func hoursLabel(_ seconds: TimeInterval) -> String {
         guard seconds > 0 else { return "0" }
-        return String(format: "%.1f", seconds / 3600)
+        return String(format: "%.1f", locale: LanguageManager.shared.locale, seconds / 3600)
     }
 
     nonisolated static func shareWidths(rows: [TaskTimeRow], maxWidth: CGFloat) -> [CGFloat] {
@@ -60,28 +61,23 @@ struct WeekSummaryView: View {
     }
 
     nonisolated static func status(_ row: TaskTimeRow) -> String {
-        if row.isDone { return "сделано" }
-        return row.taskID == nil ? "—" : "в работе"
+        if row.isDone { return L10n.tr("focus.done_445") }
+        return row.taskID == nil ? "—" : L10n.tr("focus.in_progress_446")
     }
 
     nonisolated static func rangeTitle(start: Date, calendar: Calendar = .current) -> String {
         let end = calendar.date(byAdding: .day, value: 6, to: start) ?? start
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.locale = LanguageManager.shared.locale
         formatter.calendar = calendar
         formatter.timeZone = calendar.timeZone
-        let sameMonth = calendar.component(.month, from: start) == calendar.component(.month, from: end)
-        formatter.dateFormat = "d MMMM"
-        let endText = formatter.string(from: end)
-        if sameMonth {
-            return "\(calendar.component(.day, from: start)) – \(endText)"
-        }
-        return "\(formatter.string(from: start)) – \(endText)"
+        formatter.setLocalizedDateFormatFromTemplate("dMMMM")
+        return "\(formatter.string(from: start)) – \(formatter.string(from: end))"
     }
 
     nonisolated static func dayLabel(_ day: Date, calendar: Calendar = .current) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.locale = LanguageManager.shared.locale
         formatter.calendar = calendar
         formatter.timeZone = calendar.timeZone
         formatter.dateFormat = "EEEEEE"
@@ -101,6 +97,7 @@ struct WeekSummaryView: View {
             .padding(.horizontal, 24)
             .padding(.vertical, 20)
         }
+        .onChange(of: LanguageManager.shared.language) { _, _ in load() }
         .task {
             while !Task.isCancelled {
                 load()
@@ -125,7 +122,7 @@ struct WeekSummaryView: View {
 
     private var header: some View {
         HStack {
-            Text("Неделя").font(.system(size: 22, weight: .bold))
+            Text(L10n.tr("focus.week")).font(.system(size: 22, weight: .bold))
             if let weekStart {
                 Text(Self.rangeTitle(start: weekStart)).font(FocusStyle.secondaryFont).foregroundStyle(FocusStyle.secondaryText)
             }
@@ -135,21 +132,21 @@ struct WeekSummaryView: View {
 
     private var kpiRow: some View {
         HStack(alignment: .top, spacing: 12) {
-            kpi("Задач закрыто", report.map { "\($0.tasksDone)" } ?? "—", detail: Self.previousCount(previous?.tasksDone))
-            kpi("Сессий", report.map { "\($0.sessions)" } ?? "—", detail: Self.boundShareDetail(report?.boundShare))
+            kpi(L10n.tr("focus.tasks_completed"), report.map { "\($0.tasksDone)" } ?? "—", detail: Self.previousCount(previous?.tasksDone))
+            kpi(L10n.tr("focus.sessions_448"), report.map { "\($0.sessions)" } ?? "—", detail: Self.boundShareDetail(report?.boundShare))
             kpi(
-                "Ждали тебя",
+                L10n.tr("focus.waiting_for_you_449"),
                 report.map { DaySummaryFormatter.duration($0.waitingSeconds) } ?? "—",
                 color: FocusStyle.waitingText,
                 detail: Self.averageWaitDetail(report?.averageWaitSeconds)
             )
             kpi(
-                "Отвлечения",
+                L10n.tr("focus.distractions"),
                 report.map { DaySummaryFormatter.duration($0.distractionSeconds) } ?? "—",
                 color: FocusStyle.distractionText,
                 detail: Self.previousDuration(previous?.distractionSeconds)
             )
-            kpi("Реакция на «Что дальше?»", Self.reactionValue(reactionSeconds), detail: "медиана")
+            kpi(L10n.tr("focus.response_to_what_s_next"), Self.reactionValue(reactionSeconds), detail: L10n.tr("focus.median"))
         }
     }
 
@@ -174,10 +171,10 @@ struct WeekSummaryView: View {
         let heights = Self.barHeights(days: days, maxHeight: Self.chartHeight)
         return FocusBox(fill: FocusStyle.barBackground, spacing: 12) {
             HStack(spacing: 14) {
-                Text("По дням, часы").font(.system(size: 14, weight: .bold)).frame(maxWidth: .infinity, alignment: .leading)
-                legend("в задаче", FocusStyle.accent)
-                legend("ждали", FocusStyle.waiting)
-                legend("отвлечения", FocusStyle.distraction)
+                Text(L10n.tr("focus.hours_by_day")).font(.system(size: 14, weight: .bold)).frame(maxWidth: .infinity, alignment: .leading)
+                legend(L10n.tr("focus.in_task"), FocusStyle.accent)
+                legend(L10n.tr("focus.waiting_453"), FocusStyle.waiting)
+                legend(L10n.tr("focus.distractions_454"), FocusStyle.distraction)
             }
             HStack(alignment: .bottom, spacing: 10) {
                 ForEach(Array(days.enumerated()), id: \.offset) { index, day in
@@ -197,7 +194,7 @@ struct WeekSummaryView: View {
             }
             .frame(height: Self.chartHeight + 50)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Часы по дням: в задаче, ожидание и отвлечения")
+            .accessibilityLabel(L10n.tr("focus.hours_by_day_on_task_waiting_and_distractions"))
         }
         .frame(maxWidth: .infinity)
     }
@@ -229,17 +226,17 @@ struct WeekSummaryView: View {
         let rows = report?.rows ?? []
         let widths = Self.shareWidths(rows: rows, maxWidth: Self.shareWidth)
         return FocusBox(fill: FocusStyle.barBackground, spacing: 0) {
-            Text("Куда ушло время").font(.system(size: 14, weight: .bold)).padding(.bottom, 12)
+            Text(L10n.tr("focus.where_the_time_went")).font(.system(size: 14, weight: .bold)).padding(.bottom, 12)
             HStack(spacing: 8) {
-                FocusSectionCaption("Задача").frame(maxWidth: .infinity, alignment: .leading)
-                FocusSectionCaption("Время").frame(width: 170, alignment: .leading)
-                FocusSectionCaption("Сессии").frame(width: 60, alignment: .leading)
-                FocusSectionCaption("Статус").frame(width: 70, alignment: .leading)
+                FocusSectionCaption(L10n.tr("focus.task_127")).frame(maxWidth: .infinity, alignment: .leading)
+                FocusSectionCaption(L10n.tr("focus.time")).frame(width: 170, alignment: .leading)
+                FocusSectionCaption(L10n.tr("focus.sessions_299")).frame(width: 60, alignment: .leading)
+                FocusSectionCaption(L10n.tr("focus.status_458")).frame(width: 70, alignment: .leading)
             }
             .padding(.vertical, 6)
             Divider().overlay(FocusStyle.hairline)
             if rows.isEmpty {
-                Text("Нет данных за неделю")
+                Text(L10n.tr("focus.no_data_for_this_week"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
                     .padding(.vertical, 12)

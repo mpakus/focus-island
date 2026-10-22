@@ -7,12 +7,17 @@ import Foundation
 /// breaks code signing (macOS rejects "unsealed contents" at the bundle root).
 /// Use `Bundle.appResources` instead of `Bundle.module` throughout the app.
 enum ResourceBundle {
+    static let name = "OpenIsland_OpenIslandCore"
     static let bundle: Bundle = {
-        let bundleName = "OpenIsland_OpenIslandApp"
+        let bundleName = name
 
         let candidates = [
             // Signed .app: Contents/Resources/
             Bundle.main.resourceURL,
+            // Installed hooks keep their catalogs beside the standalone executable.
+            Bundle.main.executableURL?.deletingLastPathComponent(),
+            // Packaged CLI helpers live in Contents/Helpers next to Resources.
+            Bundle.main.executableURL?.deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Resources"),
             // SPM default / dev builds: .app root
             Bundle.main.bundleURL,
         ]

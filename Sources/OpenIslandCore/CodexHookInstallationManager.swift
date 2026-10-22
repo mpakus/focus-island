@@ -24,8 +24,8 @@ public enum CodexHookInstallationError: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .malformedConfiguration: "Codex hooks configuration is malformed; no files were changed."
-        case .inlineConflict: "Focus Island Codex hooks already appear in config.toml. Remove that duplicate before installing hooks.json."
+        case .malformedConfiguration: L10n.tr("core.codex_hooks_configuration_is_malformed_no_files_were_changed")
+        case .inlineConflict: L10n.tr("core.focus_island_codex_hooks_already_appear_in_config_toml_remove_that_duplicat")
         }
     }
 }

@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -14,7 +15,7 @@ struct BindingCard: View {
                 Image(systemName: "sparkle")
                     .foregroundStyle(FocusStyle.link)
                     .accessibilityHidden(true)
-                Text("Новая сессия \(focus.session(sessionID)?.tool.shortName ?? "агента")")
+                Text(L10n.tr("focus.new_session", "\(focus.session(sessionID)?.tool.shortName ?? L10n.tr("common.agent"))"))
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(1)
                 if let cwd {
@@ -25,17 +26,17 @@ struct BindingCard: View {
                         .truncationMode(.head)
                 }
             }
-            Text("Над какой задачей работаешь?")
+            Text(L10n.tr("focus.which_task_are_you_working_on"))
                 .font(FocusStyle.titleFont)
                 .lineLimit(2)
             ScrollView {
                 VStack(alignment: .leading, spacing: 6) {
                     if !groups.thisProject.isEmpty {
-                        FocusSectionCaption("Этот проект")
+                        FocusSectionCaption(L10n.tr("focus.this_project"))
                         ForEach(groups.thisProject) { taskRow($0) }
                     }
                     if !groups.others.isEmpty {
-                        FocusSectionCaption("Другие")
+                        FocusSectionCaption(L10n.tr("focus.other"))
                         ForEach(groups.others) { taskRow($0) }
                     }
                     Button {
@@ -46,7 +47,7 @@ struct BindingCard: View {
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundStyle(FocusStyle.link)
                                 .accessibilityHidden(true)
-                            Text("Новая задача из первого промпта")
+                            Text(L10n.tr("focus.new_task_from_the_first_prompt"))
                                 .font(.system(size: 13))
                                 .foregroundStyle(FocusStyle.link)
                                 .lineLimit(1)
@@ -61,12 +62,12 @@ struct BindingCard: View {
             }
             .frame(maxHeight: 240)
             HStack(spacing: 8) {
-                Text("Задача переедет в In progress")
+                Text(L10n.tr("focus.the_task_will_move_to_in_progress"))
                     .font(.system(size: 11))
                     .foregroundStyle(FocusStyle.captionText)
                     .lineLimit(1)
                 Spacer(minLength: 0)
-                Button("Без задачи") { focus.skipBinding(sessionID: sessionID) }
+                Button(L10n.tr("focus.no_task")) { focus.skipBinding(sessionID: sessionID) }
                     .buttonStyle(FocusButtonStyle(kind: .quiet))
             }
         }

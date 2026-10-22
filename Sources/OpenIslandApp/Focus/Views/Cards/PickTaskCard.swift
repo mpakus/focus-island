@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -14,17 +15,17 @@ struct PickTaskCard: View {
             if showsHeader {
                 header
             } else {
-                Text("Над чем работаешь сейчас?")
+                Text(L10n.tr("focus.what_are_you_working_on"))
                     .font(.system(size: 17, weight: .bold))
                     .lineLimit(1)
             }
             list(primaryID: primaryID, showsTodo: showsTodo)
             HStack(spacing: 8) {
-                Button("+ Новая задача") { openBoard() }
+                Button(L10n.tr("focus.new_task_156")) { openBoard() }
                     .buttonStyle(FocusButtonStyle(kind: .quiet, height: 28, horizontalPadding: 6))
                 Spacer(minLength: 0)
                 if Self.showsEmptyCaption(inProgressIsEmpty: options.inProgress.isEmpty, todoIsEmpty: options.todo.isEmpty) {
-                    Text("Пусто в работе — сразу список Todo")
+                    Text(L10n.tr("focus.no_tasks_in_progress_showing_to_do"))
                         .font(.system(size: 11))
                         .foregroundStyle(FocusStyle.captionText)
                         .lineLimit(1)
@@ -43,10 +44,10 @@ struct PickTaskCard: View {
     private var header: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 1) {
-                Text("В фокусе")
+                Text(L10n.tr("focus.in_focus_126"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
-                Text("Над чем работаешь сейчас?")
+                Text(L10n.tr("focus.what_are_you_working_on"))
                     .font(.system(size: 16, weight: .bold))
                     .lineLimit(1)
             }
@@ -88,7 +89,7 @@ struct PickTaskCard: View {
                 .foregroundStyle(FocusStyle.secondaryText)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Button("Показать") { todoExpanded = true }
+            Button(L10n.tr("focus.show")) { todoExpanded = true }
                 .buttonStyle(FocusButtonStyle(kind: .quiet, height: 28, horizontalPadding: 6))
         }
         .padding(.horizontal, 12)
@@ -117,7 +118,7 @@ struct PickTaskCard: View {
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Button("Взять") { take(option.id) }
+            Button(L10n.tr("focus.choose")) { take(option.id) }
                 .buttonStyle(FocusButtonStyle(kind: isPrimary ? .primary : .secondary, height: 28))
         }
         .padding(.horizontal, 12)
@@ -142,14 +143,14 @@ struct PickTaskCard: View {
     }
 
     nonisolated static func inProgressCaption(_ count: Int) -> String {
-        "В работе · \(count)"
+        L10n.tr("focus.in_progress", "\(count)")
     }
 
     nonisolated static func todoSummary(titles: [String]) -> String {
         guard !titles.isEmpty else { return "" }
         let shown = titles.prefix(2).joined(separator: " · ")
         let rest = titles.count - 2
-        return rest > 0 ? "\(shown) · ещё \(rest)" : shown
+        return rest > 0 ? L10n.tr("focus.more_160", "\(shown)", "\(rest)") : shown
     }
 
     nonisolated static func showsTodoList(inProgressIsEmpty: Bool, userExpanded: Bool) -> Bool {
@@ -165,7 +166,7 @@ struct PickTaskCard: View {
     }
 
     nonisolated static func todoCaption(_ count: Int) -> String {
-        "Todo · \(count)"
+        L10n.tr("ui.todo", "\(count)")
     }
 
     nonisolated static func primaryOptionID(_ options: [PickTaskOption]) -> String? {

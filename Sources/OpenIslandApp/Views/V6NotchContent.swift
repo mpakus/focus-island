@@ -58,7 +58,7 @@ enum FocusEars {
         }
         guard let progress = live.first?.progress, progress.total > 0 else { return nil }
         let step = min(progress.total, progress.completed + 1)
-        return .progress("шаг \(step)/\(progress.total)")
+        return .progress(L10n.tr("focus.step", "\(step)", "\(progress.total)"))
     }
 
     nonisolated static func leftSlot(preference: IslandRightSlot, rows: [HubRow]) -> IslandLeftSlotContent? {
@@ -93,11 +93,11 @@ enum FocusEars {
     }
 
     nonisolated static func yourTurnText(_ count: Int) -> String {
-        "\(count) твой ход"
+        L10n.tr("focus.your_turn_466", "\(count)")
     }
 
     nonisolated static func waitingOutsideText(_ count: Int, quiet: Bool) -> String {
-        quiet ? "\(count)" : "\(count) ждут"
+        quiet ? "\(count)" : L10n.tr("focus.waiting_467", "\(count)")
     }
 
     nonisolated static func clickShowsWaitingOutside(leftSlot: IslandLeftSlotContent?) -> Bool {
@@ -111,7 +111,7 @@ enum FocusEars {
     nonisolated static func pomodoroText(_ ear: PomodoroEar) -> String {
         switch ear.phase {
         case .focus: return PomodoroFormat.timerText(remainingSeconds: ear.remainingSeconds)
-        case .break: return "Перерыв \(FocusText.clock(TimeInterval(ear.remainingSeconds)))"
+        case .break: return L10n.tr("focus.break_468", "\(FocusText.clock(TimeInterval(ear.remainingSeconds)))")
         }
     }
 
@@ -127,13 +127,13 @@ enum FocusEars {
         newSessionPending: Bool = false
     ) -> IslandRightSlotContent? {
         if isOnBreak && runningCount > 0 {
-            return .status("Claude работает · \(runningCount)")
+            return .status(L10n.tr("focus.agent_working", "\(runningCount)"))
         }
         guard taskTitle != nil else {
             if pomodoroActive { return nil }
             if newSessionPending { return .hint(newSessionHint) }
-            if todoCount > 0 { return .hint("Выбрать задачу · Todo \(todoCount)") }
-            return .hint(inProgressCount > 0 ? "Выбрать задачу" : "Доска пуста")
+            if todoCount > 0 { return .hint(L10n.tr("focus.choose_task_to_do", "\(todoCount)")) }
+            return .hint(inProgressCount > 0 ? L10n.tr("focus.choose_task") : L10n.tr("focus.board_is_empty"))
         }
         if !pomodoroActive, let focusMinutes {
             return .startFocus(focusMinutes)
@@ -167,7 +167,7 @@ enum FocusEars {
     }
 
     nonisolated static func startFocusText(_ minutes: Int) -> String {
-        "▶ Фокус \(minutes)"
+        L10n.tr("focus.focus", "\(minutes)")
     }
 
     nonisolated static func opensIsland(after result: PickTaskOpenResult) -> Bool {
@@ -193,8 +193,8 @@ enum FocusEars {
     nonisolated static func pomodoroCardSlot(_ card: FocusCard?, breakCountdown: Int?, breakMinutes: Int, focusMinutes: Int) -> IslandRightSlotContent? {
         switch card {
         case .pomodoroEnd?:
-            if let breakCountdown { return .alert("☕ Перерыв через \(breakCountdown)") }
-            return .alert("☕ Перерыв \(breakMinutes)")
+            if let breakCountdown { return .alert(L10n.tr("focus.break_in", "\(breakCountdown)")) }
+            return .alert(L10n.tr("focus.break_474", "\(breakMinutes)"))
         case .breakEnd?:
             return .startFocus(focusMinutes)
         default:
@@ -202,7 +202,7 @@ enum FocusEars {
         }
     }
 
-    nonisolated static let newSessionHint = "✦ Новая сессия · задача?"
+    nonisolated static var newSessionHint: String { L10n.tr("focus.new_session_task") }
 
     nonisolated static func rightSlot(
         toast: String?,
@@ -211,10 +211,10 @@ enum FocusEars {
         elapsedMinutes: Int?
     ) -> IslandRightSlotContent? {
         if let toast { return .alert(toast) }
-        if let stalled { return .alert("\(stalled.title) ждёт \(stalled.minutes)м") }
+        if let stalled { return .alert(L10n.tr("focus.waiting_m", "\(stalled.title)", "\(stalled.minutes)")) }
         guard let taskTitle else { return nil }
         if let elapsedMinutes, elapsedMinutes > 0 {
-            return .text("\(taskTitle) · \(elapsedMinutes)м")
+            return .text(L10n.tr("focus.m", "\(taskTitle)", "\(elapsedMinutes)"))
         }
         return .text(taskTitle)
     }
@@ -263,7 +263,7 @@ struct V6RightSlotView: View {
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
                 .foregroundStyle(FocusStyle.link)
-                .accessibilityLabel("Начать фокус \(minutes) минут")
+                .accessibilityLabel(L10n.tr("focus.start_focus_for_minutes", "\(minutes)"))
         case .status(let value):
             HStack(spacing: 6) {
                 Circle().fill(FocusStyle.working).frame(width: 6, height: 6)
@@ -375,7 +375,7 @@ struct V6LeftSlotView: View {
                         .stroke(FocusStyle.waiting, lineWidth: 1.5)
                         .frame(width: 8, height: 8)
                         .padding(.leading, 4)
-                    Text("\(waiting) ждёт")
+                    Text(L10n.tr("focus.waiting_479", "\(waiting)"))
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(FocusStyle.waitingText)
                 }
@@ -411,7 +411,7 @@ struct V6LeftSlotView: View {
             }
             .lineLimit(1)
             .fixedSize()
-            .accessibilityLabel("Ждут вне задачи: \(count)")
+            .accessibilityLabel(L10n.tr("focus.waiting_outside_task_480", "\(count)"))
         }
     }
 
@@ -438,7 +438,7 @@ struct V6LeftSlotView: View {
         case .focusSummary(let running, let waiting, let done):
             var width: CGFloat = 10 + CGFloat(String(running).count) * 7
             if waiting > 0 {
-                width += 16 + CGFloat("\(waiting) ждёт".count) * 6.5
+                width += 16 + CGFloat(L10n.tr("focus.waiting_479", "\(waiting)").count) * 6.5
             }
             if done > 0 {
                 width += 14 + CGFloat(FocusEars.yourTurnText(done).count) * 6.5

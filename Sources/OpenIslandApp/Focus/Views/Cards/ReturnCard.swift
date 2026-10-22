@@ -49,7 +49,7 @@ struct ReturnCard: View {
                 .background(RoundedRectangle(cornerRadius: 10).fill(FocusStyle.working.opacity(0.18)))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
-                Text("Claude закончил «\(taskTitle)»")
+                Text(L10n.tr("focus.the_agent_finished_201", "\(taskTitle)"))
                     .font(FocusStyle.titleFont)
                     .lineLimit(2)
                 let subtitle = Self.subtitle(progress: focus.planProgress(sessionID: sessionID), minutes: minutes, awayProject: away)
@@ -72,7 +72,7 @@ struct ReturnCard: View {
         let items = Self.doneItems(completedTitles: completed, lastMessage: focus.record(sessionID)?.lastAssistantMessage)
         if !items.isEmpty {
             FocusBox(spacing: 6) {
-                FocusSectionCaption("Что сделано")
+                FocusSectionCaption(L10n.tr("focus.what_was_done"))
                 ForEach(Array(items.enumerated()), id: \.offset) { _, item in
                     HStack(alignment: .top, spacing: 8) {
                         if !completed.isEmpty {
@@ -89,7 +89,7 @@ struct ReturnCard: View {
     private var criteriaBox: some View {
         if let taskID, !focus.criteria(taskID: taskID).isEmpty {
             FocusBox(spacing: 6) {
-                FocusSectionCaption("Твой критерий готовности")
+                FocusSectionCaption(L10n.tr("focus.your_completion_criteria"))
                 CriteriaChecklist(focus: focus, taskID: taskID).id(taskID)
             }
         }
@@ -99,9 +99,9 @@ struct ReturnCard: View {
     private var queuedBox: some View {
         if let queued = focus.queuedPrompt(sessionID: sessionID) {
             FocusBox(border: FocusStyle.link.opacity(0.35), spacing: 6) {
-                FocusSectionCaption("Промпт в очереди", color: FocusStyle.link)
+                FocusSectionCaption(L10n.tr("focus.queued_prompt"), color: FocusStyle.link)
                 if isEditing {
-                    TextField("Промпт", text: $editText, axis: .vertical)
+                    TextField(L10n.tr("focus.prompt"), text: $editText, axis: .vertical)
                         .textFieldStyle(.plain)
                         .lineLimit(2...5)
                         .font(.system(size: 13))
@@ -110,20 +110,20 @@ struct ReturnCard: View {
                         .background(RoundedRectangle(cornerRadius: 9).fill(FocusStyle.surface))
                         .overlay(RoundedRectangle(cornerRadius: 9).stroke(FocusStyle.link.opacity(0.45), lineWidth: 1))
                     HStack(spacing: 8) {
-                        Button("Сохранить") { saveEdit() }
+                        Button(L10n.tr("focus.save")) { saveEdit() }
                             .buttonStyle(FocusButtonStyle(kind: .primary))
                             .keyboardShortcut(.return, modifiers: .command)
                             .disabled(editText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        Button("Отмена") { isEditing = false }
+                        Button(L10n.tr("focus.cancel_207")) { isEditing = false }
                             .buttonStyle(FocusButtonStyle(kind: .quiet))
                     }
                 } else {
                     Text(queued.text).font(.system(size: 13)).lineLimit(5)
                     HStack(spacing: 8) {
-                        Button("Отправить и вернуться") { focus.perform(.sendQueuedPrompt(sessionID: sessionID)) }
+                        Button(L10n.tr("focus.send_and_return")) { focus.perform(.sendQueuedPrompt(sessionID: sessionID)) }
                             .buttonStyle(FocusButtonStyle(kind: .primary))
                             .keyboardShortcut(.defaultAction)
-                        Button("Изменить") {
+                        Button(L10n.tr("focus.edit")) {
                             editText = queued.text
                             editSynced = queued.text
                             isEditing = true
@@ -139,16 +139,16 @@ struct ReturnCard: View {
     private var footer: some View {
         HStack(spacing: 8) {
             if focus.queuedPrompt(sessionID: sessionID) == nil {
-                Button("Перейти") { focus.perform(.jump(sessionID: sessionID)) }
+                Button(L10n.tr("focus.open_session")) { focus.perform(.jump(sessionID: sessionID)) }
                     .buttonStyle(FocusButtonStyle(kind: .primary))
                     .keyboardShortcut(.defaultAction)
             }
             if let taskID {
-                Button("Задача готова → Done") { focus.perform(.markTaskDone(taskID: taskID)) }
+                Button(L10n.tr("focus.task_complete_done")) { focus.perform(.markTaskDone(taskID: taskID)) }
                     .buttonStyle(FocusButtonStyle(kind: .secondary))
             }
             Spacer(minLength: 0)
-            Button("Позже") { focus.perform(.dismiss) }
+            Button(L10n.tr("focus.later")) { focus.perform(.dismiss) }
                 .buttonStyle(FocusButtonStyle(kind: .quiet))
         }
     }
@@ -162,9 +162,9 @@ struct ReturnCard: View {
 
     nonisolated static func subtitle(progress: PlanProgress?, minutes: Int?, awayProject: String?) -> String {
         var parts: [String] = []
-        if let progress { parts.append("\(progress.completed) из \(progress.total) шагов") }
-        if let minutes { parts.append("\(minutes) мин") }
-        if let awayProject, !awayProject.isEmpty { parts.append("пока ты был в \(awayProject)") }
+        if let progress { parts.append(L10n.tr("focus.of_steps", "\(progress.completed)", "\(progress.total)")) }
+        if let minutes { parts.append(L10n.tr("focus.min", "\(minutes)")) }
+        if let awayProject, !awayProject.isEmpty { parts.append(L10n.tr("focus.while_you_were_in", "\(awayProject)")) }
         return parts.joined(separator: " · ")
     }
 

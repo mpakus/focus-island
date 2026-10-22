@@ -35,15 +35,15 @@ public enum SessionPhase: String, Codable, Sendable, CaseIterable {
     public var displayName: String {
         switch self {
         case .idle:
-            "Idle"
+            L10n.tr("ui.idle")
         case .running:
-            "Running"
+            L10n.tr("ui.running_63")
         case .waitingForApproval:
-            "Needs approval"
+            L10n.tr("ui.needs_approval")
         case .waitingForAnswer:
-            "Needs answer"
+            L10n.tr("ui.needs_answer")
         case .completed:
-            "Completed"
+            L10n.tr("ui.completed")
         }
     }
 
@@ -108,8 +108,8 @@ public struct PermissionRequest: Equatable, Identifiable, Codable, Sendable {
         title: String,
         summary: String,
         affectedPath: String,
-        primaryActionTitle: String = "Allow",
-        secondaryActionTitle: String = "Deny",
+        primaryActionTitle: String = L10n.tr("ui.allow"),
+        secondaryActionTitle: String = L10n.tr("ui.deny"),
         toolName: String? = nil,
         toolUseID: String? = nil,
         suggestedUpdates: [ClaudePermissionUpdate] = [],

@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -13,14 +14,14 @@ enum SessionDoneFormat {
         group == .running || group == .waiting
     }
 
-    nonisolated static let doneHelp = "Завершить сессию: она сделала своё в задаче. Уйдёт в «Завершённые», время и история останутся. Напишешь в неё — вернётся."
+    nonisolated static var doneHelp: String { L10n.tr("focus.complete_this_session_its_work_on_the_task_is_done_it_moves_to_complet") }
 
     nonisolated static func sectionTitle(count: Int, expanded: Bool) -> String {
-        "Завершённые · \(count) " + (expanded ? "▾" : "▸")
+        L10n.tr("focus.completed_330", "\(count)") + (expanded ? "▾" : "▸")
     }
 
     nonisolated static func noticeText(_ title: String) -> String {
-        "«\(title)» завершена"
+        L10n.tr("focus.completed_331", "\(title)")
     }
 }
 
@@ -44,11 +45,11 @@ enum SessionStatusKind: Equatable {
 
     nonisolated var title: String {
         switch self {
-        case .running: "Работает"
-        case .waiting: "Ждёт ответа"
-        case .yourTurn: "Твой ход"
-        case .ended: "Завершена"
-        case .parked: "На паузе"
+        case .running: L10n.tr("focus.working_228")
+        case .waiting: L10n.tr("focus.waiting_for_an_answer")
+        case .yourTurn: L10n.tr("focus.your_turn")
+        case .ended: L10n.tr("focus.completed_20")
+        case .parked: L10n.tr("focus.paused")
         }
     }
 
@@ -87,7 +88,7 @@ struct SessionStatusBadge: View {
         .background(Capsule().fill(kind.showsDot ? kind.color.opacity(0.15) : Color.white.opacity(0.08)))
         .fixedSize()
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Статус: \(kind.title)")
+        .accessibilityLabel(L10n.tr("focus.status", "\(kind.title)"))
     }
 }
 
@@ -127,10 +128,10 @@ struct SessionDoneCheck: View {
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
         .help(SessionDoneFormat.doneHelp)
-        .accessibilityLabel("Завершить сессию")
-        .confirmationDialog("Claude ещё не закончил. Всё равно завершить сессию?", isPresented: $confirming) {
-            Button("Завершить", action: action)
-            Button("Отмена", role: .cancel) {}
+        .accessibilityLabel(L10n.tr("focus.complete_session"))
+        .confirmationDialog(L10n.tr("focus.the_agent_has_not_finished_complete_the_session_anyway"), isPresented: $confirming) {
+            Button(L10n.tr("focus.complete"), action: action)
+            Button(L10n.tr("focus.cancel_207"), role: .cancel) {}
         }
     }
 }
@@ -151,8 +152,8 @@ struct SessionReopenCheck: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("Вернуть сессию в активные")
-        .accessibilityLabel("Вернуть сессию")
+        .help(L10n.tr("focus.make_session_active_again"))
+        .accessibilityLabel(L10n.tr("focus.restore_session"))
     }
 }
 
@@ -163,11 +164,11 @@ struct SessionMoreMenu: View {
 
     var body: some View {
         Menu {
-            Button("Завершить сессию") { focus.markSessionDone(sessionID: sessionID) }
-            Button("Отвязать от задачи") { focus.bind(sessionID: sessionID, taskID: nil) }
+            Button(L10n.tr("focus.complete_session")) { focus.markSessionDone(sessionID: sessionID) }
+            Button(L10n.tr("focus.unlink_from_task")) { focus.bind(sessionID: sessionID, taskID: nil) }
             let targets = focus.moveTargets(excludingTaskID: taskID)
             if !targets.isEmpty {
-                Menu("Перенести в другую задачу") {
+                Menu(L10n.tr("focus.move_to_another_task")) {
                     ForEach(targets) { target in
                         Button(target.title) { focus.bind(sessionID: sessionID, taskID: target.id) }
                     }
@@ -183,7 +184,7 @@ struct SessionMoreMenu: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
-        .accessibilityLabel("Ещё")
+        .accessibilityLabel(L10n.tr("focus.more_341"))
     }
 }
 
@@ -202,7 +203,7 @@ struct DoneSessionNoticeBanner: View {
                 .foregroundStyle(FocusStyle.tagText)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Button("Вернуть", action: onReopen)
+            Button(L10n.tr("focus.restore"), action: onReopen)
                 .buttonStyle(FocusButtonStyle(kind: .quiet, height: 24, horizontalPadding: 6))
         }
         .padding(.horizontal, 12)
@@ -220,12 +221,12 @@ struct BoundSessionNoticeBanner: View {
                 .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(FocusStyle.working)
                 .accessibilityHidden(true)
-            Text("Новая сессия в задаче")
+            Text(L10n.tr("focus.new_session_in_task"))
                 .font(FocusStyle.secondaryFont)
                 .foregroundStyle(FocusStyle.tagText)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Button("Отвязать", action: onUnbind)
+            Button(L10n.tr("focus.unlink"), action: onUnbind)
                 .buttonStyle(FocusButtonStyle(kind: .quiet, height: 24, horizontalPadding: 6))
         }
         .padding(.horizontal, 12)
@@ -245,20 +246,20 @@ struct AllSessionsDoneCard: View {
                 .foregroundStyle(FocusStyle.working)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Все сессии задачи завершены")
+                Text(L10n.tr("focus.all_task_sessions_are_complete"))
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(FocusStyle.primaryText)
-                Text("Закрыть задачу или открыть новую сессию?")
+                Text(L10n.tr("focus.close_the_task_or_open_a_new_session"))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Button(action: onClose) {
-                Label("Закрыть задачу", systemImage: "checkmark")
+                Label(L10n.tr("focus.close_task"), systemImage: "checkmark")
             }
             .buttonStyle(FocusButtonStyle(kind: .done, height: 28))
-            Button("Не сейчас", action: onDismiss)
+            Button(L10n.tr("focus.not_now"), action: onDismiss)
                 .buttonStyle(FocusButtonStyle(kind: .quiet, height: 28, horizontalPadding: 6))
         }
         .padding(.horizontal, 14)
@@ -315,7 +316,7 @@ struct DoneSessionsSection: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             SessionStatusBadge(kind: .ended)
             if let onOpen {
-                Button("Перейти") { onOpen(item.id) }
+                Button(L10n.tr("focus.open_session")) { onOpen(item.id) }
                     .buttonStyle(FocusButtonStyle(kind: .quiet, height: 26, horizontalPadding: 8))
             }
         }

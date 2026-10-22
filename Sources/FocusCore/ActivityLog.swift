@@ -1,3 +1,4 @@
+import OpenIslandCore
 import Foundation
 import GRDB
 
@@ -188,7 +189,7 @@ public struct WeekReport: Equatable, Sendable {
 
 public enum ReportBuilder {
     private static let laneCap = 6
-    private static let noTaskTitle = "Без задачи"
+    private static var noTaskTitle: String { L10n.tr("focus.no_task") }
     private static let noTaskID = "none"
 
     private struct Clipped {
@@ -294,7 +295,7 @@ public enum ReportBuilder {
         let rest = ranked.dropFirst(laneCap)
         if !rest.isEmpty {
             let merged = rest.flatMap(\.segments).sorted { $0.start < $1.start }
-            lanes.append(TaskLane(id: "other", taskID: nil, title: "Другие", segments: merged))
+            lanes.append(TaskLane(id: "other", taskID: nil, title: L10n.tr("focus.other"), segments: merged))
         }
 
         return DayReport(

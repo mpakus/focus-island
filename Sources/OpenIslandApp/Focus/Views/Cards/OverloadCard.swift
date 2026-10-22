@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -32,7 +33,7 @@ struct OverloadCard: View {
                 newSlot
             }
             if let suggestion, suggestion.attend != nil || suggestion.park != nil {
-                FocusSectionCaption("Лучше сначала")
+                FocusSectionCaption(L10n.tr("focus.first_consider"))
                 if let attend = suggestion.attend {
                     attendOption(attend)
                 }
@@ -41,12 +42,12 @@ struct OverloadCard: View {
                 }
             }
             HStack(spacing: 8) {
-                Text("Лимит меняется в настройках")
+                Text(L10n.tr("focus.change_the_limit_in_settings"))
                     .font(.system(size: 11))
                     .foregroundStyle(FocusStyle.captionText)
                     .lineLimit(1)
                 Spacer(minLength: 0)
-                Button("Всё равно запустить") { focus.perform(.dismiss) }
+                Button(L10n.tr("focus.start_anyway")) { focus.perform(.dismiss) }
                     .buttonStyle(FocusButtonStyle(kind: .quiet, height: 30))
             }
         }
@@ -75,7 +76,7 @@ struct OverloadCard: View {
     }
 
     private var newSlot: some View {
-        Text("+ новая")
+        Text(L10n.tr("focus.new"))
             .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(FocusStyle.captionText)
             .lineLimit(1)
@@ -88,18 +89,18 @@ struct OverloadCard: View {
 
     private func attendOption(_ row: HubRow) -> some View {
         optionRow(
-            title: "Ответить \(row.projectName ?? row.title) — дело на минуту",
+            title: L10n.tr("focus.reply_to_it_takes_a_minute", "\(row.projectName ?? row.title)"),
             detail: row.detail.isEmpty ? Self.waitingDetail(row: row, now: .now) : "\(row.detail) · \(Self.waitingDetail(row: row, now: .now))",
-            buttonTitle: "Перейти",
+            buttonTitle: L10n.tr("focus.open_session"),
             primary: true
         ) { focus.perform(.jump(sessionID: row.id)) }
     }
 
     private func parkOption(_ row: HubRow) -> some View {
         optionRow(
-            title: "Поставить \(row.projectName ?? row.title) на паузу",
-            detail: "Уберу из пульта, запомню, где остановились, и напомню, когда освободится слот",
-            buttonTitle: "На паузу",
+            title: L10n.tr("focus.pause", "\(row.projectName ?? row.title)"),
+            detail: L10n.tr("focus.hide_it_from_the_hub_remember_where_you_left_off_and_remind_you_when_a"),
+            buttonTitle: L10n.tr("focus.pause_149"),
             primary: false
         ) { focus.perform(.park(sessionID: row.id)) }
     }
@@ -123,26 +124,26 @@ struct OverloadCard: View {
     }
 
     nonisolated static func title(liveCount: Int) -> String {
-        "\(liveCount)-я сессия в задаче"
+        L10n.tr("focus.session_in_this_task", "\(liveCount)")
     }
 
     nonisolated static func subtitle(limit: Int) -> String {
-        "Обычно ты уверенно держишь \(limit). Дальше сессии начинают теряться — давай сначала разгрузим голову."
+        L10n.tr("focus.you_usually_manage_comfortably_more_sessions_can_be_hard_to_track_clea", "\(limit)")
     }
 
     nonisolated static func waitingDetail(row: HubRow, now: Date = .now) -> String {
-        "ждёт \(FocusText.minutes(now.timeIntervalSince(row.since))) мин"
+        L10n.tr("focus.waiting_min_152", "\(FocusText.minutes(now.timeIntervalSince(row.since)))")
     }
 
     nonisolated static func stateText(_ group: HubGroup) -> String {
         switch group {
-        case .waiting: "ждёт"
-        case .running: "работает"
-        case .review: "готово"
-        case .idle: "твой ход"
-        case .unbound: "без задачи"
-        case .parked: "на паузе"
-        case .done: "готова"
+        case .waiting: L10n.tr("focus.waiting")
+        case .running: L10n.tr("focus.working_28")
+        case .review: L10n.tr("focus.done_153")
+        case .idle: L10n.tr("focus.your_turn_27")
+        case .unbound: L10n.tr("focus.no_task_154")
+        case .parked: L10n.tr("focus.paused_29")
+        case .done: L10n.tr("focus.done_155")
         }
     }
 

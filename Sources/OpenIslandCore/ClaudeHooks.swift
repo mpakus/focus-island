@@ -24,7 +24,7 @@ public enum ClaudeHookJSONValue: Equatable, Codable, Sendable {
         } else if let value = try? container.decode([ClaudeHookJSONValue].self) {
             self = .array(value)
         } else {
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unsupported JSON value.")
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: L10n.tr("core.unsupported_json_value"))
         }
     }
 
@@ -188,48 +188,48 @@ public enum ClaudePermissionUpdate: Equatable, Codable, Sendable {
     public var displayLabel: String {
         switch self {
         case let .addRules(destination, rules, _):
-            guard let rule = rules.first else { return "Yes, always allow" }
+            guard let rule = rules.first else { return L10n.tr("core.yes_always_allow") }
             let action = Self.actionVerb(for: rule.toolName)
             let path = Self.shortenedPath(rule.ruleContent)
             let scope = Self.scopeLabel(for: destination)
             if let path {
                 return scope.isEmpty
-                    ? "Yes, allow \(action) \(path)"
-                    : "Yes, allow \(action) \(path) \(scope)"
+                    ? L10n.tr("core.yes_allow", "\(action)", "\(path)")
+                    : L10n.tr("core.yes_allow_26", "\(action)", "\(path)", "\(scope)")
             }
             return scope.isEmpty
-                ? "Yes, always allow \(rule.toolName)"
-                : "Yes, always allow \(rule.toolName) \(scope)"
+                ? L10n.tr("core.yes_always_allow_27", "\(rule.toolName)")
+                : L10n.tr("core.yes_always_allow_28", "\(rule.toolName)", "\(scope)")
         case let .setMode(_, mode):
             switch mode {
             case .acceptEdits:
-                return "Yes, manually approve edits"
+                return L10n.tr("core.yes_manually_approve_edits")
             case .bypassPermissions, .dontAsk:
-                return "Yes, and bypass permissions"
+                return L10n.tr("core.yes_and_bypass_permissions")
             case .plan:
-                return "Plan Mode"
+                return L10n.tr("core.plan_mode")
             case .default:
-                return "Manual Mode"
+                return L10n.tr("core.manual_mode")
             case .auto:
-                return "Auto Mode"
+                return L10n.tr("core.auto_mode")
             }
         case .replaceRules:
-            return "Update Rules"
+            return L10n.tr("core.update_rules")
         case .removeRules:
-            return "Remove Rules"
+            return L10n.tr("core.remove_rules")
         case .addDirectories:
-            return "Add Directories"
+            return L10n.tr("core.add_directories")
         case .removeDirectories:
-            return "Remove Directories"
+            return L10n.tr("core.remove_directories")
         }
     }
 
     private static func actionVerb(for toolName: String) -> String {
         switch toolName {
-        case "Read": return "reading from"
-        case "Write", "Edit": return "writing to"
-        case "Bash": return "running"
-        case "Glob", "Grep": return "searching"
+        case "Read": return L10n.tr("core.reading_from")
+        case "Write", "Edit": return L10n.tr("core.writing_to")
+        case "Bash": return L10n.tr("approval.running")
+        case "Glob", "Grep": return L10n.tr("approval.searching")
         default: return toolName.lowercased()
         }
     }
@@ -245,10 +245,10 @@ public enum ClaudePermissionUpdate: Equatable, Codable, Sendable {
 
     private static func scopeLabel(for destination: ClaudePermissionUpdateDestination) -> String {
         switch destination {
-        case .projectSettings: return "from this project"
-        case .userSettings: return "globally"
+        case .projectSettings: return L10n.tr("core.from_this_project")
+        case .userSettings: return L10n.tr("approval.globally")
         case .localSettings: return ""
-        case .session: return "for this session"
+        case .session: return L10n.tr("core.for_this_session")
         case .cliArg: return ""
         }
     }
@@ -766,40 +766,40 @@ public extension ClaudeHookPayload {
         case .sessionStart:
             switch source {
             case .resume:
-                return "Resumed \(agent) session in \(workspaceName)."
+                return L10n.tr("core.resumed_session_in", "\(agent)", "\(workspaceName)")
             case .clear:
-                return "Cleared \(agent) context in \(workspaceName)."
+                return L10n.tr("core.cleared_context_in", "\(agent)", "\(workspaceName)")
             case .compact:
-                return "Compacted \(agent) context in \(workspaceName)."
+                return L10n.tr("core.compacted_context_in", "\(agent)", "\(workspaceName)")
             case .startup, .none:
-                return "Started \(agent) session in \(workspaceName)."
+                return L10n.tr("core.started_session_in", "\(agent)", "\(workspaceName)")
             }
         case .userPromptSubmit:
-            return "\(agent) received a new prompt in \(workspaceName)."
+            return L10n.tr("core.received_a_new_prompt_in", "\(agent)", "\(workspaceName)")
         case .preToolUse:
-            return "\(agent) is preparing \(toolName ?? "a tool") in \(workspaceName)."
+            return L10n.tr("core.is_preparing_in", "\(agent)", "\(toolName ?? "a tool")", "\(workspaceName)")
         case .postToolUse:
-            return "\(agent) finished \(toolName ?? "a tool") in \(workspaceName)."
+            return L10n.tr("core.finished_in", "\(agent)", "\(toolName ?? "a tool")", "\(workspaceName)")
         case .postToolUseFailure:
-            return "\(agent) hit a tool error in \(workspaceName)."
+            return L10n.tr("core.hit_a_tool_error_in", "\(agent)", "\(workspaceName)")
         case .permissionRequest:
-            return "\(agent) needs approval in \(workspaceName)."
+            return L10n.tr("core.needs_approval_in", "\(agent)", "\(workspaceName)")
         case .permissionDenied:
-            return "\(agent) permission was denied in \(workspaceName)."
+            return L10n.tr("core.permission_was_denied_in", "\(agent)", "\(workspaceName)")
         case .notification:
-            return "\(agent) sent a notification in \(workspaceName)."
+            return L10n.tr("core.sent_a_notification_in", "\(agent)", "\(workspaceName)")
         case .stop:
-            return "\(agent) completed a turn in \(workspaceName)."
+            return L10n.tr("core.completed_a_turn_in", "\(agent)", "\(workspaceName)")
         case .stopFailure:
-            return "\(agent) failed to finish a turn in \(workspaceName)."
+            return L10n.tr("core.failed_to_finish_a_turn_in", "\(agent)", "\(workspaceName)")
         case .subagentStart:
-            return "\(agent) started a subagent in \(workspaceName)."
+            return L10n.tr("core.started_a_subagent_in", "\(agent)", "\(workspaceName)")
         case .subagentStop:
-            return "\(agent) finished a subagent in \(workspaceName)."
+            return L10n.tr("core.finished_a_subagent_in", "\(agent)", "\(workspaceName)")
         case .preCompact:
-            return "\(agent) is compacting the conversation in \(workspaceName)."
+            return L10n.tr("core.is_compacting_the_conversation_in", "\(agent)", "\(workspaceName)")
         case .sessionEnd:
-            return "\(agent) session ended in \(workspaceName)."
+            return L10n.tr("core.session_ended_in", "\(agent)", "\(workspaceName)")
         }
     }
 
@@ -893,7 +893,7 @@ public extension ClaudeHookPayload {
             // CLIs add "Other" client-side and tell the model not to include one; mirror that here.
             var resolvedOptions = options
             resolvedOptions.append(
-                QuestionOption(label: "Other", description: "", allowsFreeform: true)
+                QuestionOption(label: L10n.tr("question.other"), description: "", allowsFreeform: true)
             )
 
             return QuestionPromptItem(
@@ -912,7 +912,7 @@ public extension ClaudeHookPayload {
         if questions.count == 1, let firstQuestion = questions.first?.question {
             title = firstQuestion
         } else {
-            title = "Claude has \(questions.count) questions for you."
+            title = L10n.tr("core.claude_has_questions_for_you", "\(questions.count)")
         }
 
         return QuestionPrompt(title: title, questions: questions)
@@ -925,19 +925,19 @@ public extension ClaudeHookPayload {
     var permissionRequestTitle: String {
         switch toolName {
         case "ExitPlanMode":
-            return "Exit plan mode"
+            return L10n.tr("core.exit_plan_mode")
         case "AskUserQuestion":
-            return "Answer Claude's questions"
+            return L10n.tr("core.answer_claude_s_questions")
         case let toolName?:
-            return "Allow \(toolName)"
+            return L10n.tr("core.allow", "\(toolName)")
         case nil:
-            return "Allow Claude tool"
+            return L10n.tr("core.allow_claude_tool")
         }
     }
 
     var permissionRequestSummary: String {
         if toolName == "ExitPlanMode" {
-            return "Claude wants to exit plan mode and start implementation."
+            return L10n.tr("core.claude_wants_to_exit_plan_mode_and_start_implementation")
         }
 
         if let questionPrompt {
@@ -951,10 +951,10 @@ public extension ClaudeHookPayload {
         let agent = resolvedAgentTool.displayName
 
         if let toolName {
-            return "\(agent) wants to run \(toolName)."
+            return L10n.tr("core.wants_to_run", "\(agent)", "\(toolName)")
         }
 
-        return "\(agent) needs permission to continue."
+        return L10n.tr("core.needs_permission_to_continue", "\(agent)")
     }
 
     var permissionAffectedPath: String {

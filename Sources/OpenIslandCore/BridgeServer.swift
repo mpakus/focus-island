@@ -334,7 +334,7 @@ public final class BridgeServer: @unchecked Sendable {
                 .actionableStateResolved(
                     ActionableStateResolved(
                         sessionID: sessionID,
-                        summary: "Permission request is no longer active.",
+                        summary: L10n.tr("bridge.permission_request_is_no_longer_active"),
                         timestamp: .now
                     )
                 )
@@ -353,8 +353,8 @@ public final class BridgeServer: @unchecked Sendable {
             }
 
             let summary = response.displaySummary.isEmpty
-                ? "Answered the question."
-                : "Answered: \(response.displaySummary)"
+                ? L10n.tr("bridge.answered_the_question")
+                : L10n.tr("bridge.answered", "\(response.displaySummary)")
             emit(
                 .activityUpdated(
                     SessionActivityUpdated(
@@ -429,7 +429,7 @@ public final class BridgeServer: @unchecked Sendable {
                 .activityUpdated(
                     SessionActivityUpdated(
                         sessionID: payload.sessionID,
-                        summary: payload.promptPreview.map { "Prompt: \($0)" } ?? payload.implicitStartSummary,
+                        summary: payload.promptPreview.map { L10n.tr("bridge.prompt", "\($0)") } ?? payload.implicitStartSummary,
                         phase: .running,
                         timestamp: .now
                     )
@@ -472,7 +472,7 @@ public final class BridgeServer: @unchecked Sendable {
                 }
             }
 
-            let summary = payload.toolName.map { "Running \($0)" } ?? "Running \(payload.resolvedAgentTool.displayName) tool"
+            let summary = payload.toolName.map { L10n.tr("bridge.running", "\($0)") } ?? L10n.tr("bridge.running_tool", "\(payload.resolvedAgentTool.displayName)")
             emit(
                 .activityUpdated(
                     SessionActivityUpdated(
@@ -516,8 +516,8 @@ public final class BridgeServer: @unchecked Sendable {
                                 title: payload.permissionRequestTitle,
                                 summary: payload.permissionRequestSummary,
                                 affectedPath: payload.permissionAffectedPath,
-                                primaryActionTitle: "Allow Once",
-                                secondaryActionTitle: "Deny",
+                                primaryActionTitle: L10n.tr("bridge.allow_once"),
+                                secondaryActionTitle: L10n.tr("ui.deny"),
                                 toolName: payload.toolName,
                                 toolUseID: claudeToolUseID(for: payload),
                                 suggestedUpdates: suggestions
@@ -568,16 +568,16 @@ public final class BridgeServer: @unchecked Sendable {
 
             let summary = {
                 if payload.toolName == "AskUserQuestion" {
-                    return "\(payload.resolvedAgentTool.displayName) captured your answers."
+                    return L10n.tr("bridge.captured_your_answers", "\(payload.resolvedAgentTool.displayName)")
                 }
 
                 if let preview = payload.toolResponsePreview,
                    let toolName = payload.toolName {
-                    return "\(toolName) finished: \(preview)"
+                    return L10n.tr("bridge.finished", "\(toolName)", "\(preview)")
                 }
 
                 if let toolName = payload.toolName {
-                    return "\(toolName) finished."
+                    return L10n.tr("bridge.finished_9", "\(toolName)")
                 }
 
                 return payload.implicitStartSummary
@@ -606,7 +606,7 @@ public final class BridgeServer: @unchecked Sendable {
                 .activityUpdated(
                     SessionActivityUpdated(
                         sessionID: payload.sessionID,
-                        summary: payload.error ?? "\(payload.resolvedAgentTool.displayName) tool failed.",
+                        summary: payload.error ?? L10n.tr("bridge.tool_failed", "\(payload.resolvedAgentTool.displayName)"),
                         phase: payload.isInterrupt == true ? .completed : .running,
                         timestamp: .now
                     )
@@ -624,7 +624,7 @@ public final class BridgeServer: @unchecked Sendable {
                 .sessionCompleted(
                     SessionCompleted(
                         sessionID: payload.sessionID,
-                        summary: payload.error ?? "\(payload.resolvedAgentTool.displayName) permission was denied.",
+                        summary: payload.error ?? L10n.tr("bridge.permission_was_denied", "\(payload.resolvedAgentTool.displayName)"),
                         timestamp: .now
                     )
                 )
@@ -671,7 +671,7 @@ public final class BridgeServer: @unchecked Sendable {
                 .sessionCompleted(
                     SessionCompleted(
                         sessionID: payload.sessionID,
-                        summary: payload.lastAssistantMessage ?? payload.assistantMessagePreview ?? "\(payload.resolvedAgentTool.displayName) completed the turn.",
+                        summary: payload.lastAssistantMessage ?? payload.assistantMessagePreview ?? L10n.tr("bridge.completed_the_turn", "\(payload.resolvedAgentTool.displayName)"),
                         timestamp: .now,
                         isInterrupt: payload.isInterrupt
                     )
@@ -693,7 +693,7 @@ public final class BridgeServer: @unchecked Sendable {
                 .sessionCompleted(
                     SessionCompleted(
                         sessionID: payload.sessionID,
-                        summary: payload.error ?? payload.lastAssistantMessage ?? payload.assistantMessagePreview ?? "\(payload.resolvedAgentTool.displayName) failed to finish the turn.",
+                        summary: payload.error ?? payload.lastAssistantMessage ?? payload.assistantMessagePreview ?? L10n.tr("bridge.failed_to_finish_the_turn", "\(payload.resolvedAgentTool.displayName)"),
                         timestamp: .now,
                         isInterrupt: payload.isInterrupt
                     )
@@ -719,7 +719,7 @@ public final class BridgeServer: @unchecked Sendable {
                 )
             }
 
-            let summary = payload.agentType.map { "Started \($0) subagent." } ?? "Started \(payload.resolvedAgentTool.displayName) subagent."
+            let summary = payload.agentType.map { L10n.tr("bridge.started_subagent", "\($0)") } ?? L10n.tr("bridge.started_subagent", "\(payload.resolvedAgentTool.displayName)")
             emit(
                 .activityUpdated(
                     SessionActivityUpdated(
@@ -750,8 +750,8 @@ public final class BridgeServer: @unchecked Sendable {
             }
 
             let summary = payload.lastAssistantMessage ?? payload.assistantMessagePreview
-                ?? payload.agentType.map { "Finished \($0) subagent." }
-                ?? "Finished \(payload.resolvedAgentTool.displayName) subagent."
+                ?? payload.agentType.map { L10n.tr("bridge.finished_subagent", "\($0)") }
+                ?? L10n.tr("bridge.finished_subagent", "\(payload.resolvedAgentTool.displayName)")
             emit(
                 .activityUpdated(
                     SessionActivityUpdated(
@@ -773,7 +773,7 @@ public final class BridgeServer: @unchecked Sendable {
                 .activityUpdated(
                     SessionActivityUpdated(
                         sessionID: payload.sessionID,
-                        summary: "\(payload.resolvedAgentTool.displayName) is compacting the conversation.",
+                        summary: L10n.tr("bridge.is_compacting_the_conversation", "\(payload.resolvedAgentTool.displayName)"),
                         phase: .running,
                         timestamp: .now
                     )
@@ -795,7 +795,7 @@ public final class BridgeServer: @unchecked Sendable {
                 .sessionCompleted(
                     SessionCompleted(
                         sessionID: payload.sessionID,
-                        summary: "\(payload.resolvedAgentTool.displayName) session ended.",
+                        summary: L10n.tr("bridge.session_ended", "\(payload.resolvedAgentTool.displayName)"),
                         timestamp: .now,
                         isInterrupt: true,
                         isSessionEnd: true
@@ -815,7 +815,7 @@ public final class BridgeServer: @unchecked Sendable {
             .actionableStateResolved(
                 ActionableStateResolved(
                     sessionID: sessionID,
-                    summary: "Approval was handled outside Open Island.",
+                    summary: L10n.tr("bridge.approval_was_handled_outside_open_island"),
                     timestamp: .now
                 )
             )
@@ -1364,14 +1364,14 @@ public final class BridgeServer: @unchecked Sendable {
             directive = .permissionRequest(
                 .allow(updatedInput: finalInput, updatedPermissions: updatedPermissions)
             )
-            summary = payload.toolName.map { "Permission approved for \($0)." } ?? "Permission approved."
+            summary = payload.toolName.map { L10n.tr("bridge.permission_approved_for", "\($0)") } ?? L10n.tr("bridge.permission_approved")
             phase = .running
 
         case let (.permission(_), .deny(message, interrupt)):
             directive = .permissionRequest(
-                .deny(message: message ?? "Permission denied in Open Island.", interrupt: interrupt)
+                .deny(message: message ?? L10n.tr("bridge.permission_denied_in_open_island"), interrupt: interrupt)
             )
-            summary = message ?? "Permission denied in Open Island."
+            summary = message ?? L10n.tr("bridge.permission_denied_in_open_island")
             phase = .completed
 
         case let (.question(payload, _), .allowOnce(updatedInput, updatedPermissions)):
@@ -1379,11 +1379,11 @@ public final class BridgeServer: @unchecked Sendable {
             directive = .permissionRequest(
                 .allow(updatedInput: finalInput, updatedPermissions: updatedPermissions)
             )
-            summary = "\(payload.resolvedAgentTool.displayName)'s questions were answered."
+            summary = L10n.tr("bridge.s_questions_were_answered", "\(payload.resolvedAgentTool.displayName)")
             phase = .running
 
         case let (.question(payload, _), .deny(message, interrupt)):
-            let fallback = "Declined to answer \(payload.resolvedAgentTool.displayName)'s questions."
+            let fallback = L10n.tr("bridge.declined_to_answer_s_questions", "\(payload.resolvedAgentTool.displayName)")
             directive = .permissionRequest(
                 .deny(message: message ?? fallback, interrupt: interrupt)
             )
@@ -1431,8 +1431,8 @@ public final class BridgeServer: @unchecked Sendable {
             response: response
         )
         let summary = response.displaySummary.isEmpty
-            ? "Answered \(payload.resolvedAgentTool.displayName)'s questions."
-            : "Answered: \(response.displaySummary)"
+            ? L10n.tr("bridge.answered_s_questions", "\(payload.resolvedAgentTool.displayName)")
+            : L10n.tr("bridge.answered", "\(response.displaySummary)")
 
         emit(
             .activityUpdated(
@@ -1556,7 +1556,7 @@ public final class BridgeServer: @unchecked Sendable {
                 .actionableStateResolved(
                     ActionableStateResolved(
                         sessionID: sessionID,
-                        summary: "Hook process disconnected.",
+                        summary: L10n.tr("bridge.hook_process_disconnected"),
                         timestamp: .now
                     )
                 )

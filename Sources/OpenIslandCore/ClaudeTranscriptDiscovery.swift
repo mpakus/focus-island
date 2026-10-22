@@ -205,7 +205,7 @@ public final class ClaudeTranscriptDiscovery: @unchecked Sendable {
         )
         let summary = lastAssistantMessage
             ?? lastUserPrompt
-            ?? "Recovered Claude session in \(workspaceName)."
+            ?? L10n.tr("bridge.recovered_claude_session_in", "\(workspaceName)")
 
         return AgentSession(
             id: sessionID,

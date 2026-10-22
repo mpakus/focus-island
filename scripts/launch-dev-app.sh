@@ -59,11 +59,12 @@ command cp "$setup_binary" "$bundle_dir/Contents/Helpers/OpenIslandSetup"
 command cp "$brand_icon" "$bundle_dir/Contents/Resources/OpenIsland.icns"
 chmod +x "$bundle_binary" "$bundle_dir/Contents/Helpers/OpenIslandHooks" "$bundle_dir/Contents/Helpers/OpenIslandSetup"
 
-# Copy SPM resource bundle to .app root — SPM's generated Bundle.module accessor
-# searches Bundle.main.bundleURL (the .app root), NOT Contents/Resources/.
-resource_bundle="$build_root/OpenIsland_OpenIslandApp.bundle"
+# Copy the shared catalog, then move it into Contents/Resources before signing.
+# ResourceBundle finds it for the app and its packaged helpers.
+resource_bundle="$build_root/OpenIsland_OpenIslandCore.bundle"
 if [ -d "$resource_bundle" ]; then
-    rm -rf "$bundle_dir/OpenIsland_OpenIslandApp.bundle"
+    rm -rf "$bundle_dir/OpenIsland_OpenIslandApp.bundle" "$bundle_dir/Contents/Resources/OpenIsland_OpenIslandApp.bundle"
+    rm -rf "$bundle_dir/OpenIsland_OpenIslandCore.bundle"
     command cp -R "$resource_bundle" "$bundle_dir/"
 fi
 
@@ -74,6 +75,8 @@ cat > "$plist_path" <<EOF
 <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array><string>en</string><string>es</string><string>ru</string></array>
     <key>CFBundleExecutable</key>
     <string>OpenIslandApp</string>
     <key>CFBundleIdentifier</key>
@@ -106,11 +109,9 @@ EOF
 
 # Dev builds on macOS 26+: the SPM resource bundle at the .app root
 # causes "unsealed contents" codesign failure. Move it into
-# Contents/Resources/ so signing succeeds. On the developer machine
-# Bundle.module falls back to the hardcoded .build/ path, so
-# localization still works. (Release builds use package-app.sh which
-# has its own resource bundle handling.)
-resource_bundle_name="OpenIsland_OpenIslandApp.bundle"
+# Contents/Resources/ so signing succeeds. The shared ResourceBundle accessor
+# resolves this path without relying on the development checkout.
+resource_bundle_name="OpenIsland_OpenIslandCore.bundle"
 root_bundle="$bundle_dir/$resource_bundle_name"
 resources_bundle="$bundle_dir/Contents/Resources/$resource_bundle_name"
 if [ -d "$root_bundle" ] && [ ! -L "$root_bundle" ]; then

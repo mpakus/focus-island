@@ -82,7 +82,7 @@ cp "$brand_icon" "$bundle_dir/Contents/Resources/OpenIsland.icns"
 # Copy SPM resource bundle into Contents/Resources/ so the .app root stays
 # clean for code signing (no unsealed contents). Our custom
 # resource_bundle_accessor.swift searches Bundle.main.resourceURL first.
-spm_resource_bundle="$build_bin_dir/OpenIsland_OpenIslandApp.bundle"
+spm_resource_bundle="$build_bin_dir/OpenIsland_OpenIslandCore.bundle"
 if [[ -d "$spm_resource_bundle" ]]; then
     cp -R "$spm_resource_bundle" "$bundle_dir/Contents/Resources/"
 else
@@ -101,6 +101,8 @@ cat > "$bundle_dir/Contents/Info.plist" <<EOF
 <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array><string>en</string><string>es</string><string>ru</string></array>
     <key>CFBundleDisplayName</key>
     <string>$app_name</string>
     <key>CFBundleExecutable</key>
@@ -140,7 +142,7 @@ for required in \
     "Contents/Helpers/OpenIslandHooks" \
     "Contents/Helpers/OpenIslandSetup" \
     "Contents/Resources/OpenIsland.icns" \
-    "Contents/Resources/OpenIsland_OpenIslandApp.bundle" \
+    "Contents/Resources/OpenIsland_OpenIslandCore.bundle" \
 ; do
     if [[ ! -e "$bundle_dir/$required" ]]; then
         echo "ERROR: missing required file: $required" >&2

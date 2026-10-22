@@ -40,21 +40,21 @@ public enum BridgeTransportError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .alreadyConnected:
-            "The bridge client is already connected."
+            L10n.tr("core.the_bridge_client_is_already_connected")
         case .notConnected:
-            "The bridge client is not connected."
+            L10n.tr("core.the_bridge_client_is_not_connected")
         case .malformedEnvelope:
-            "The bridge transport received malformed data."
+            L10n.tr("core.the_bridge_transport_received_malformed_data")
         case .responseTimedOut:
-            "The local bridge timed out while waiting for a response."
+            L10n.tr("core.the_local_bridge_timed_out_while_waiting_for_a_response")
         case let .listenerFailed(message):
-            "The local bridge listener failed: \(message)"
+            L10n.tr("core.the_local_bridge_listener_failed", "\(message)")
         case .socketPathTooLong:
-            "The Unix socket path is too long for `sockaddr_un`."
+            L10n.tr("core.the_unix_socket_path_is_too_long_for_sockaddr_un")
         case let .systemCallFailed(name, code):
-            "\(name) failed with errno \(code)."
+            L10n.tr("core.failed_with_errno", "\(name)", "\(code)")
         case .socketInUse:
-            "Another Focus Island instance is already listening on the bridge socket."
+            L10n.tr("core.another_focus_island_instance_is_already_listening_on_the_bridge_socket")
         }
     }
 }

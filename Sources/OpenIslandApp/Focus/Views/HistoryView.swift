@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -8,10 +9,10 @@ struct HistoryView: View {
 
     nonisolated static func dayTitle(_ day: Date, now: Date, calendar: Calendar = .current) -> String {
         let base = DaySummaryFormatter.title(day, calendar: calendar)
-        let lowered = base.prefix(1).lowercased() + base.dropFirst()
-        if calendar.isDate(day, inSameDayAs: now) { return "Сегодня · \(lowered)" }
+        let lowered = LanguageManager.shared.language == .en ? base : base.prefix(1).lowercased() + base.dropFirst()
+        if calendar.isDate(day, inSameDayAs: now) { return L10n.tr("focus.today_320", "\(lowered)") }
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(day, inSameDayAs: yesterday) {
-            return "Вчера · \(lowered)"
+            return L10n.tr("focus.yesterday_321", "\(lowered)")
         }
         return base
     }
@@ -21,9 +22,9 @@ struct HistoryView: View {
         let groups = Dictionary(grouping: records) { Calendar.current.startOfDay(for: $0.lastActivityAt) }
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                TextField("Поиск по заголовку и промптам", text: $query).textFieldStyle(.roundedBorder)
-                Picker("Проект", selection: $projectFilter) {
-                    Text("Все проекты").tag(String?.none)
+                TextField(L10n.tr("focus.search_titles_and_prompts"), text: $query).textFieldStyle(.roundedBorder)
+                Picker(L10n.tr("focus.project"), selection: $projectFilter) {
+                    Text(L10n.tr("focus.all_projects")).tag(String?.none)
                     ForEach(focus.knownProjectPaths(), id: \.self) { path in
                         Text(URL(fileURLWithPath: path).lastPathComponent).tag(String?.some(path))
                     }
@@ -58,7 +59,7 @@ struct HistoryRow: View {
     let record: SessionRecord
 
     nonisolated static func actionTitle(isLive: Bool) -> String {
-        isLive ? "Перейти" : "Продолжить"
+        isLive ? L10n.tr("focus.open_session") : L10n.tr("focus.resume")
     }
 
     var body: some View {
@@ -80,12 +81,12 @@ struct HistoryRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             Text(record.provider.shortName).font(.caption2).foregroundStyle(.secondary)
             if let project = record.projectName { ProjectTag(project) }
-            Text(focus.board.task(id: record.taskId)?.title ?? "без задачи")
+            Text(focus.board.task(id: record.taskId)?.title ?? L10n.tr("focus.no_task_154"))
                 .font(FocusStyle.secondaryFont)
                 .foregroundStyle(FocusStyle.secondaryText)
                 .lineLimit(1)
                 .frame(width: 150, alignment: .leading)
-            Text(record.lastActivityAt.formatted(date: .omitted, time: .shortened))
+            Text(record.lastActivityAt.formatted(.dateTime.hour().minute().locale(LanguageManager.shared.locale)))
                 .font(FocusStyle.secondaryFont)
                 .foregroundStyle(FocusStyle.secondaryText)
                 .monospacedDigit()
@@ -99,14 +100,14 @@ struct HistoryRow: View {
             }
             .buttonStyle(FocusButtonStyle(kind: .secondary, height: 26, horizontalPadding: 12))
             .disabled(!canAct)
-            .help(canAct ? "" : "Папка проекта больше не существует")
+            .help(canAct ? "" : L10n.tr("focus.the_project_folder_no_longer_exists"))
         }
         .padding(.vertical, 8)
         .opacity(canAct ? 1 : 0.6)
     }
 
     nonisolated static func detail(_ record: SessionRecord, canAct: Bool) -> String? {
-        if !canAct { return "Папка проекта удалена — продолжить нельзя" }
+        if !canAct { return L10n.tr("focus.project_folder_deleted_cannot_resume") }
         let text = record.lastAssistantMessage ?? record.lastPrompt ?? record.firstPrompt
         return text.map { FocusText.truncated($0, limit: 120) }
     }

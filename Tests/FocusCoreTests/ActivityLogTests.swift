@@ -125,7 +125,7 @@ struct ActivityLogTests {
         #expect(report.lanes[0].title == "Задача t8")
         let other = report.lanes[6]
         #expect(other.id == "other")
-        #expect(other.title == "Другие")
+        #expect(other.title == "Other")
         #expect(other.segments.count == 3)
         #expect(other.segments.map(\.start) == [at(10), at(20), at(100)])
     }
@@ -140,9 +140,9 @@ struct ActivityLogTests {
         }
         let report = ReportBuilder.day(spans: spans, episodes: [], tasks: tasks, dayStart: at(0), dayEnd: at(600))
         #expect(report.lanes.count == 7)
-        #expect(report.lanes[0].title == "Без задачи")
+        #expect(report.lanes[0].title == "No task")
         #expect(report.lanes[0].taskID == nil)
-        #expect(report.lanes[6].title == "Другие")
+        #expect(report.lanes[6].title == "Other")
         #expect(report.lanes[6].segments.count == 1)
     }
 
@@ -214,7 +214,7 @@ struct ActivityLogTests {
         #expect(report.rows[1].projectName == "proj")
         #expect(report.rows[1].sessions == 1)
         #expect(report.rows[2].taskID == nil)
-        #expect(report.rows[2].title == "Без задачи")
+        #expect(report.rows[2].title == "No task")
         #expect(report.rows[2].sessions == 1)
     }
 

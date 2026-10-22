@@ -73,12 +73,12 @@ struct FocusCoordinatorTakeTaskTests {
         #expect(optionA.projectName == "proj")
         #expect(optionA.liveSessionCount == 2)
         #expect(optionA.hasLiveSessions)
-        #expect(optionA.sessionStateText == "2 сессии · твой ход 83 мин")
+        #expect(optionA.sessionStateText == "2 sessions · your turn 83 min")
         #expect(optionA.id == a)
         let optionB = try #require(options.inProgress.first { $0.taskID == b })
         #expect(optionB.liveSessionCount == 0)
         #expect(!optionB.hasLiveSessions)
-        #expect(optionB.sessionStateText == "нет сессий — добавишь следующим шагом")
+        #expect(optionB.sessionStateText == "no sessions — add them next")
     }
 
     @Test
@@ -100,9 +100,9 @@ struct FocusCoordinatorTakeTaskTests {
         for id in ["run2", "idle2"] { c.bind(sessionID: id, taskID: b, now: at(240)) }
         c.bind(sessionID: "run3", taskID: d, now: at(240))
         let options = c.pickTaskOptions(now: at(600))
-        #expect(options.inProgress.first { $0.taskID == a }?.sessionStateText == "3 сессии · ждёт 8 мин")
-        #expect(options.inProgress.first { $0.taskID == b }?.sessionStateText == "2 сессии · твой ход 7 мин")
-        #expect(options.inProgress.first { $0.taskID == d }?.sessionStateText == "1 сессия · работает 6 мин")
+        #expect(options.inProgress.first { $0.taskID == a }?.sessionStateText == "3 sessions · waiting 8 min")
+        #expect(options.inProgress.first { $0.taskID == b }?.sessionStateText == "2 sessions · your turn 7 min")
+        #expect(options.inProgress.first { $0.taskID == d }?.sessionStateText == "1 session · working 6 min")
     }
 
     @Test

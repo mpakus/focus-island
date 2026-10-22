@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import Foundation
 import SwiftUI
@@ -26,10 +27,10 @@ enum BoardTab: String, CaseIterable, Sendable {
 
     var title: String {
         switch self {
-        case .board: "Доска"
-        case .today: "Сегодня"
-        case .week: "Неделя"
-        case .history: "История"
+        case .board: L10n.tr("focus.board")
+        case .today: L10n.tr("focus.today")
+        case .week: L10n.tr("focus.week")
+        case .history: L10n.tr("focus.history")
         }
     }
 
@@ -77,6 +78,8 @@ struct BoardRootView: View {
         .background(FocusStyle.windowBackground)
         .frame(minWidth: 900, minHeight: 520)
         .preferredColorScheme(.dark)
+        .environment(\.locale, LanguageManager.shared.locale)
+        .onChange(of: LanguageManager.shared.language) { _, _ in BoardWindowController.shared.refreshTitle() }
         .sheet(item: startTaskBinding) { item in
             StartTaskSheet(focus: focus, taskID: item.id).id(item.id)
         }
@@ -137,16 +140,16 @@ struct BoardRootView: View {
 
     private var filterMenu: some View {
         Menu {
-            Picker("Проект", selection: $projectFilter) {
-                Text("Все проекты").tag(String?.none)
+            Picker(L10n.tr("focus.project"), selection: $projectFilter) {
+                Text(L10n.tr("focus.all_projects")).tag(String?.none)
                 ForEach(focus.knownProjectPaths(), id: \.self) { path in
                     Text(URL(fileURLWithPath: path).lastPathComponent).tag(String?.some(path))
                 }
             }
             Divider()
-            Toggle("Архив Done", isOn: $showsArchive)
+            Toggle(L10n.tr("focus.completed_archive"), isOn: $showsArchive)
         } label: {
-            Text(projectFilter.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "Все проекты")
+            Text(projectFilter.map { URL(fileURLWithPath: $0).lastPathComponent } ?? L10n.tr("focus.all_projects"))
                 .font(.system(size: 13))
                 .foregroundStyle(FocusStyle.primaryText)
         }
@@ -238,31 +241,27 @@ struct BoardView: View {
     }
 
     nonisolated static func workingLabel(_ count: Int) -> String {
-        "\(count) \(count % 10 == 1 && count % 100 != 11 ? "работает" : "работают")"
+        L10n.tr(L10n.pluralKey(count, one: "board.working.one", few: "board.working.many", many: "board.working.many"), "\(count)")
     }
 
     nonisolated static func waitingLabel(_ count: Int) -> String {
-        "\(count) \(count % 10 == 1 && count % 100 != 11 ? "ждёт тебя" : "ждут тебя")"
+        L10n.tr(L10n.pluralKey(count, one: "board.waiting.one", few: "board.waiting.many", many: "board.waiting.many"), "\(count)")
     }
 
     nonisolated static func reviewLabel(_ count: Int) -> String {
-        "\(count) готово"
+        L10n.tr("focus.done", "\(count)")
     }
 
     nonisolated static func duration(_ seconds: TimeInterval) -> String {
-        guard seconds > 0 else { return "0 мин" }
+        guard seconds > 0 else { return L10n.tr("focus.0_min") }
         let minutes = FocusText.roundedUpMinutes(seconds)
-        guard minutes >= 60 else { return "\(minutes) мин" }
+        guard minutes >= 60 else { return L10n.tr("focus.min", "\(minutes)") }
         let rest = minutes % 60
-        return rest == 0 ? "\(minutes / 60) ч" : String(format: "%d ч %02d мин", minutes / 60, rest)
+        return rest == 0 ? L10n.tr("focus.h", "\(minutes / 60)") : String(format: L10n.tr("focus.d_h_02d_min"), minutes / 60, rest)
     }
 
     nonisolated static func sessionsWord(_ count: Int) -> String {
-        let mod10 = count % 10
-        let mod100 = count % 100
-        if mod10 == 1 && mod100 != 11 { return "сессия" }
-        if (2...4).contains(mod10) && !(12...14).contains(mod100) { return "сессии" }
-        return "сессий"
+        return L10n.tr(L10n.pluralKey(count, one: "focus.session_47", few: "focus.sessions_48", many: "focus.sessions_49"))
     }
 }
 
@@ -297,7 +296,7 @@ struct BoardColumnView: View {
                     }
                 }
             }
-            TextField("+ Задача", text: $newTitle)
+            TextField(L10n.tr("focus.task"), text: $newTitle)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
                 .padding(.horizontal, 12)
@@ -357,7 +356,7 @@ struct TaskCardView: View {
                     ProjectTag(URL(fileURLWithPath: path).lastPathComponent)
                 }
                 if focus.currentTask?.id == task.id && !isDone {
-                    Text("в фокусе")
+                    Text(L10n.tr("focus.in_focus"))
                         .font(.system(size: 11))
                         .foregroundStyle(FocusStyle.badgeText)
                         .padding(.horizontal, 7)
@@ -429,10 +428,10 @@ struct TaskCardView: View {
     nonisolated static func footerText(aggregate: TaskAggregate) -> String? {
         var parts: [String] = []
         if let progress = aggregate.criteria {
-            parts.append("Критерий: \(progress.done) из \(progress.total)")
+            parts.append(L10n.tr("focus.criteria_of", "\(progress.done)", "\(progress.total)"))
         }
         if !aggregate.sessionIDsWithQueuedPrompt.isEmpty {
-            parts.append("промпт в очереди")
+            parts.append(L10n.tr("focus.prompt_queued"))
         }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
@@ -470,22 +469,24 @@ struct TaskCardView: View {
         let past = records.filter { !live.contains($0.id) }
         guard !past.isEmpty else { return nil }
         let total = past.reduce(0) { $0 + sessionSeconds($1) }
-        return "ещё \(past.count) \(BoardView.sessionsWord(past.count)) · \(BoardView.duration(total))"
+        return L10n.tr("focus.more", "\(past.count)", "\(BoardView.sessionsWord(past.count))", "\(BoardView.duration(total))")
     }
 
     nonisolated static func waitLabel(since: Date, now: Date) -> String {
-        "\(FocusText.minutes(now.timeIntervalSince(since))) м"
+        L10n.tr("focus.min_55", "\(FocusText.minutes(now.timeIntervalSince(since)))")
     }
 
     nonisolated static func dayLabel(_ date: Date, now: Date, calendar: Calendar) -> String {
-        if calendar.isDate(date, inSameDayAs: now) { return "сегодня" }
+        if calendar.isDate(date, inSameDayAs: now) { return L10n.tr("focus.today_56") }
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
-            return "вчера"
+            return L10n.tr("focus.yesterday")
         }
-        let parts = calendar.dateComponents([.day, .month], from: date)
-        let months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"]
-        let month = max(1, min(12, parts.month ?? 1))
-        return "\(parts.day ?? 1) \(months[month - 1])"
+        let formatter = DateFormatter()
+        formatter.locale = LanguageManager.shared.locale
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.setLocalizedDateFormatFromTemplate("dMMMM")
+        return formatter.string(from: date)
     }
 
     nonisolated static func doneCaption(doneAt: Date?, records: [SessionRecord], now: Date, calendar: Calendar) -> String {

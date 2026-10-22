@@ -59,6 +59,7 @@
 - "History" — a searchable session archive; "Open" jumps to a live session and "Resume" continues one via `claude --resume` or `codex resume` with its native session ID.
 
 **Settings**
+- Settings → General → Language: **English** (default), **Español**, or **Русский**. The interface, generated session messages, dates, and exported summaries follow this choice. Your task names, prompts, and agent replies stay as written.
 - Settings → Setup: independent Claude Code and Codex hook status, paths, install and uninstall, plus Codex trust instructions and reinstall controls.
 - "Sessions": parallel session limit (1–6), waiting-session reminder (5–60 min), the "Start of day" morning screen.
 - "What's next?", "Distractions" (threshold, blocklist of domains and apps), terminal used for Resume, board hotkey.

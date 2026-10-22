@@ -51,6 +51,7 @@ final class HookInstallationCoordinator {
     @ObservationIgnored
     private var relativeTimestampFormatter: RelativeDateTimeFormatter {
         let formatter = RelativeDateTimeFormatter()
+        formatter.locale = LanguageManager.shared.locale
         formatter.unitsStyle = .short
         return formatter
     }
@@ -69,46 +70,46 @@ final class HookInstallationCoordinator {
         claudeStatusLineStatus?.providedByOtherIsland == true
     }
 
-    static let statusLineProvidedByOtherIslandText = "Строку статуса уже использует Open Island — Focus её не трогает"
+    static var statusLineProvidedByOtherIslandText: String { L10n.tr("focus.open_island_already_uses_the_status_line_focus_leaves_it_unchanged") }
 
     var claudeHookStatusTitle: String {
         if claudeHooksInstalled {
-            return "Claude hooks installed"
+            return L10n.tr("ui.claude_hooks_installed")
         }
 
         if hooksBinaryURL == nil {
-            return "Hook binary not found"
+            return L10n.tr("ui.hook_binary_not_found")
         }
 
-        return "Claude hooks not installed"
+        return L10n.tr("ui.claude_hooks_not_installed")
     }
 
     var claudeHookStatusSummary: String {
         guard let status = claudeHookStatus else {
-            return "Reading \(ClaudeConfigDirectory.resolved().appendingPathComponent("settings.json").path)."
+            return L10n.tr("ui.reading", "\(ClaudeConfigDirectory.resolved().appendingPathComponent("settings.json").path)")
         }
 
         if claudeHooksInstalled {
             if status.hasClaudeIslandHooks {
-                return "managed hooks present · claude-island hooks also detected"
+                return L10n.tr("ui.managed_hooks_present_claude_island_hooks_also_detected")
             }
-            return "managed hooks present"
+            return L10n.tr("ui.managed_hooks_present")
         }
 
         if hooksBinaryURL == nil {
-            return "Build OpenIslandHooks before installing."
+            return L10n.tr("ui.build_openislandhooks_before_installing")
         }
 
         if status.hasClaudeIslandHooks {
-            return "claude-island hooks detected · managed hooks absent"
+            return L10n.tr("ui.claude_island_hooks_detected_managed_hooks_absent")
         }
 
-        return "no managed Claude hooks"
+        return L10n.tr("ui.no_managed_claude_hooks")
     }
 
     var claudeUsageStatusTitle: String {
         guard let status = claudeStatusLineStatus else {
-            return "Claude usage status unavailable"
+            return L10n.tr("ui.claude_usage_status_unavailable")
         }
 
         if status.providedByOtherIsland && !status.managedStatusLineInstalled {
@@ -116,30 +117,30 @@ final class HookInstallationCoordinator {
         }
 
         if status.managedStatusLineInstalled {
-            return "Claude usage bridge installed"
+            return L10n.tr("ui.claude_usage_bridge_installed")
         }
 
         if status.managedStatusLineNeedsRepair {
-            return "Claude usage bridge needs repair"
+            return L10n.tr("ui.claude_usage_bridge_needs_repair")
         }
 
         if status.hasConflictingStatusLine {
-            return "Custom Claude status line detected"
+            return L10n.tr("ui.custom_claude_status_line_detected")
         }
 
-        return "Claude usage bridge not installed"
+        return L10n.tr("ui.claude_usage_bridge_not_installed")
     }
 
     var claudeUsageStatusSummary: String {
         guard let status = claudeStatusLineStatus else {
-            return "Reading \(ClaudeConfigDirectory.resolved().appendingPathComponent("settings.json").path)."
+            return L10n.tr("ui.reading", "\(ClaudeConfigDirectory.resolved().appendingPathComponent("settings.json").path)")
         }
 
         if status.managedStatusLineInstalled {
             if let summary = claudeUsageSummaryText {
-                return "Caching rate limits from Claude Code · \(summary)"
+                return L10n.tr("ui.caching_rate_limits_from_claude_code", "\(summary)")
             }
-            return "Caching rate limits from Claude Code into \(status.cacheURL.path)."
+            return L10n.tr("ui.caching_rate_limits_from_claude_code_into", "\(status.cacheURL.path)")
         }
 
         if status.providedByOtherIsland {
@@ -147,14 +148,14 @@ final class HookInstallationCoordinator {
         }
 
         if status.managedStatusLineNeedsRepair {
-            return "Open Island detected a missing managed Claude status line script and will repair it automatically."
+            return L10n.tr("ui.open_island_detected_a_missing_managed_claude_status_line_script_and_will_r")
         }
 
         if status.hasConflictingStatusLine {
-            return "Open Island will not overwrite an existing Claude status line automatically."
+            return L10n.tr("ui.open_island_will_not_overwrite_an_existing_claude_status_line_automatically")
         }
 
-        return "Install a managed Claude status line to cache 5h and 7d usage locally."
+        return L10n.tr("ui.install_a_managed_claude_status_line_to_cache_5h_and_7d_usage_locally")
     }
 
     var claudeUsageSummaryText: String? {
@@ -164,13 +165,13 @@ final class HookInstallationCoordinator {
 
         var components: [String] = []
         if let fiveHour = snapshot.fiveHour {
-            components.append("5h \(fiveHour.roundedUsedPercentage)%")
+            components.append(L10n.tr("usage.fiveHours", "\(fiveHour.roundedUsedPercentage)"))
         }
         if let sevenDay = snapshot.sevenDay {
-            components.append("7d \(sevenDay.roundedUsedPercentage)%")
+            components.append(L10n.tr("usage.sevenDays", "\(sevenDay.roundedUsedPercentage)"))
         }
         if let cachedAt = snapshot.cachedAt {
-            components.append("updated \(relativeTimestampFormatter.localizedString(for: cachedAt, relativeTo: .now))")
+            components.append(L10n.tr("ui.updated", "\(relativeTimestampFormatter.localizedString(for: cachedAt, relativeTo: .now))"))
         }
         return components.isEmpty ? nil : components.joined(separator: " · ")
     }
@@ -192,10 +193,10 @@ final class HookInstallationCoordinator {
         if oldHadHooks {
             let oldPath = oldDirectory.path
             if oldPath != newPath {
-                onStatusMessage?("Claude config directory changed to \(newPath). Hooks in \(oldPath) were not removed — uninstall them manually if no longer needed.")
+                onStatusMessage?(L10n.tr("ui.claude_config_directory_changed_to_hooks_in_were_not_removed_uninstall_them", "\(newPath)", "\(oldPath)"))
             }
         } else {
-            onStatusMessage?("Claude config directory set to \(newPath).")
+            onStatusMessage?(L10n.tr("ui.claude_config_directory_set_to", "\(newPath)"))
         }
     }
 
@@ -214,11 +215,11 @@ final class HookInstallationCoordinator {
                     try ManagedHooksBinary.updateIfNeeded(from: source)
                 }.value
                 if updated {
-                    self.onStatusMessage?("Hooks binary updated to match the current app version.")
+                    self.onStatusMessage?(L10n.tr("ui.hooks_binary_updated_to_match_the_current_app_version"))
                     self.refreshClaudeHookStatus()
                 }
             } catch {
-                self.onStatusMessage?("Failed to update hooks binary: \(error.localizedDescription)")
+                self.onStatusMessage?(L10n.tr("ui.failed_to_update_hooks_binary", "\(error.localizedDescription)"))
             }
         }
     }
@@ -246,7 +247,7 @@ final class HookInstallationCoordinator {
             self.claudeHealthReport = claudeReport
 
             if !claudeReport.isHealthy {
-                self.onStatusMessage?("Hook health check: \(claudeReport.errors.count) Claude issue(s).")
+                self.onStatusMessage?(L10n.tr("ui.hook_health_check_claude_issue_s", "\(claudeReport.errors.count)"))
             }
         }
     }
@@ -267,7 +268,7 @@ final class HookInstallationCoordinator {
 
         // Repair Claude hooks if there are repairable issues
         if !claudeReport.repairableIssues.isEmpty, hooksBinaryURL != nil {
-            onStatusMessage?("Repairing Claude hooks: \(claudeReport.repairableIssues.map(\.description).joined(separator: "; "))")
+            onStatusMessage?(L10n.tr("ui.repairing_claude_hooks", "\(claudeReport.repairableIssues.map(\.description).joined(separator: "; "))"))
             installClaudeHooks()
             repaired = true
         }
@@ -281,9 +282,9 @@ final class HookInstallationCoordinator {
             claudeHealthReport = updatedClaude
 
             if updatedClaude.isHealthy {
-                onStatusMessage?("Hook repair completed successfully.")
+                onStatusMessage?(L10n.tr("ui.hook_repair_completed_successfully"))
             } else {
-                onStatusMessage?("Hook repair finished with \(updatedClaude.errors.count) remaining issue(s).")
+                onStatusMessage?(L10n.tr("ui.hook_repair_finished_with_remaining_issue_s", "\(updatedClaude.errors.count)"))
             }
         }
 
@@ -300,7 +301,7 @@ final class HookInstallationCoordinator {
                 let status = try self.claudeHookInstallationManager.status(hooksBinaryURL: self.hooksBinaryURL)
                 self.claudeHookStatus = status
             } catch {
-                self.onStatusMessage?("Failed to read Claude hook status: \(error.localizedDescription)")
+                self.onStatusMessage?(L10n.tr("ui.failed_to_read_claude_hook_status", "\(error.localizedDescription)"))
             }
         }
     }
@@ -315,7 +316,7 @@ final class HookInstallationCoordinator {
                     let status = try self.claudeHookInstallationManager.status(hooksBinaryURL: self.hooksBinaryURL)
                     self.claudeHookStatus = status
                 } catch {
-                    self.onStatusMessage?("Failed to read Claude hook status: \(error.localizedDescription)")
+                    self.onStatusMessage?(L10n.tr("ui.failed_to_read_claude_hook_status", "\(error.localizedDescription)"))
                 }
             }
 
@@ -326,7 +327,7 @@ final class HookInstallationCoordinator {
                     self.claudeStatusLineStatus = usageState.status
                     self.claudeUsageSnapshot = usageState.snapshot
                 } catch {
-                    self.onStatusMessage?("Failed to read Claude usage state: \(error.localizedDescription)")
+                    self.onStatusMessage?(L10n.tr("ui.failed_to_read_claude_usage_state", "\(error.localizedDescription)"))
                 }
             }
         }
@@ -351,10 +352,10 @@ final class HookInstallationCoordinator {
                 self.claudeStatusLineStatus = usageState.status
                 self.claudeUsageSnapshot = usageState.snapshot
                 if usageState.repairedManagedBridge {
-                    self.onStatusMessage?("Recovered the Claude usage bridge after repairing a missing managed script.")
+                    self.onStatusMessage?(L10n.tr("ui.recovered_the_claude_usage_bridge_after_repairing_a_missing_managed_script"))
                 }
             } catch {
-                self.onStatusMessage?("Failed to read Claude usage state: \(error.localizedDescription)")
+                self.onStatusMessage?(L10n.tr("ui.failed_to_read_claude_usage_state", "\(error.localizedDescription)"))
             }
         }
     }
@@ -415,7 +416,7 @@ final class HookInstallationCoordinator {
     func updateCodexHooks(install: Bool) {
         guard !isCodexHookSetupBusy else { return }
         if install && hooksBinaryURL == nil {
-            codexHookError = "Build OpenIslandHooks before connecting Codex."
+            codexHookError = L10n.tr("ui.build_openislandhooks_before_connecting_codex")
             return
         }
         isCodexHookSetupBusy = true
@@ -430,8 +431,8 @@ final class HookInstallationCoordinator {
             intentStore.setIntent(install ? .installed : .uninstalled, for: .codex)
             codexHookError = nil
             onStatusMessage?(install
-                ? "Codex configured. Review /hooks in Codex, then send a prompt to verify monitoring."
-                : "Codex monitoring hooks removed.")
+                ? L10n.tr("ui.codex_configured_review_hooks_in_codex_then_send_a_prompt_to_verify_monitor")
+                : L10n.tr("ui.codex_monitoring_hooks_removed"))
         } catch {
             codexHookError = error.localizedDescription
             onStatusMessage?(error.localizedDescription)
@@ -440,17 +441,17 @@ final class HookInstallationCoordinator {
 
     func installClaudeHooks() {
         guard let hooksBinaryURL else {
-            onStatusMessage?("Could not find a local OpenIslandHooks binary. Build the package first.")
+            onStatusMessage?(L10n.tr("ui.could_not_find_a_local_openislandhooks_binary_build_the_package_first"))
             return
         }
 
-        updateClaudeHooks(userMessage: "Installing Claude hooks.", intent: .installed) { manager in
+        updateClaudeHooks(userMessage: L10n.tr("ui.installing_claude_hooks"), intent: .installed) { manager in
             try manager.install(hooksBinaryURL: hooksBinaryURL)
         }
     }
 
     func uninstallClaudeHooks() {
-        updateClaudeHooks(userMessage: "Removing Claude hooks.", intent: .uninstalled) { manager in
+        updateClaudeHooks(userMessage: L10n.tr("ui.removing_claude_hooks"), intent: .uninstalled) { manager in
             try manager.uninstall()
         }
     }
@@ -460,7 +461,7 @@ final class HookInstallationCoordinator {
             onStatusMessage?(Self.statusLineProvidedByOtherIslandText)
             return
         }
-        updateClaudeUsageBridge(userMessage: "Installing Claude usage bridge.", intent: .installed) { manager in
+        updateClaudeUsageBridge(userMessage: L10n.tr("ui.installing_claude_usage_bridge"), intent: .installed) { manager in
             do {
                 return try manager.install()
             } catch ClaudeStatusLineInstallationError.existingStatusLineConflict {
@@ -472,7 +473,7 @@ final class HookInstallationCoordinator {
     }
 
     func uninstallClaudeUsageBridge() {
-        updateClaudeUsageBridge(userMessage: "Removing Claude usage bridge.", intent: .uninstalled) { manager in
+        updateClaudeUsageBridge(userMessage: L10n.tr("ui.removing_claude_usage_bridge"), intent: .uninstalled) { manager in
             try manager.uninstall()
         }
     }
@@ -535,13 +536,13 @@ final class HookInstallationCoordinator {
                 self.intentStore.setIntent(intent, for: .claudeCode)
                 if status.managedHooksPresent {
                     self.onStatusMessage?(status.hasClaudeIslandHooks
-                        ? "Claude hooks are installed. claude-island hooks are also still present."
-                        : "Claude hooks are installed and ready.")
+                        ? L10n.tr("ui.claude_hooks_are_installed_claude_island_hooks_are_also_still_present")
+                        : L10n.tr("ui.claude_hooks_are_installed_and_ready"))
                 } else {
-                    self.onStatusMessage?("Claude hooks are not installed.")
+                    self.onStatusMessage?(L10n.tr("ui.claude_hooks_are_not_installed"))
                 }
             } catch {
-                self.onStatusMessage?("Claude hook update failed: \(error.localizedDescription)")
+                self.onStatusMessage?(L10n.tr("ui.claude_hook_update_failed", "\(error.localizedDescription)"))
             }
         }
     }
@@ -566,15 +567,15 @@ final class HookInstallationCoordinator {
                 self.intentStore.setIntent(intent, for: .claudeUsageBridge)
                 if status.managedStatusLineInstalled {
                     if status.managedStatusLineIsWrapper {
-                        self.onStatusMessage?("Claude usage bridge installed in wrapper mode — your existing statusLine is preserved. Start a Claude Code turn to refresh cached rate limits.")
+                        self.onStatusMessage?(L10n.tr("ui.claude_usage_bridge_installed_in_wrapper_mode_your_existing_statusline_is_p"))
                     } else {
-                        self.onStatusMessage?("Claude usage bridge is installed. Start a Claude Code turn to refresh cached rate limits.")
+                        self.onStatusMessage?(L10n.tr("ui.claude_usage_bridge_is_installed_start_a_claude_code_turn_to_refresh_cached"))
                     }
                 } else {
-                    self.onStatusMessage?("Claude usage bridge is not installed.")
+                    self.onStatusMessage?(L10n.tr("ui.claude_usage_bridge_is_not_installed"))
                 }
             } catch {
-                self.onStatusMessage?("Claude usage bridge update failed: \(error.localizedDescription)")
+                self.onStatusMessage?(L10n.tr("ui.claude_usage_bridge_update_failed", "\(error.localizedDescription)"))
             }
         }
     }

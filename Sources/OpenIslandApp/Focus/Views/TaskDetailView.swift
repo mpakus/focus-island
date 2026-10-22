@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -77,8 +78,8 @@ struct TaskDetailView: View {
             .background(FocusStyle.cardFill)
             .preferredColorScheme(.dark)
         }
-        .confirmationDialog("Удалить задачу? Сессии останутся в истории.", isPresented: $confirmsDelete) {
-            Button("Удалить", role: .destructive) {
+        .confirmationDialog(L10n.tr("focus.delete_task_sessions_will_remain_in_history"), isPresented: $confirmsDelete) {
+            Button(L10n.tr("focus.delete"), role: .destructive) {
                 focus.deleteTask(id: task.id)
                 dismiss()
             }
@@ -87,7 +88,7 @@ struct TaskDetailView: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            TextField("Заголовок", text: $task.title)
+            TextField(L10n.tr("focus.title"), text: $task.title)
                 .textFieldStyle(.plain)
                 .font(FocusStyle.titleFont)
                 .foregroundStyle(FocusStyle.primaryText)
@@ -95,13 +96,13 @@ struct TaskDetailView: View {
                 .frame(height: 34)
                 .background(RoundedRectangle(cornerRadius: FocusStyle.buttonRadius).fill(FocusStyle.fieldFill))
                 .overlay(RoundedRectangle(cornerRadius: FocusStyle.buttonRadius).stroke(FocusStyle.fieldBorder, lineWidth: 1))
-            Picker("Колонка", selection: $task.boardColumn) {
+            Picker(L10n.tr("focus.column"), selection: $task.boardColumn) {
                 ForEach(BoardColumn.allCases) { Text($0.title).tag($0) }
             }
             .labelsHidden()
             .fixedSize()
-            Picker("Проект", selection: $task.projectPath) {
-                Text("Без проекта").tag(String?.none)
+            Picker(L10n.tr("focus.project"), selection: $task.projectPath) {
+                Text(L10n.tr("focus.no_project_402")).tag(String?.none)
                 ForEach(projectPaths, id: \.self) { path in
                     Text(URL(fileURLWithPath: path).lastPathComponent).tag(String?.some(path))
                 }
@@ -113,15 +114,15 @@ struct TaskDetailView: View {
 
     private func leftColumn(aggregate: TaskAggregate) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            field("Описание", text: detailsBinding, height: 72)
+            field(L10n.tr("focus.description"), text: detailsBinding, height: 72)
             VStack(alignment: .leading, spacing: 6) {
                 FocusSectionCaption(Self.criteriaCaption(aggregate.criteria))
                 CriteriaChecklist(focus: focus, taskID: task.id)
             }
-            field("Где остановился", text: noteBinding, height: 52)
+            field(L10n.tr("focus.where_i_left_off"), text: noteBinding, height: 52)
             if let prompt = queued {
                 VStack(alignment: .leading, spacing: 3) {
-                    FocusSectionCaption("Промпт в очереди", color: FocusStyle.link)
+                    FocusSectionCaption(L10n.tr("focus.queued_prompt"), color: FocusStyle.link)
                     Text(prompt.text)
                         .font(.system(size: 13))
                         .foregroundStyle(FocusStyle.primaryText)
@@ -173,11 +174,11 @@ struct TaskDetailView: View {
                 }
             )
             if Self.showsCloseTask(column: focus.board.task(id: task.id)?.boardColumn) {
-                Menu("Новая сессия") {
+                Menu(L10n.tr("focus.new_session_348")) {
                     Button("Claude Code") { focus.startNewSession(forTaskID: task.id, provider: .claudeCode) }
                     Button("Codex") { focus.startNewSession(forTaskID: task.id, provider: .codex) }
                 }
-                Button("+ Добавить сессию") { showsSessionsPicker = true }
+                Button(L10n.tr("focus.add_session")) { showsSessionsPicker = true }
                     .buttonStyle(FocusButtonStyle(kind: rows.isEmpty && unrowed.isEmpty ? .primary : .secondary))
                     .padding(.top, 4)
             }
@@ -191,7 +192,7 @@ struct TaskDetailView: View {
             title: focus.sessionTitle(row.id),
             subtitle: Self.liveSubtitle(progress: row.progress, group: row.group),
             progress: row.group == .running ? row.progress : nil,
-            actionTitle: "Перейти",
+            actionTitle: L10n.tr("focus.open_session"),
             enabled: true,
             doneGroup: SessionDoneFormat.showsDoneCheck(group: row.group) ? row.group : nil,
             status: SessionStatusKind.of(row.group),
@@ -205,9 +206,9 @@ struct TaskDetailView: View {
         sessionRow(
             dot: AnyView(StatusDot(color: FocusStyle.working)),
             title: focus.sessionLabel(record.id) ?? record.title,
-            subtitle: "сейчас",
+            subtitle: L10n.tr("focus.now"),
             progress: nil,
-            actionTitle: "Перейти",
+            actionTitle: L10n.tr("focus.open_session"),
             enabled: true,
             sessionID: record.id
         ) {
@@ -221,7 +222,7 @@ struct TaskDetailView: View {
             title: focus.sessionLabel(record.id) ?? record.title,
             subtitle: Self.pastSubtitle(record: record, now: now, calendar: .current),
             progress: nil,
-            actionTitle: "Продолжить",
+            actionTitle: L10n.tr("focus.resume"),
             enabled: resumable.contains(record.id),
             doneGroup: .idle,
             sessionID: record.id
@@ -260,7 +261,7 @@ struct TaskDetailView: View {
 
     private var footer: some View {
         HStack(spacing: 8) {
-            Button("Удалить задачу") { confirmsDelete = true }
+            Button(L10n.tr("focus.delete_task")) { confirmsDelete = true }
                 .buttonStyle(.plain)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(FocusStyle.removed)
@@ -269,13 +270,13 @@ struct TaskDetailView: View {
                 Button {
                     closeTask()
                 } label: {
-                    Label("Закрыть задачу", systemImage: "checkmark")
+                    Label(L10n.tr("focus.close_task"), systemImage: "checkmark")
                 }
                 .buttonStyle(FocusButtonStyle(kind: .done))
             }
-            Button("Отмена") { dismiss() }
+            Button(L10n.tr("focus.cancel_207")) { dismiss() }
                 .buttonStyle(FocusButtonStyle(kind: .secondary))
-            Button("Сохранить") {
+            Button(L10n.tr("focus.save")) {
                 let previous = focus.board.task(id: task.id)?.boardColumn
                 if previous != task.boardColumn {
                     focus.moveTask(id: task.id, to: task.boardColumn, before: nil)
@@ -371,7 +372,7 @@ struct TaskDetailView: View {
         let end = record.doneAt ?? record.lastActivityAt
         let minutes = max(0, Int(end.timeIntervalSince(record.startedAt) / 60))
         guard minutes > 0 else { return nil }
-        return minutes >= 60 ? "\(minutes / 60) ч \(minutes % 60) мин" : "\(minutes) мин"
+        return minutes >= 60 ? L10n.tr("focus.h_min_407", "\(minutes / 60)", "\(minutes % 60)") : L10n.tr("focus.min", "\(minutes)")
     }
 
     nonisolated static func unrowedLive(records: [SessionRecord], rows: [HubRow], live: Set<String>) -> [SessionRecord] {
@@ -380,17 +381,17 @@ struct TaskDetailView: View {
     }
 
     nonisolated static func criteriaCaption(_ progress: CriteriaProgress?) -> String {
-        guard let progress else { return "Критерий готовности" }
-        return "Критерий готовности · \(progress.done) из \(progress.total)"
+        guard let progress else { return L10n.tr("focus.completion_criteria") }
+        return L10n.tr("focus.completion_criteria_of", "\(progress.done)", "\(progress.total)")
     }
 
     nonisolated static func sessionsCaption(count: Int) -> String {
-        "Сессии · \(count)"
+        L10n.tr("focus.sessions_410", "\(count)")
     }
 
     nonisolated static func timeSummary(_ totals: TaskTimeTotals) -> String? {
         guard totals.totalSeconds > 0 else { return nil }
-        return "всего \(BoardView.duration(totals.totalSeconds)) · агенты \(BoardView.duration(totals.agentSeconds))"
+        return L10n.tr("focus.total_agents", "\(BoardView.duration(totals.totalSeconds))", "\(BoardView.duration(totals.agentSeconds))")
     }
 
     nonisolated static func timeTotals(spans: [ActivitySpan], now: Date) -> TaskTimeTotals {
@@ -431,12 +432,12 @@ struct TaskDetailView: View {
     nonisolated static func liveSubtitle(progress: PlanProgress?, group: HubGroup) -> String {
         switch group {
         case .waiting:
-            return "ждёт ответа"
+            return L10n.tr("focus.waiting_for_an_answer_412")
         case .review:
-            return "закончил, не просмотрено"
+            return L10n.tr("focus.finished_not_reviewed")
         default:
-            guard let progress else { return "сейчас" }
-            return "сейчас · шаг \(min(progress.total, progress.completed + 1)) из \(progress.total)"
+            guard let progress else { return L10n.tr("focus.now") }
+            return L10n.tr("focus.now_step_of", "\(min(progress.total, progress.completed + 1))", "\(progress.total)")
         }
     }
 
@@ -494,7 +495,7 @@ struct TaskPomodoroSection: View {
             Image(systemName: "timer")
                 .font(.system(size: 14))
                 .foregroundStyle(FocusStyle.captionText)
-            Text("Фокус-таймер")
+            Text(L10n.tr("focus.focus_timer"))
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(FocusStyle.primaryText)
             if let active = focus.pomodoro {
@@ -510,10 +511,10 @@ struct TaskPomodoroSection: View {
             Spacer()
             Menu {
                 ForEach([15, 25, 30, 45, 50, 60, 90], id: \.self) { minutes in
-                    Button("\(minutes) мин") { quickMinutes = minutes }
+                    Button(L10n.tr("focus.min", "\(minutes)")) { quickMinutes = minutes }
                 }
             } label: {
-                Text("\(quickMinutes) мин")
+                Text(L10n.tr("focus.min", "\(quickMinutes)"))
             }
             .menuStyle(.borderlessButton)
             .fixedSize()
@@ -526,8 +527,8 @@ struct TaskPomodoroSection: View {
             }
             .buttonStyle(FocusButtonStyle(kind: .primary))
         }
-        .confirmationDialog("Заменить текущее помодоро?", isPresented: $confirmsReplace) {
-            Button("Заменить и начать \(quickMinutes) мин") {
+        .confirmationDialog(L10n.tr("focus.replace_the_current_pomodoro"), isPresented: $confirmsReplace) {
+            Button(L10n.tr("focus.replace_and_start_min", "\(quickMinutes)")) {
                 focus.startPomodoro(taskID: taskID, minutes: quickMinutes)
             }
         }
@@ -565,7 +566,7 @@ struct PomodoroBlock: View {
                         .font(FocusStyle.secondaryFont)
                         .foregroundStyle(FocusStyle.secondaryText)
                 }
-                Text(isBreak ? "Перерыв" : PomodoroFormat.cycleCaption(index: snapshot.cycleIndex, cycle: snapshot.cycle))
+                Text(isBreak ? L10n.tr("focus.break") : PomodoroFormat.cycleCaption(index: snapshot.cycleIndex, cycle: snapshot.cycle))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
                 if let caption = PomodoroFormat.todayCaption(seconds: todaySeconds) {
@@ -583,7 +584,7 @@ struct PomodoroBlock: View {
                 }
             }
             .buttonStyle(FocusButtonStyle(kind: .secondary))
-            Button("Остановить") { focus.stopPomodoro() }
+            Button(L10n.tr("focus.stop_418")) { focus.stopPomodoro() }
                 .buttonStyle(FocusButtonStyle(kind: .secondary))
         }
         .padding(.horizontal, 14)

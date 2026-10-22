@@ -61,7 +61,7 @@ extension AgentSession {
         if let currentTool = displayCurrentToolName {
             return phase == .completed
                 ? summary
-                : "Running \(currentTool)"
+                : L10n.tr("ui.running", "\(currentTool)")
         }
 
         let normalizedPrimary = spotlightPrimaryText.trimmedForSurface
@@ -89,18 +89,18 @@ extension AgentSession {
     var spotlightStatusLabel: String {
         switch phase {
         case .idle:
-            return codexMetadata?.isStale == true ? "Unconfirmed" : "Idle"
+            return codexMetadata?.isStale == true ? L10n.tr("ui.unconfirmed") : L10n.tr("ui.idle")
         case .running:
             if let currentTool = spotlightCurrentToolLabel {
-                return "Live · \(currentTool)"
+                return L10n.tr("ui.live", "\(currentTool)")
             }
-            return "Live"
+            return L10n.tr("ui.live_60")
         case .waitingForApproval:
-            return "Approval"
+            return L10n.tr("ui.approval")
         case .waitingForAnswer:
-            return "Question"
+            return L10n.tr("ui.question")
         case .completed:
-            return jumpTarget != nil ? "Idle" : "Completed"
+            return jumpTarget != nil ? L10n.tr("ui.idle") : L10n.tr("ui.completed")
         }
     }
 
@@ -167,7 +167,7 @@ extension AgentSession {
         guard let subagents = claudeMetadata?.activeSubagents, !subagents.isEmpty else {
             return nil
         }
-        return "Subagents (\(subagents.count))"
+        return L10n.tr("ui.subagents", "\(subagents.count)")
     }
 
     var spotlightHeadlineText: String {
@@ -205,7 +205,7 @@ extension AgentSession {
             return nil
         }
 
-        return "You: \(prompt)"
+        return L10n.tr("ui.you", "\(prompt)")
     }
 
     var completionReplyRecipientName: String {
@@ -237,23 +237,23 @@ extension AgentSession {
 
         switch phase {
         case .idle:
-            return codexMetadata?.isStale == true ? "Unconfirmed" : "Idle"
+            return codexMetadata?.isStale == true ? L10n.tr("ui.unconfirmed") : L10n.tr("ui.idle")
         case .running:
             if let activity = spotlightRunningActivityText {
                 return activity
             }
-            return spotlightPromptLineText == nil ? "Running" : "Thinking"
+            return spotlightPromptLineText == nil ? L10n.tr("ui.running_63") : L10n.tr("ui.thinking")
         case .waitingForApproval:
-            return permissionRequest?.summary.trimmedForSurface ?? "Approval needed"
+            return permissionRequest?.summary.trimmedForSurface ?? L10n.tr("ui.approval_needed")
         case .waitingForAnswer:
-            return questionPrompt?.title.trimmedForSurface ?? "Answer needed"
+            return questionPrompt?.title.trimmedForSurface ?? L10n.tr("ui.answer_needed")
         case .completed:
             if let assistantMessage = lastAssistantMessageText?.trimmedForSurface,
                !assistantMessage.isEmpty {
                 return assistantMessage
             }
 
-            return jumpTarget != nil ? "Ready" : "Completed"
+            return jumpTarget != nil ? L10n.tr("ui.ready") : L10n.tr("ui.completed")
         }
     }
 
@@ -297,18 +297,18 @@ extension AgentSession {
         let age = max(0, Int(Date.now.timeIntervalSince(islandActivityDate)))
 
         if age < 60 {
-            return "<1m"
+            return L10n.tr("time.age.lessThanMinute")
         }
 
         if age < 3_600 {
-            return "\(max(1, age / 60))m"
+            return L10n.tr("time.age.minutes", "\(max(1, age / 60))")
         }
 
         if age < 86_400 {
-            return "\(max(1, age / 3_600))h"
+            return L10n.tr("time.age.hours", "\(max(1, age / 3_600))")
         }
 
-        return "\(max(1, age / 86_400))d"
+        return L10n.tr("time.age.days", "\(max(1, age / 86_400))")
     }
 
     func islandPresence(at referenceDate: Date) -> IslandSessionPresence {
@@ -368,25 +368,25 @@ extension AgentSession {
         case "Bash":
             return "Bash"
         case "AskUserQuestion":
-            return "Question"
+            return L10n.tr("ui.question")
         case "ExitPlanMode":
-            return "Plan"
+            return L10n.tr("ui.plan")
         case "apply_patch":
-            return "Patch"
+            return L10n.tr("ui.patch")
         case "write_stdin":
-            return "Input"
+            return L10n.tr("ui.input")
         case "web_search", "tool_search":
-            return "Search"
+            return L10n.tr("ui.search")
         case "image_generation", "view_image":
-            return "Image"
+            return L10n.tr("ui.image")
         case "context_compaction":
-            return "Compact"
+            return L10n.tr("ui.compact")
         case "update_plan":
-            return "Plan"
+            return L10n.tr("ui.plan")
         case "request_user_input":
-            return "Question"
+            return L10n.tr("ui.question")
         case "spawn_agent":
-            return "Subagent"
+            return L10n.tr("ui.subagent")
         default:
             return humanizedToolName(toolName)
         }

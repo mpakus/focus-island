@@ -207,10 +207,10 @@ public struct SessionState: Equatable, Sendable {
 
         if resolution.isApproved {
             session.phase = .running
-            session.summary = "Permission approved. \(session.tool.displayName) continued the tool."
+            session.summary = L10n.tr("bridge.permission_approved_continued_the_tool", "\(session.tool.displayName)")
         } else {
             session.phase = .completed
-            session.summary = "Permission denied in Open Island."
+            session.summary = L10n.tr("bridge.permission_denied_in_open_island")
         }
 
         upsert(session)
@@ -229,7 +229,7 @@ public struct SessionState: Equatable, Sendable {
         session.questionPrompt = nil
         session.phase = .running
         let summary = response.displaySummary
-        session.summary = summary.isEmpty ? "Answered the question." : "Answered: \(summary)"
+        session.summary = summary.isEmpty ? L10n.tr("bridge.answered_the_question") : L10n.tr("bridge.answered", "\(summary)")
         session.updatedAt = timestamp
         upsert(session)
     }

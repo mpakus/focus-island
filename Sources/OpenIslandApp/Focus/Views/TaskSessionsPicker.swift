@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -26,11 +27,11 @@ struct TaskSessionsPicker: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 if showsBack {
-                    Button("‹ Назад", action: onCancel)
+                    Button(L10n.tr("focus.back"), action: onCancel)
                         .buttonStyle(FocusButtonStyle(kind: .quiet, height: 28, horizontalPadding: 6))
                 }
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("Сессии задачи")
+                    Text(L10n.tr("focus.task_sessions_420"))
                         .font(FocusStyle.secondaryFont)
                         .foregroundStyle(FocusStyle.secondaryText)
                     HStack(spacing: 8) {
@@ -49,7 +50,7 @@ struct TaskSessionsPicker: View {
                 VStack(alignment: .leading, spacing: 6) {
                     if !hasBound {
                         FocusSectionCaption(Self.boundCaption(0))
-                        Text("Пока ни одной — отметь ниже")
+                        Text(L10n.tr("focus.none_yet_select_below"))
                             .font(FocusStyle.secondaryFont)
                             .foregroundStyle(FocusStyle.secondaryText)
                             .padding(.horizontal, 2)
@@ -63,7 +64,7 @@ struct TaskSessionsPicker: View {
                         }
                     }
                     if choices.isEmpty {
-                        Text("Открытых сессий нет — запусти Claude Code и вернись сюда")
+                        Text(L10n.tr("focus.no_open_sessions_start_claude_code_or_codex_and_return_here"))
                             .font(FocusStyle.secondaryFont)
                             .foregroundStyle(FocusStyle.secondaryText)
                             .padding(.horizontal, 2)
@@ -161,45 +162,45 @@ struct TaskSessionsPicker: View {
         var result: [Section] = []
         if !bound.isEmpty { result.append(Section(title: boundCaption(bound.count), rows: bound)) }
         if !same.isEmpty { result.append(Section(title: sameProjectCaption(projectName), rows: same)) }
-        if !other.isEmpty { result.append(Section(title: same.isEmpty && projectName == nil ? "Открытые" : "Открытые · другие проекты", rows: other)) }
+        if !other.isEmpty { result.append(Section(title: same.isEmpty && projectName == nil ? L10n.tr("focus.open_sessions") : L10n.tr("focus.open_other_projects"), rows: other)) }
         return result
     }
 
     nonisolated static func boundCaption(_ count: Int) -> String {
-        "Привязаны · \(count)"
+        L10n.tr("focus.linked", "\(count)")
     }
 
     nonisolated static func sameProjectCaption(_ projectName: String?) -> String {
-        guard let projectName else { return "Открытые · этот проект" }
-        return "Открытые · проект \(projectName)"
+        guard let projectName else { return L10n.tr("focus.open_this_project") }
+        return L10n.tr("focus.open_project", "\(projectName)")
     }
 
     nonisolated static func applyTitle(_ changes: (add: [String], remove: [String])) -> String {
-        changes.remove.isEmpty ? "Добавить \(changes.add.count)" : "Сохранить"
+        changes.remove.isEmpty ? L10n.tr("focus.add", "\(changes.add.count)") : L10n.tr("focus.save")
     }
 
     nonisolated static func cancelTitle(hasBound: Bool) -> String {
-        hasBound ? "Отмена" : "Позже"
+        hasBound ? L10n.tr("focus.cancel_207") : L10n.tr("focus.later")
     }
 
     nonisolated static func trailingLabel(_ session: BindableSession) -> String? {
         if session.isBound { return nil }
         if let bound = session.boundTaskTitle { return otherTaskLabel(bound) }
-        return "без задачи"
+        return L10n.tr("focus.no_task_154")
     }
 
     nonisolated static func otherTaskLabel(_ title: String) -> String {
-        "у задачи «\(title)»"
+        L10n.tr("focus.for_task", "\(title)")
     }
 
     nonisolated static func footerHint(_ changes: (add: [String], remove: [String]), choices: [BindableSession]) -> String {
         let moving = choices.filter { changes.add.contains($0.id) }.compactMap(\.boundTaskTitle)
         if let title = moving.first {
-            return "Сессия переедет из «\(title)» в эту задачу"
+            return L10n.tr("focus.this_session_will_move_from_to_this_task", "\(title)")
         }
         if !changes.remove.isEmpty {
-            return "Снятые сессии отвяжутся от задачи"
+            return L10n.tr("focus.deselected_sessions_will_be_unlinked_from_the_task")
         }
-        return "Сессию чужой задачи не трогаем, пока сам не отметишь"
+        return L10n.tr("focus.sessions_in_other_tasks_stay_there_unless_you_select_them")
     }
 }

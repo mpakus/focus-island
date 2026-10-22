@@ -24,4 +24,4 @@ if (( failed )); then
     exit 1
 fi
 
-echo "All .strings files passed validation."
+python3 "$repo_root/scripts/check-localizations.py"

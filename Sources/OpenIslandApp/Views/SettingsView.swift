@@ -19,7 +19,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 
     func label(_ lang: LanguageManager) -> String {
         switch self {
-        case .focus:      "Focus"
+        case .focus:      L10n.tr("ui.focus")
         case .general:    lang.t("settings.tab.general")
         case .setup:      lang.t("settings.tab.setup")
         case .appearance: lang.t("settings.tab.appearance")
@@ -103,6 +103,7 @@ struct SettingsView: View {
         }
         .frame(minWidth: 680, idealWidth: 780, minHeight: 480, idealHeight: 560)
         .preferredColorScheme(.dark)
+        .environment(\.locale, lang.locale)
         .onReceive(NotificationCenter.default.publisher(for: .openIslandSelectSetupTab)) { _ in
             selectedTab = .setup
         }
@@ -194,9 +195,11 @@ struct GeneralSettingsPane: View {
                     get: { lang.language },
                     set: { lang.language = $0 }
                 )) {
-                    Text(lang.t("settings.general.languageSystem")).tag(LanguageManager.AppLanguage.system)
-                    Text(lang.t("settings.general.languageEnglish")).tag(LanguageManager.AppLanguage.en)
+                    ForEach(LanguageManager.AppLanguage.allCases) { language in
+                        Text(language.nativeName).tag(language)
+                    }
                 }
+                .pickerStyle(.segmented)
             }
 
             Section(lang.t("settings.general.behavior")) {
@@ -711,7 +714,7 @@ struct SetupSettingsPane: View {
             }
 
             if let binaryPath = report.binaryPath {
-                Text("Binary: \(binaryPath)")
+                Text(L10n.tr("ui.binary", "\(binaryPath)"))
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }

@@ -37,7 +37,7 @@ public enum ClaudeHookInstallerError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .invalidSettingsJSON:
-            "The existing Claude settings.json is not valid JSON."
+            L10n.tr("core.the_existing_claude_settings_json_is_not_valid_json")
         }
     }
 }

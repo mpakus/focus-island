@@ -139,7 +139,7 @@ public enum CodexHookAdapter {
             result.append(.sessionStarted(SessionStarted(
                 sessionID: id,
                 title: payload.cwd.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "Codex",
-                tool: .codex, origin: .live, initialPhase: .idle, summary: "Codex is ready.",
+                tool: .codex, origin: .live, initialPhase: .idle, summary: L10n.tr("core.codex_is_ready"),
                 timestamp: at, codexMetadata: metadata
             )))
         }
@@ -155,7 +155,7 @@ public enum CodexHookAdapter {
             )))
         }
         var phase = existing?.phase ?? .idle
-        var summary = existing?.summary ?? "Codex is ready."
+        var summary = existing?.summary ?? L10n.tr("core.codex_is_ready")
         var attention: AgentEvent?
         var completion = false
         var resolved = false
@@ -163,7 +163,7 @@ public enum CodexHookAdapter {
         case "SessionStart":
             if payload.source != "compact" && !(payload.source == "resume" && existing != nil && !metadata.ended) {
                 phase = .idle
-                summary = "Codex is ready."
+                summary = L10n.tr("core.codex_is_ready")
                 metadata.interrupted = false
                 metadata.turnFinished = false
                 resolved = true
@@ -179,7 +179,7 @@ public enum CodexHookAdapter {
             metadata.pendingApprovalIDs = []
             metadata.uncorrelatedApproval = false
             phase = .running
-            summary = "Codex is working."
+            summary = L10n.tr("core.codex_is_working")
             resolved = true
         case "PreToolUse":
             metadata.turnFinished = false
@@ -190,7 +190,7 @@ public enum CodexHookAdapter {
             metadata.currentTool = payload.toolName
             metadata.currentToolInputPreview = payload.toolInput?.command
             phase = .running
-            summary = payload.toolName.map { "Codex is running \($0)." } ?? "Codex is working."
+            summary = payload.toolName.map { L10n.tr("core.codex_is_running", "\($0)") } ?? L10n.tr("core.codex_is_working")
         case "PermissionRequest":
             metadata.currentTool = payload.toolName ?? metadata.currentTool
             metadata.currentToolInputPreview = payload.toolInput?.command ?? metadata.currentToolInputPreview
@@ -199,11 +199,11 @@ public enum CodexHookAdapter {
             if let correlation { metadata.pendingApprovalIDs.insert(correlation) }
             else { metadata.uncorrelatedApproval = true }
             phase = .waitingForApproval
-            summary = payload.toolInput?.description ?? "Review the request in Codex."
+            summary = payload.toolInput?.description ?? L10n.tr("core.review_the_request_in_codex")
             attention = .permissionRequested(PermissionRequested(
                 sessionID: id,
-                request: PermissionRequest(title: "Codex needs approval", summary: summary,
-                    affectedPath: payload.cwd ?? "", primaryActionTitle: "Open Codex",
+                request: PermissionRequest(title: L10n.tr("core.codex_needs_approval"), summary: summary,
+                    affectedPath: payload.cwd ?? "", primaryActionTitle: L10n.tr("core.open_codex"),
                     toolName: payload.toolName, toolUseID: correlation, requiresTerminalApproval: true),
                 timestamp: at
             ))
@@ -216,11 +216,11 @@ public enum CodexHookAdapter {
             metadata.currentTool = nil
             metadata.currentToolInputPreview = nil
             phase = .running
-            summary = "Codex is working."
+            summary = L10n.tr("core.codex_is_working")
         case "Stop":
             guard existing?.phase != .completed || existing?.codexMetadata?.isStale == true else { return result }
             metadata.lastAssistantMessage = payload.lastAssistantMessage ?? metadata.lastAssistantMessage
-            summary = payload.lastAssistantMessage.map { String($0.prefix(500)) } ?? "Codex finished the turn."
+            summary = payload.lastAssistantMessage.map { String($0.prefix(500)) } ?? L10n.tr("core.codex_finished_the_turn")
             phase = .completed
             completion = true
             metadata.turnFinished = true
@@ -229,12 +229,12 @@ public enum CodexHookAdapter {
             metadata.interrupted = true
             metadata.turnFinished = true
             phase = .idle
-            summary = "Codex was interrupted."
+            summary = L10n.tr("core.codex_was_interrupted")
             resolved = true
         case "SessionEnd":
             metadata.ended = true
             phase = .idle
-            summary = "Codex session ended."
+            summary = L10n.tr("core.codex_session_ended")
             resolved = true
         default: break
         }
@@ -251,7 +251,7 @@ public enum CodexHookAdapter {
         }
         if attention == nil && phase == .running && (!metadata.pendingApprovalIDs.isEmpty || metadata.uncorrelatedApproval) {
             attention = .permissionRequested(PermissionRequested(sessionID: id,
-                request: existing?.permissionRequest ?? PermissionRequest(title: "Codex approval status unconfirmed", summary: "Review the request in Codex.", affectedPath: payload.cwd ?? "", primaryActionTitle: "Open Codex", requiresTerminalApproval: true), timestamp: at))
+                request: existing?.permissionRequest ?? PermissionRequest(title: L10n.tr("core.codex_approval_status_unconfirmed"), summary: L10n.tr("core.review_the_request_in_codex"), affectedPath: payload.cwd ?? "", primaryActionTitle: L10n.tr("core.open_codex"), requiresTerminalApproval: true), timestamp: at))
         }
         if let attention { result.append(attention) }
         else if completion {
@@ -269,7 +269,7 @@ public enum CodexHookAdapter {
         metadata.isStale = true
         return [
             .codexSessionMetadataUpdated(.init(sessionID: session.id, metadata: metadata, timestamp: session.updatedAt)),
-            .activityUpdated(.init(sessionID: session.id, summary: "Codex status unconfirmed — waiting for a new event.", phase: .idle, timestamp: session.updatedAt)),
+            .activityUpdated(.init(sessionID: session.id, summary: L10n.tr("core.codex_status_unconfirmed_waiting_for_a_new_event"), phase: .idle, timestamp: session.updatedAt)),
         ]
     }
 }

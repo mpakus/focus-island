@@ -167,63 +167,63 @@ private enum DebugSessionFactory {
             inactiveSession(
                 id: "session-claude-research",
                 workspace: "claude-research",
-                initialPrompt: "我更关注获取的部分 我想在其他 app 里实时展示我的 usage。",
-                latestPrompt: "为什么要查 Xcode 官方呢？这个事跟 Xcode 有什么关系？",
-                assistant: "不建议按“最古老”来选。最古老不等于最轻量且最适合这个任务。",
+                initialPrompt: "I want to show my usage live in another app. Focus on retrieving the data.",
+                latestPrompt: "Why look at the Xcode documentation? How is Xcode related to this?",
+                assistant: "Do not choose a model just because it is the oldest. Older does not mean lighter or better suited to this task.",
                 age: 27 * 60,
                 now: now
             ),
             inactiveSession(
                 id: "session-personal",
                 workspace: "Personal",
-                initialPrompt: "[Image #1]我给你截了 3 张图，这个是我现在 Xcode 里面可用的模型。",
-                latestPrompt: "[Image #1]我给你截了 3 张图，这个是我现在 Xcode 里面可用的模型。",
-                assistant: "这张图里的模型，严格说不是这个 `voice-input` App 应该选的模…",
+                initialPrompt: "[Image #1] I sent three screenshots showing the models available in Xcode.",
+                latestPrompt: "[Image #1] I sent three screenshots showing the models available in Xcode.",
+                assistant: "The models in this screenshot are not necessarily the best choices for the voice-input app…",
                 age: 32 * 60,
                 now: now
             ),
             inactiveSession(
                 id: "session-open-agent-sdk",
                 workspace: "open-agent-sdk",
-                initialPrompt: "OK，那现在你是不是需要提一个 PR？",
-                latestPrompt: "那你直接提个 PR 吧",
-                assistant: "PR 已经提好了：",
+                initialPrompt: "OK, should you open a PR now?",
+                latestPrompt: "Go ahead and open a PR.",
+                assistant: "The PR is ready:",
                 age: 60 * 60,
                 now: now
             ),
             inactiveSession(
                 id: "session-voice-input",
                 workspace: "voice-input",
-                initialPrompt: "看看 voice-input 这个仓库，重点关注模型选型。",
-                latestPrompt: "严格来说它应该选哪个模型？",
-                assistant: "如果目标是轻量实时，不建议直接按 Xcode 现成套餐来映射。",
+                initialPrompt: "Review the voice-input repository, focusing on model selection.",
+                latestPrompt: "Which model should it actually use?",
+                assistant: "For lightweight, real-time use, do not choose solely from the models bundled with Xcode.",
                 age: 78 * 60,
                 now: now
             ),
             inactiveSession(
                 id: "session-agents",
                 workspace: "agents",
-                initialPrompt: "把你的分支和 worktree 都给我。",
-                latestPrompt: "所以你是要先重启吗？",
-                assistant: "已经重启了。现在跑的是新的 dev 进程。",
+                initialPrompt: "Show me your branch and worktree.",
+                latestPrompt: "Do you need to restart first?",
+                assistant: "Restarted. The new development process is running.",
                 age: 92 * 60,
                 now: now
             ),
             inactiveSession(
                 id: "session-claude",
                 workspace: "claude-code",
-                initialPrompt: "我们先把整个 notch 的背景换成纯黑。",
-                latestPrompt: "下面那块空白要去掉。",
-                assistant: "展开态高度已经改成按内容自适应。",
+                initialPrompt: "First, change the entire notch background to pure black.",
+                latestPrompt: "Remove the empty space below.",
+                assistant: "The expanded height now adapts to its content.",
                 age: 118 * 60,
                 now: now
             ),
             inactiveSession(
                 id: "session-hooks",
                 workspace: "hooks",
-                initialPrompt: "假如我想实时监控 Claude Code 的 usage 应该怎么做？",
-                latestPrompt: "如果是在别的 app 里展示呢？",
-                assistant: "代码里已经有几条更直接的路可以走。",
+                initialPrompt: "How can I monitor Claude Code usage in real time?",
+                latestPrompt: "What if I want to show it in another app?",
+                assistant: "The code already provides several more direct approaches.",
                 age: 130 * 60,
                 now: now
             ),
@@ -257,9 +257,9 @@ private enum DebugSessionFactory {
                 terminalSessionID: "ghostty-running"
             ),
             claudeMetadata: ClaudeSessionMetadata(
-                initialUserPrompt: "把 DEV 完全重构成一个 debug 页面，我需要稳定验收这些 card 的 UI。",
-                lastUserPrompt: "之前也有错误的改动吧 你应该重新改",
-                lastAssistantMessage: "读取现有 notch 状态与事件路由，准备把提醒态从 session list 里拆出来。",
+                initialUserPrompt: "Rebuild DEV as a debug page so I can reliably verify the card UI.",
+                lastUserPrompt: "There were incorrect changes before. Please fix them again.",
+                lastAssistantMessage: "Reading the notch state and event routing before separating notification states from the session list.",
                 currentTool: "Bash",
                 currentToolInputPreview: "sed -n '1,260p' Sources/OpenIslandApp/Views/SettingsView.swift"
             )
@@ -284,9 +284,9 @@ private enum DebugSessionFactory {
                 terminalSessionID: "ghostty-recent"
             ),
             claudeMetadata: ClaudeSessionMetadata(
-                initialUserPrompt: "读一下这篇论文 https://arxiv.org/html/2603.28052",
-                lastUserPrompt: "读一下这篇论文 https://arxiv.org/html/2603.28052v1 感觉和我们在做的 agent 很像。",
-                lastAssistantMessage: "整理完了，已经提炼出和 autoreserach 相关的几段关键差异。"
+                initialUserPrompt: "Read this paper: https://arxiv.org/html/2603.28052",
+                lastUserPrompt: "Read this paper: https://arxiv.org/html/2603.28052v1. It seems similar to the agent work we are doing.",
+                lastAssistantMessage: "The review is complete, including the key differences related to autoresearch."
             )
         )
     }
@@ -349,9 +349,9 @@ private enum DebugSessionFactory {
                 terminalSessionID: "ghostty-approval"
             ),
             claudeMetadata: ClaudeSessionMetadata(
-                initialUserPrompt: "接下来我打算继续补齐一些能力。",
-                lastUserPrompt: "askUserquestion 和权限审批，我想把他们也做到我们的 island 里。",
-                lastAssistantMessage: "已经准备好重写 DEV 页面，需要批准文件改动。",
+                initialUserPrompt: "Next, I want to fill in some missing capabilities.",
+                lastUserPrompt: "Add questions and permission approvals to our island.",
+                lastAssistantMessage: "Ready to rewrite the DEV page. File changes need approval.",
                 currentTool: "Bash",
                 currentToolInputPreview: "head -5000 /Users/wangruobing/Personal/claude-research/extracts/claude-bun-2.1.81-v3/islands/000_cli.js.txt"
             )
@@ -366,7 +366,7 @@ private enum DebugSessionFactory {
             origin: .demo,
             attachmentState: .attached,
             phase: .waitingForAnswer,
-            summary: "这个提醒态需要自动收起吗？",
+            summary: "Should this notification state collapse automatically?",
             updatedAt: now.addingTimeInterval(-18),
             questionPrompt: QuestionPrompt(
                 title: "Which authentication method should we use?",
@@ -391,9 +391,9 @@ private enum DebugSessionFactory {
                 terminalSessionID: "ghostty-question"
             ),
             claudeMetadata: ClaudeSessionMetadata(
-                initialUserPrompt: "原产品看起来像是单 notch surface + 多 content surface。",
-                lastUserPrompt: "我们应该怎么做？",
-                lastAssistantMessage: "建议先把 approvalCard、questionCard、completionCard 拆成独立 surface。"
+                initialUserPrompt: "The original product seems to use one notch surface with several content surfaces.",
+                lastUserPrompt: "How should we build this?",
+                lastAssistantMessage: "Start by splitting approvalCard, questionCard, and completionCard into separate surfaces."
             )
         )
     }
@@ -406,7 +406,7 @@ private enum DebugSessionFactory {
             origin: .demo,
             attachmentState: .attached,
             phase: .completed,
-            summary: "DEV 页面已经切到 mock-driven card 调试模式。",
+            summary: "The DEV page now uses mock data for card debugging.",
             updatedAt: now.addingTimeInterval(-15),
             jumpTarget: JumpTarget(
                 terminalApp: "Ghostty",
@@ -416,9 +416,9 @@ private enum DebugSessionFactory {
                 terminalSessionID: "ghostty-completion"
             ),
             claudeMetadata: ClaudeSessionMetadata(
-                initialUserPrompt: "这次我可能确实需要一些 mock 手段，让我能验收这些 Card 的 UI。",
-                lastUserPrompt: "可以把 DEV 完全重构成一个 debug 页面。",
-                lastAssistantMessage: "Plan 文件已写好。你的 hooks 触发情况如何？"
+                initialUserPrompt: "I need mock data so I can verify these card interfaces.",
+                lastUserPrompt: "Rebuild DEV as a debug page.",
+                lastAssistantMessage: "The plan file is ready. Are your hooks firing?"
             )
         )
     }
@@ -431,7 +431,7 @@ private enum DebugSessionFactory {
             origin: .demo,
             attachmentState: .attached,
             phase: .completed,
-            summary: "README 提交已经完成，长回复现在应该在卡片内部滚动。",
+            summary: "The README commit is complete. Long replies should now scroll inside the card.",
             updatedAt: now.addingTimeInterval(-45),
             jumpTarget: JumpTarget(
                 terminalApp: "Ghostty",
@@ -441,16 +441,16 @@ private enum DebugSessionFactory {
                 terminalSessionID: "ghostty-completion-long"
             ),
             claudeMetadata: ClaudeSessionMetadata(
-                initialUserPrompt: "帮我把这个 README 也提交了，然后把结果贴给我。",
-                lastUserPrompt: "顺便确认一下当前工作树和验证情况。",
+                initialUserPrompt: "Commit this README and show me the result.",
+                lastUserPrompt: "Also confirm the working tree and validation status.",
                 lastAssistantMessage: """
-[README.md](/Users/wangruobing/Personal/open-island/README.md) 的现有改动已经单独提交了，commit 是 `f196316`，message 是 `docs: update readme tagline`。
+The README changes were committed separately as `f196316`, with the message `docs: update readme tagline`.
 
-这轮没有跑测试，因为只是文案改动。当前工作树是干净的，`main` 相对 `origin/main` 现在是 `ahead 6`。
+No tests were run because this only changed copy. The working tree is clean, and `main` is six commits ahead of `origin/main`.
 
-如果你要我继续做下一轮，我建议把工作切到独立 worktree 里，这样不会和共享 `main` 上的并行改动互相打架。
+For the next round, use a separate worktree to avoid conflicts with parallel changes on the shared branch.
 
-下一步我会先检查当前仓库状态，然后从 `origin/main` 新建一个 worktree 和分支，在新工作区里继续处理这个样式问题并做完验证。
+I will inspect the repository state, create a worktree and branch from `origin/main`, then continue the styling work and verify it.
 """
             )
         )

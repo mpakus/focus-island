@@ -1,3 +1,4 @@
+import OpenIslandCore
 import FocusCore
 import SwiftUI
 
@@ -38,14 +39,14 @@ struct DayStartCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Доброе утро").font(FocusStyle.titleFont)
+                Text(L10n.tr("focus.good_morning")).font(FocusStyle.titleFont)
                 Text(Self.dateText(.now))
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
             }
             if !yesterday.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    FocusSectionCaption("Вчера осталось открытым · \(yesterday.count)")
+                    FocusSectionCaption(L10n.tr("focus.left_open_yesterday", "\(yesterday.count)"))
                     ScrollView {
                         VStack(spacing: 6) {
                             ForEach(yesterday) { row in
@@ -58,14 +59,14 @@ struct DayStartCard: View {
             }
             if let note {
                 FocusBox(spacing: 4) {
-                    FocusSectionCaption("Твоя заметка с вечера")
+                    FocusSectionCaption(L10n.tr("focus.your_note_from_last_night"))
                     Text(note).font(.system(size: 13)).lineLimit(3)
                 }
             }
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
-                    FocusSectionCaption("Фокус на сегодня")
-                    Text("выбери 1–3")
+                    FocusSectionCaption(L10n.tr("focus.today_s_focus"))
+                    Text(L10n.tr("focus.choose_1_3"))
                         .font(.system(size: 11))
                         .foregroundStyle(FocusStyle.captionText)
                 }
@@ -80,12 +81,12 @@ struct DayStartCard: View {
                 .buttonStyle(FocusButtonStyle(kind: .primary, height: 32))
                 .disabled(validSelection.isEmpty)
                 .opacity(validSelection.isEmpty ? 0.5 : 1)
-                Text("Выбранное — в In progress, остальное подождёт")
+                Text(L10n.tr("focus.selected_tasks_move_to_in_progress_the_rest_can_wait"))
                     .font(.system(size: 11))
                     .foregroundStyle(FocusStyle.captionText)
                     .lineLimit(2)
                 Spacer(minLength: 0)
-                Button("Позже") { focus.perform(.dismiss) }
+                Button(L10n.tr("focus.later")) { focus.perform(.dismiss) }
                     .buttonStyle(FocusButtonStyle(kind: .quiet, height: 32))
             }
         }
@@ -141,12 +142,12 @@ struct DayStartCard: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityValue(isOn ? "выбрано" : "не выбрано")
+        .accessibilityValue(isOn ? L10n.tr("focus.selected") : L10n.tr("focus.not_selected"))
     }
 
     nonisolated static func primaryTitle(selectedTitles: [String]) -> String {
-        guard let first = selectedTitles.first else { return "Начать день" }
-        return "Начать с «\(first)»"
+        guard let first = selectedTitles.first else { return L10n.tr("focus.start_the_day") }
+        return L10n.tr("focus.start_with", "\(first)")
     }
 
     nonisolated static func toggled(_ selection: [String], id: String) -> [String] {
@@ -173,16 +174,16 @@ struct DayStartCard: View {
 
     nonisolated static func yesterdayButtonTitle(group: HubGroup) -> String {
         switch group {
-        case .review: "Посмотреть"
-        case .parked: "Вернуть"
-        default: "Продолжить"
+        case .review: L10n.tr("focus.review")
+        case .parked: L10n.tr("focus.restore")
+        default: L10n.tr("focus.resume")
         }
     }
 
     static func dateText(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
-        formatter.dateFormat = "EEEE, d MMMM"
+        formatter.locale = LanguageManager.shared.locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEEdMMMM")
         let text = formatter.string(from: date)
         return text.prefix(1).uppercased() + text.dropFirst()
     }
