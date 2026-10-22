@@ -397,11 +397,11 @@ public struct AgentSession: Equatable, Identifiable, Codable, Sendable {
 public extension AgentSession {
     static let syntheticClaudeProcessPrefix = "claude-process:"
 
-    public var isSyntheticProcessSession: Bool {
+    var isSyntheticProcessSession: Bool {
         id.hasPrefix(Self.syntheticClaudeProcessPrefix)
     }
 
-    public var isDemoSession: Bool {
+    var isDemoSession: Bool {
         origin == .demo
     }
 
@@ -416,7 +416,7 @@ public extension AgentSession {
     /// Visibility rule for the island UI.
     /// Hook-managed sessions (Claude Code via hooks) rely on hook lifecycle
     /// signals; non-hook sessions use process polling.
-    public var isVisibleInIsland: Bool {
+    var isVisibleInIsland: Bool {
         if isDemoSession { return true }
         if phase.requiresAttention { return true }
         if isHookManaged { return !isSessionEnded }

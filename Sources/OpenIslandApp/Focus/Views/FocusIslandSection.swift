@@ -1,4 +1,5 @@
 import FocusCore
+import OpenIslandCore
 import SwiftUI
 
 extension Notification.Name {
@@ -14,7 +15,8 @@ struct FocusSectionHeightKey: PreferenceKey {
 
 struct FocusIslandSection: View {
     @Bindable var focus: FocusCoordinator
-    var installHooks: (() -> Void)?
+    var configureAgents: (() -> Void)?
+    var onboardingAgent: AgentTool = .claudeCode
     var openSettings: (() -> Void)?
     var horizontalInset: CGFloat = 20
 
@@ -45,14 +47,14 @@ struct FocusIslandSection: View {
         )
     }
 
-    static func showsCardView(_ card: FocusCard?) -> Bool {
+    nonisolated static func showsCardView(_ card: FocusCard?) -> Bool {
         switch card {
         case nil, .returned: false
         default: true
         }
     }
 
-    static func showsBinding(card: FocusCard?) -> Bool {
+    nonisolated static func showsBinding(card: FocusCard?) -> Bool {
         switch card {
         case nil, .nextAction, .returned, .dayStart: true
         case .onboarding, .nudge, .reEntry, .overload, .pickTask, .bindToTask, .pomodoroEnd, .breakEnd: false
@@ -75,7 +77,7 @@ struct FocusIslandSection: View {
         case .dayStart:
             DayStartCard(focus: focus).id("dayStart")
         case .onboarding:
-            OnboardingCard(focus: focus, installHooks: { installHooks?() }).id("onboarding")
+            OnboardingCard(focus: focus, agent: onboardingAgent, configureAgents: { configureAgents?() }).id("onboarding")
         case .pickTask:
             PickTaskCard(focus: focus).id("pickTask")
         case let .bindToTask(taskID):
@@ -87,7 +89,7 @@ struct FocusIslandSection: View {
         }
     }
 
-    static func boardButtonTitle(_ hotKey: BoardHotKey) -> String {
+    nonisolated static func boardButtonTitle(_ hotKey: BoardHotKey) -> String {
         hotKey == .off ? "Доска" : "Доска " + hotKey.title
     }
 }

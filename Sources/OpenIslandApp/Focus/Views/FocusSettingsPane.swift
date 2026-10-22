@@ -4,34 +4,21 @@ import SwiftUI
 struct FocusSettingsPane: View {
     @Bindable var focus: FocusCoordinator
     var hooksInstalled = false
-    var hooksConfigPath: String?
-    var install: () -> Void = {}
-    var uninstall: () -> Void = {}
-    var codexConfigured = false
-    var codexStatus = "Not connected"
-    var codexConfigPath = ""
-    var installCodex: () -> Void = {}
-    var uninstallCodex: () -> Void = {}
-    @State private var confirmingCodexUninstall = false
-    @State private var confirmingUninstall = false
+    var configureAgents: () -> Void = {}
     @State private var appsText = ""
     @State private var domainsText = ""
 
-    static let maxParallelRange = FocusSettings.maxParallelRange
-    static let stalledReminderRange = FocusSettings.stalledReminderRange
+    nonisolated static let maxParallelRange = FocusSettings.maxParallelRange
+    nonisolated static let stalledReminderRange = FocusSettings.stalledReminderRange
 
     nonisolated static func hooksTitle(installed: Bool) -> String {
-        installed ? "Хуки Claude Code установлены" : "Хуки Claude Code не установлены"
+        installed ? "Хуки агентов настроены" : "Подключите Claude Code или Codex"
     }
 
     nonisolated static func hooksPathText(path: String, home: String) -> String {
         if path == home { return "~" }
         let prefix = home.hasSuffix("/") ? home : home + "/"
         return path.hasPrefix(prefix) ? "~/" + path.dropFirst(prefix.count) : path
-    }
-
-    nonisolated static func hooksActionTitle(installed: Bool) -> String {
-        installed ? "Удалить хуки" : "Установить хуки"
     }
 
     var body: some View {
@@ -42,29 +29,12 @@ struct FocusSettingsPane: View {
                         .foregroundStyle(hooksInstalled ? FocusStyle.working : FocusStyle.waiting)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(Self.hooksTitle(installed: hooksInstalled)).fontWeight(.semibold)
-                        if hooksInstalled, let hooksConfigPath {
-                            Text(Self.hooksPathText(path: hooksConfigPath, home: FileManager.default.homeDirectoryForCurrentUser.path))
-                                .font(FocusStyle.secondaryFont)
-                                .foregroundStyle(FocusStyle.secondaryText)
-                        }
+                        Text("Claude Code и Codex — установка и проверка в Setup")
+                            .font(FocusStyle.secondaryFont)
+                            .foregroundStyle(FocusStyle.secondaryText)
                     }
                     Spacer()
-                    Button(Self.hooksActionTitle(installed: hooksInstalled)) {
-                        if hooksInstalled { confirmingUninstall = true } else { install() }
-                    }
-                }
-            }
-            Section("Codex") {
-                LabeledContent("Status", value: codexStatus)
-                Text(Self.hooksPathText(path: codexConfigPath, home: FileManager.default.homeDirectoryForCurrentUser.path))
-                    .font(.caption).foregroundStyle(.secondary)
-                Text("After installation, open /hooks in Codex and enable/trust these hooks, then send a prompt. Approval requests must be answered in Codex. Questions and exact session navigation are not supported yet.")
-                    .font(.caption).foregroundStyle(.secondary)
-                Button(codexConfigured ? "Remove Codex hooks" : "Install Codex hooks") {
-                    if codexConfigured { confirmingCodexUninstall = true } else { installCodex() }
-                }
-                if codexConfigured {
-                    Button("Reinstall Codex hooks", action: installCodex)
+                    Button("Настроить агентов", action: configureAgents)
                 }
             }
             if let backup = focus.storeRecoveredBackupURL {
@@ -129,16 +99,6 @@ struct FocusSettingsPane: View {
             }
         }
         .formStyle(.grouped)
-        .confirmationDialog("Удалить хуки Claude Code?", isPresented: $confirmingUninstall) {
-            Button("Удалить хуки", role: .destructive, action: uninstall)
-            Button("Отмена", role: .cancel) {}
-        } message: {
-            Text("Focus Island перестанет получать события Claude Code.")
-        }
-        .confirmationDialog("Remove Codex hooks?", isPresented: $confirmingCodexUninstall) {
-            Button("Remove hooks", role: .destructive, action: uninstallCodex)
-            Button("Cancel", role: .cancel) {}
-        }
         .onAppear(perform: loadStopList)
     }
 

@@ -5,7 +5,7 @@ struct DayStartCard: View {
     @Bindable var focus: FocusCoordinator
     @State private var selection: [String]
 
-    static let selectionLimit = 3
+    nonisolated static let selectionLimit = 3
 
     init(focus: FocusCoordinator) {
         self.focus = focus

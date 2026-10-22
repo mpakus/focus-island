@@ -246,12 +246,14 @@ struct FocusViewLogicTests {
         #expect(OnboardingCard.stage(hooksInstalled: true, taskAdded: false) == .firstTask)
         #expect(OnboardingCard.stage(hooksInstalled: true, taskAdded: true) == .started)
         #expect(OnboardingCard.startedToast(sessionCount: 2) == "Задача в работе · 2 сессии внутри")
-        #expect(OnboardingCard.candidateDetail(cwd: nil, appName: nil) == "сессия Claude")
+        #expect(OnboardingCard.candidateDetail(cwd: nil, appName: nil) == "сессия агента")
         #expect(OnboardingCard.candidateDetail(cwd: "/tmp/api", appName: "Ghostty") == "/tmp/api · Ghostty")
         #expect(OnboardingCard.shortPath(NSHomeDirectory() + "/work/api") == "~/work/api")
         #expect(OnboardingCard.launchCommand(projectPath: nil) == "claude")
         #expect(OnboardingCard.launchCommand(projectPath: NSHomeDirectory() + "/work/api") == "cd ~/work/api && claude")
         #expect(OnboardingCard.launchCommand(projectPath: "/tmp/my api") == "cd \"/tmp/my api\" && claude")
+        #expect(OnboardingCard.launchCommand(projectPath: nil, agent: .codex) == "codex")
+        #expect(OnboardingCard.launchCommand(projectPath: "/tmp/my api", agent: .codex) == "cd \"/tmp/my api\" && codex")
     }
 
     @Test
@@ -859,13 +861,11 @@ struct FocusViewLogicTests {
     func settingsStepperBoundsAreClamped() {
         #expect(FocusSettingsPane.maxParallelRange == 1...6)
         #expect(FocusSettingsPane.stalledReminderRange == 5...60)
-        #expect(FocusSettingsPane.hooksTitle(installed: true) == "Хуки Claude Code установлены")
-        #expect(FocusSettingsPane.hooksTitle(installed: false) == "Хуки Claude Code не установлены")
+        #expect(FocusSettingsPane.hooksTitle(installed: true) == "Хуки агентов настроены")
+        #expect(FocusSettingsPane.hooksTitle(installed: false) == "Подключите Claude Code или Codex")
         #expect(FocusSettingsPane.hooksPathText(path: "/Users/me/.claude/settings.json", home: "/Users/me") == "~/.claude/settings.json")
         #expect(FocusSettingsPane.hooksPathText(path: "/etc/x.json", home: "/Users/me") == "/etc/x.json")
         #expect(FocusSettingsPane.hooksPathText(path: "/Users/meow/x.json", home: "/Users/me") == "/Users/meow/x.json")
-        #expect(FocusSettingsPane.hooksActionTitle(installed: true) == "Удалить хуки")
-        #expect(FocusSettingsPane.hooksActionTitle(installed: false) == "Установить хуки")
     }
 
     @Test

@@ -2,6 +2,7 @@ import FocusCore
 import Foundation
 import OpenIslandCore
 import Testing
+import os
 @testable import OpenIslandApp
 
 @MainActor
@@ -529,12 +530,15 @@ struct FocusCoordinatorPomodoroTests {
     func openPickTaskWithEmptyTodoOpensBoard() throws {
         let h = try make()
         let c = h.coordinator
-        var posted: [AnyHashable: Any]?
-        let token = NotificationCenter.default.addObserver(forName: .focusOpenBoard, object: nil, queue: nil) { posted = $0.userInfo }
+        let postedTab = OSAllocatedUnfairLock<String?>(initialState: nil)
+        let token = NotificationCenter.default.addObserver(forName: .focusOpenBoard, object: nil, queue: nil) { notification in
+            let tab = notification.userInfo?["tab"] as? String
+            postedTab.withLock { $0 = tab }
+        }
         defer { NotificationCenter.default.removeObserver(token) }
         #expect(c.openPickTask(now: at(0)) == .openedBoard)
         #expect(c.card == nil)
-        #expect(posted?["tab"] as? String == "board")
+        #expect(postedTab.withLock { $0 } == "board")
     }
 
     @Test

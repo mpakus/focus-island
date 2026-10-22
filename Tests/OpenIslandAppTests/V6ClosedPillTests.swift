@@ -3,6 +3,7 @@ import FocusCore
 import Testing
 @testable import OpenIslandApp
 
+@MainActor
 struct V6ClosedPillTests {
     @Test
     @MainActor

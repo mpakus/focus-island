@@ -93,16 +93,18 @@ final class AppModel {
     var claudeUsageSnapshot: ClaudeUsageSnapshot? { hooks.claudeUsageSnapshot }
     var hooksBinaryURL: URL? { hooks.hooksBinaryURL }
     var claudeHooksInstalled: Bool { hooks.claudeHooksInstalled }
+    var isCodexHookSetupBusy: Bool { hooks.isCodexHookSetupBusy }
+    var codexHooksInstalled: Bool { hooks.codexHookStatus?.configured == true }
     var codexHooksConfigured: Bool { hooks.codexHooksConfigured }
     var codexHookConfigPath: String { hooks.codexHookStatus?.configURL.path ?? CodexConfigDirectory.resolved().appendingPathComponent("hooks.json").path }
     var codexHookStatusText: String {
         if let error = hooks.codexHookError { return error }
-        if hooks.codexHookStatus?.inlineConflict == true { return "Duplicate Focus Island hooks in config.toml." }
-        if hooks.codexHookStatus?.configured == true && hooks.codexHookStatus?.binaryAvailable == false { return "Codex: helper unavailable — reinstall hooks" }
+        if hooks.codexHookStatus?.inlineConflict == true { return lang.t("setup.codex.conflict") }
+        if codexHooksInstalled && hooks.codexHookStatus?.binaryAvailable == false { return lang.t("setup.codex.helperUnavailable") }
         if state.sessions.contains(where: { $0.tool == .codex && $0.codexMetadata?.isStale == false && !$0.isSessionEnded }) {
-            return "Codex: receiving events"
+            return lang.t("setup.codex.receiving")
         }
-        return codexHooksConfigured ? "Codex: configured — review /hooks and send a prompt to verify" : "Codex: not connected"
+        return lang.t(codexHooksConfigured ? "setup.codex.awaitingEvents" : "setup.codex.notConnected")
     }
     func installCodexHooks() { hooks.updateCodexHooks(install: true) }
     func uninstallCodexHooks() { hooks.updateCodexHooks(install: false) }
@@ -128,7 +130,10 @@ final class AppModel {
     /// Drives the "configure agents" empty-state prompts in the island and
     /// the settings window.
     var hasAnyInstalledAgent: Bool {
-        hooks.claudeHooksInstalled
+        hooks.claudeHooksInstalled || codexHooksInstalled
+    }
+    var onboardingAgent: AgentTool {
+        codexHooksConfigured && !claudeHooksInstalled ? .codex : .claudeCode
     }
     func refreshClaudeHookStatus() { hooks.refreshClaudeHookStatus() }
     func refreshClaudeUsageState() { hooks.refreshClaudeUsageState() }
@@ -959,7 +964,7 @@ final class AppModel {
             AcceptanceStep(
                 id: "hooks",
                 title: "Agent hooks configured",
-                detail: "Configure Claude Code or Codex hooks in Settings → Focus.",
+                detail: "Configure Claude Code or Codex hooks in Settings → Setup.",
                 isComplete: hooks.claudeHooksInstalled || hooks.codexHooksConfigured
             ),
             AcceptanceStep(
@@ -1849,7 +1854,7 @@ final class AppModel {
             return payload.summary
         case let .jumpTargetUpdated(payload):
             return "Jump target updated to \(payload.jumpTarget.terminalApp)."
-        case let .codexSessionMetadataUpdated(_):
+        case .codexSessionMetadataUpdated:
             return "Codex session metadata updated."
         case let .claudeSessionMetadataUpdated(payload):
             if let currentTool = payload.claudeMetadata.currentTool {

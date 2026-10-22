@@ -138,15 +138,8 @@ struct SettingsView: View {
         case .focus:
             FocusSettingsPane(
                 focus: model.focus,
-                hooksInstalled: model.claudeHooksInstalled,
-                hooksConfigPath: model.claudeHookStatus?.settingsURL.path,
-                install: { model.installClaudeHooks() },
-                uninstall: { model.uninstallClaudeHooks() },
-                codexConfigured: model.codexHooksConfigured,
-                codexStatus: model.codexHookStatusText,
-                codexConfigPath: model.codexHookConfigPath,
-                installCodex: { model.installCodexHooks() },
-                uninstallCodex: { model.uninstallCodexHooks() }
+                hooksInstalled: model.hasAnyInstalledAgent,
+                configureAgents: { model.showOnboarding() }
             )
         case .general:
             GeneralSettingsPane(model: model)
@@ -405,6 +398,7 @@ struct SetupSettingsPane: View {
     var model: AppModel
 
     @State private var confirmingUninstallClaude = false
+    @State private var confirmingUninstallCodex = false
     @State private var confirmingUninstallClaudeUsage = false
 
     private var lang: LanguageManager { model.lang }
@@ -434,6 +428,33 @@ struct SetupSettingsPane: View {
                 } message: {
                     Text(lang.t("settings.general.uninstallConfirmMessage.claude"))
                 }
+
+                hookRow(
+                    name: "Codex",
+                    installed: model.codexHooksInstalled,
+                    busy: model.isCodexHookSetupBusy,
+                    installedLabel: lang.t("setup.codex.configured"),
+                    configLocationURL: URL(fileURLWithPath: model.codexHookConfigPath),
+                    installAction: { model.installCodexHooks() },
+                    uninstallAction: { confirmingUninstallCodex = true }
+                )
+                .accessibilityIdentifier("setup.codex.hooks")
+                .alert(lang.t("settings.general.uninstallConfirmTitle"), isPresented: $confirmingUninstallCodex) {
+                    Button(lang.t("settings.general.uninstallConfirmAction"), role: .destructive) {
+                        model.uninstallCodexHooks()
+                    }
+                    Button(lang.t("settings.general.cancel"), role: .cancel) {}
+                } message: {
+                    Text(lang.t("setup.codex.uninstallMessage"))
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(lang.t("setup.codex.instructions"))
+                    Text(lang.t("setup.codex.approvals"))
+                    Link(lang.t("setup.codex.guide"), destination: URL(string: "https://learn.chatgpt.com/docs/hooks")!)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
 
             Section {
@@ -500,6 +521,7 @@ struct SetupSettingsPane: View {
             Section {
                 Button(lang.t("setup.installAll")) {
                     if !model.claudeHooksInstalled { model.installClaudeHooks() }
+                    if !model.codexHooksConfigured { model.installCodexHooks() }
                     if !model.claudeUsageInstalled && !model.claudeStatusLineProvidedByOtherIsland { model.installClaudeUsageBridge() }
                 }
                 .disabled(model.hooksBinaryURL == nil || allReady)
@@ -559,7 +581,8 @@ struct SetupSettingsPane: View {
     }
 
     private var allReady: Bool {
-        model.claudeHooksInstalled && (model.claudeUsageInstalled || model.claudeStatusLineProvidedByOtherIsland)
+        model.claudeHooksInstalled && model.codexHooksConfigured
+            && (model.claudeUsageInstalled || model.claudeStatusLineProvidedByOtherIsland)
     }
 
     @ViewBuilder
@@ -599,6 +622,24 @@ struct SetupSettingsPane: View {
         Section {
             ForEach(model.healthReports.filter { !$0.issues.isEmpty }) { report in
                 issueList(report: report)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Codex").font(.caption).fontWeight(.semibold)
+                Text(model.codexHookStatusText)
+                    .font(.caption)
+                    .accessibilityIdentifier("setup.codex.status")
+                Text(FocusSettingsPane.hooksPathText(
+                    path: model.codexHookConfigPath,
+                    home: FileManager.default.homeDirectoryForCurrentUser.path
+                ))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+                if model.codexHooksInstalled {
+                    Button(lang.t("setup.codex.reinstall")) { model.installCodexHooks() }
+                        .disabled(model.hooksBinaryURL == nil || model.isCodexHookSetupBusy)
+                }
             }
 
             if model.healthReports.isEmpty {
@@ -697,6 +738,7 @@ struct SetupSettingsPane: View {
         installed: Bool,
         busy: Bool,
         requiresBinary: Bool = true,
+        installedLabel: String? = nil,
         configLocationURL: URL? = nil,
         installAction: @escaping () -> Void,
         uninstallAction: @escaping () -> Void
@@ -719,7 +761,7 @@ struct SetupSettingsPane: View {
                     HStack(spacing: 4) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                        Text(lang.t("settings.general.activated"))
+                        Text(installedLabel ?? lang.t("settings.general.activated"))
                             .foregroundStyle(.secondary)
                     }
                     Button(lang.t("settings.general.uninstall")) {

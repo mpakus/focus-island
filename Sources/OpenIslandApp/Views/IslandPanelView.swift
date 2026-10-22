@@ -471,7 +471,8 @@ struct IslandPanelView: View {
     private var focusSection: some View {
         FocusIslandSection(
             focus: model.focus,
-            installHooks: model.installClaudeHooks,
+            configureAgents: model.showOnboarding,
+            onboardingAgent: model.onboardingAgent,
             openSettings: { model.showSettings() },
             horizontalInset: sessionListSideInset
         )
@@ -2734,7 +2735,7 @@ extension MarkdownUI.Theme {
         }
         .codeBlock { configuration in
             configuration.label
-                .markdownTextStyle {
+                .completionTextStyle {
                     FontFamilyVariant(.monospaced)
                     FontSize(12.5)
                     ForegroundColor(.white.opacity(0.88))
@@ -2745,7 +2746,7 @@ extension MarkdownUI.Theme {
         }
         .heading1 { configuration in
             configuration.label
-                .markdownTextStyle {
+                .completionTextStyle {
                     FontSize(16)
                     FontWeight(.bold)
                     ForegroundColor(.white.opacity(0.88))
@@ -2754,7 +2755,7 @@ extension MarkdownUI.Theme {
         }
         .heading2 { configuration in
             configuration.label
-                .markdownTextStyle {
+                .completionTextStyle {
                     FontSize(15)
                     FontWeight(.bold)
                     ForegroundColor(.white.opacity(0.88))
@@ -2763,7 +2764,7 @@ extension MarkdownUI.Theme {
         }
         .heading3 { configuration in
             configuration.label
-                .markdownTextStyle {
+                .completionTextStyle {
                     FontSize(14)
                     FontWeight(.semibold)
                     ForegroundColor(.white.opacity(0.88))
@@ -2772,7 +2773,7 @@ extension MarkdownUI.Theme {
         }
         .blockquote { configuration in
             configuration.label
-                .markdownTextStyle {
+                .completionTextStyle {
                     ForegroundColor(.white.opacity(0.6))
                     FontSize(13.5)
                 }
@@ -2788,26 +2789,43 @@ extension MarkdownUI.Theme {
                 .markdownMargin(top: 2, bottom: 2)
         }
         .table { configuration in
-            configuration.label
-                .fixedSize(horizontal: false, vertical: true)
-                .markdownTableBorderStyle(.init(.allBorders, color: .white.opacity(0.15), strokeStyle: .init(lineWidth: 1)))
-                .markdownTableBackgroundStyle(
-                    .alternatingRows(Color.white.opacity(0.04), Color.white.opacity(0.08))
-                )
-                .markdownMargin(top: 4, bottom: 8)
+            let sized = AnyView(configuration.label.fixedSize(horizontal: false, vertical: true))
+            let bordered = AnyView(sized.markdownTableBorderStyle(
+                .init(.allBorders, color: .white.opacity(0.15), strokeStyle: .init(lineWidth: 1))
+            ))
+            let background = AnyView(bordered.markdownTableBackgroundStyle(
+                .alternatingRows(Color.white.opacity(0.04), Color.white.opacity(0.08))
+            ))
+            background.markdownMargin(top: 4, bottom: 8)
         }
         .tableCell { configuration in
-            configuration.label
-                .markdownTextStyle {
+            AnyView(configuration.label
+                .completionTextStyle {
                     if configuration.row == 0 {
                         FontWeight(.semibold)
                     }
                 }
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.vertical, 6)
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 12))
                 .relativeLineSpacing(.em(0.25))
         }
+}
+
+// shortcut: bridge MarkdownUI's Swift 5 opaque types; remove after its concurrency update.
+private struct CompletionTextStyle: TextStyle {
+    let content: any TextStyle
+
+    func _collectAttributes(in attributes: inout AttributeContainer) {
+        content._collectAttributes(in: &attributes)
+    }
+}
+
+private extension View {
+    func completionTextStyle(@TextStyleBuilder style: () -> any TextStyle) -> AnyView {
+        let concreteStyle = CompletionTextStyle(content: style())
+        return AnyView(markdownTextStyle { return concreteStyle })
+    }
 }
 
 private struct DismissButton: View {

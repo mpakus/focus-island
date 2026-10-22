@@ -232,8 +232,9 @@ final class HookInstallationCoordinator {
         [claudeHealthReport].compactMap(\.self)
     }
 
-    /// Runs health checks for Claude hooks.
+    /// Refreshes both agents; Codex trust and live delivery still require verification in Codex.
     func runHealthChecks() {
+        refreshCodexHookStatus()
         Task { @MainActor [weak self] in
             guard let self else { return }
 

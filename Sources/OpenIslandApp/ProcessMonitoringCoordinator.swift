@@ -644,7 +644,6 @@ final class ProcessMonitoringCoordinator {
     /// When a Claude session was matched to a process by cwd but has a nil or
     /// mismatched TTY, adopt the process's TTY so that the subsequent terminal
     /// attachment resolution can find and promote the session.
-    @discardableResult
     private func adoptProcessTerminalAppsForClaudeSessions(
         activeProcesses: [ActiveProcessSnapshot],
         sessions localState: inout SessionState
@@ -686,9 +685,9 @@ final class ProcessMonitoringCoordinator {
     private func adoptProcessTTYsForClaudeSessions(
         activeProcesses: [ActiveProcessSnapshot],
         sessions localState: inout SessionState
-    ) -> Bool {
+    ) {
         let claudeProcesses = activeProcesses.filter { $0.tool == .claudeCode }
-        guard !claudeProcesses.isEmpty else { return false }
+        guard !claudeProcesses.isEmpty else { return }
 
         var sessions = localState.sessions
         var changed = false
@@ -734,7 +733,6 @@ final class ProcessMonitoringCoordinator {
         if changed {
             localState = SessionState(sessions: sessions)
         }
-        return changed
     }
 
     // MARK: - Display helpers

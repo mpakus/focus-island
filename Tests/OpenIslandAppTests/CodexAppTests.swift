@@ -1,11 +1,41 @@
 import FocusCore
 import Foundation
-import OpenIslandCore
+@testable import OpenIslandCore
 import Testing
 @testable import OpenIslandApp
 
 @MainActor
 struct CodexAppTests {
+    @Test func codexOnlySetupCountsAsInstalledButWaitsForLiveVerification() throws {
+        let model = AppModel(focusStore: try FocusStore.inMemory(), claudeRegistry: .temporaryForTesting(), runBackfill: false)
+        #expect(!model.hasAnyInstalledAgent)
+        #expect(model.onboardingAgent == .claudeCode)
+        model.hooks.codexHookStatus = CodexHookInstallationStatus(
+            configURL: URL(fileURLWithPath: "/tmp/codex-fixture/hooks.json"),
+            configured: true, binaryAvailable: true, inlineConflict: false
+        )
+        #expect(!model.claudeHooksInstalled)
+        #expect(model.hasAnyInstalledAgent)
+        #expect(model.codexHooksInstalled && model.codexHooksConfigured)
+        #expect(model.onboardingAgent == .codex)
+        #expect(model.codexHookStatusText == model.lang.t("setup.codex.awaitingEvents"))
+        model.state = SessionState(sessions: [session("live")])
+        #expect(model.codexHookStatusText == model.lang.t("setup.codex.receiving"))
+    }
+
+    @Test func codexSetupKeepsRemovalAvailableWhenHelperNeedsRepair() throws {
+        let model = AppModel(focusStore: try FocusStore.inMemory(), claudeRegistry: .temporaryForTesting(), runBackfill: false)
+        model.hooks.codexHookStatus = CodexHookInstallationStatus(
+            configURL: URL(fileURLWithPath: "/tmp/codex-fixture/hooks.json"),
+            configured: true, binaryAvailable: false, inlineConflict: false
+        )
+        #expect(model.hasAnyInstalledAgent && model.codexHooksInstalled)
+        #expect(!model.codexHooksConfigured)
+        #expect(model.codexHookStatusText == model.lang.t("setup.codex.helperUnavailable"))
+        model.hooks.codexHookStatus?.inlineConflict = true
+        #expect(model.codexHookStatusText == model.lang.t("setup.codex.conflict"))
+    }
+
     func session(_ id: String, phase: SessionPhase = .running, at date: Date = .now) -> AgentSession {
         var session = AgentSession(id: "codex:\(id)", title: "Codex", tool: .codex, origin: .live, attachmentState: .attached, phase: phase, summary: "Codex work", updatedAt: date,
             jumpTarget: JumpTarget(terminalApp: "Terminal", workspaceName: "project", paneTitle: "Codex", workingDirectory: "/tmp"), codexMetadata: CodexSessionMetadata(sessionID: id, lastEventAt: date))

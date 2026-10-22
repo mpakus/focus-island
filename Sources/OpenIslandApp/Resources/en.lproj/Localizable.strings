@@ -156,7 +156,18 @@
 "setup.diagnostics.runCheck" = "Run Check";
 "setup.diagnostics.recheck" = "Re-check";
 "setup.diagnostics.repair" = "Repair Hooks";
-"setup.diagnostics.allHealthy" = "All hooks are healthy.";
+"setup.diagnostics.allHealthy" = "Claude Code hooks are healthy.";
+"setup.codex.configured" = "Configured";
+"setup.codex.instructions" = "After installing, open /hooks in the Codex CLI to review and trust the Focus Island hooks, then send a prompt to verify monitoring.";
+"setup.codex.approvals" = "Approval requests must be answered in Codex. Exact session navigation is not supported yet.";
+"setup.codex.guide" = "Codex hooks guide";
+"setup.codex.uninstallMessage" = "Focus Island will stop receiving Codex events. Other Codex hooks will be kept.";
+"setup.codex.reinstall" = "Reinstall Codex hooks";
+"setup.codex.conflict" = "Duplicate Focus Island hooks in config.toml.";
+"setup.codex.helperUnavailable" = "Helper unavailable — reinstall Codex hooks.";
+"setup.codex.receiving" = "Receiving Codex events.";
+"setup.codex.awaitingEvents" = "Configured — review /hooks and send a prompt to verify monitoring.";
+"setup.codex.notConnected" = "Codex is not connected.";
 
 /* Settings - Placeholder */
 "settings.shortcuts.comingSoon" = "Keyboard shortcuts coming soon.";

@@ -1,5 +1,6 @@
 import AppKit
 import FocusCore
+import OpenIslandCore
 import SwiftUI
 
 struct OnboardingCard: View {
@@ -10,15 +11,17 @@ struct OnboardingCard: View {
     }
 
     @Bindable var focus: FocusCoordinator
-    let installHooks: () -> Void
+    let agent: AgentTool
+    let configureAgents: () -> Void
     @State private var taskText = ""
     @State private var criterionText = ""
     @State private var selected: Set<String> = []
     @State private var anchorID: String?
 
-    init(focus: FocusCoordinator, installHooks: @escaping () -> Void) {
+    init(focus: FocusCoordinator, agent: AgentTool = .claudeCode, configureAgents: @escaping () -> Void) {
         self.focus = focus
-        self.installHooks = installHooks
+        self.agent = agent
+        self.configureAgents = configureAgents
     }
 
     private var stage: Stage {
@@ -40,7 +43,7 @@ struct OnboardingCard: View {
             StepDots(current: 1)
             VStack(alignment: .leading, spacing: 3) {
                 Text("Focus Island").font(FocusStyle.titleFont)
-                Text("Держит в голове сессии Claude и задачи, чтобы ты не держал. Подключись — и заведём первую задачу.")
+                Text("Держит в голове сессии Claude Code, Codex и задачи, чтобы ты не держал. Подключись — и заведём первую задачу.")
                     .font(FocusStyle.secondaryFont)
                     .foregroundStyle(FocusStyle.secondaryText)
                     .lineLimit(3)
@@ -48,14 +51,14 @@ struct OnboardingCard: View {
             }
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Подключить Claude Code").font(.system(size: 13, weight: .semibold)).lineLimit(1)
-                    Text("Добавит хуки в ~/.claude/settings.json. Убрать можно в настройках.")
+                    Text("Claude Code и Codex").font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                    Text("Выбери агентов в Setup. Там можно установить, проверить и удалить хуки.")
                         .font(FocusStyle.secondaryFont)
                         .foregroundStyle(FocusStyle.secondaryText)
                         .lineLimit(2)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Button("Подключить", action: installHooks)
+                Button("Подключить", action: configureAgents)
                     .buttonStyle(FocusButtonStyle(kind: .primary))
             }
             .padding(.horizontal, 14)
@@ -182,7 +185,7 @@ struct OnboardingCard: View {
                 .buttonStyle(FocusButtonStyle(kind: .primary, height: 38))
                 .font(.system(size: 15, weight: .semibold))
                 .keyboardShortcut(.defaultAction)
-                Text(rows.isEmpty ? "Можно начать фокус и сейчас — сессии подтянутся по ходу" : "Пока идёт фокус, Claude зовёт только по делу. Потом перерыв \(focus.settings.pomodoroBreakMinutes) минут.")
+                Text(rows.isEmpty ? "Можно начать фокус и сейчас — сессии подтянутся по ходу" : "Пока идёт фокус, агент зовёт только по делу. Потом перерыв \(focus.settings.pomodoroBreakMinutes) минут.")
                     .font(.system(size: 11))
                     .foregroundStyle(FocusStyle.captionText)
                     .lineLimit(2)
@@ -284,7 +287,7 @@ struct OnboardingCard: View {
     }
 
     private func waitingForSession(projectPath: String?) -> some View {
-        let command = Self.launchCommand(projectPath: projectPath)
+        let command = Self.launchCommand(projectPath: projectPath, agent: agent)
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 Circle()
@@ -293,9 +296,11 @@ struct OnboardingCard: View {
                     .overlay(Circle().stroke(FocusStyle.link.opacity(0.25), lineWidth: 5))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Жду первую сессию Claude")
+                    Text("Жду первую сессию \(agent.displayName)")
                         .font(.system(size: 13, weight: .semibold))
-                    Text("Запусти claude в терминале, IDE или Claude.app — сессия сама попадёт в эту задачу.")
+                    Text(agent == .codex
+                         ? "Запусти codex в терминале, проверь доверие в /hooks и отправь запрос — сессия появится здесь."
+                         : "Запусти claude в терминале, IDE или Claude.app — сессия сама попадёт в эту задачу.")
                         .font(FocusStyle.secondaryFont)
                         .foregroundStyle(FocusStyle.secondaryText)
                         .lineLimit(2)
@@ -372,7 +377,7 @@ struct OnboardingCard: View {
         if let appName, !appName.isEmpty {
             parts.append(appName)
         }
-        return parts.isEmpty ? "сессия Claude" : parts.joined(separator: " · ")
+        return parts.isEmpty ? "сессия агента" : parts.joined(separator: " · ")
     }
 
     nonisolated static func shortPath(_ path: String) -> String {
@@ -381,10 +386,11 @@ struct OnboardingCard: View {
         return "~" + path.dropFirst(home.count)
     }
 
-    nonisolated static func launchCommand(projectPath: String?) -> String {
-        guard let projectPath, !projectPath.isEmpty else { return "claude" }
+    nonisolated static func launchCommand(projectPath: String?, agent: AgentTool = .claudeCode) -> String {
+        let executable = agent == .codex ? "codex" : "claude"
+        guard let projectPath, !projectPath.isEmpty else { return executable }
         let target = projectPath.contains(" ") ? "\"\(projectPath)\"" : shortPath(projectPath)
-        return "cd \(target) && claude"
+        return "cd \(target) && \(executable)"
     }
 }
 
