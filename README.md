@@ -84,6 +84,8 @@ App data is stored in `~/Library/Application Support/FocusIsland/`.
 
 Checks: `zsh scripts/harness.sh ci`, tests: `zsh scripts/test-clt.sh`.
 
+Planned integrations: [Codex monitoring analysis and implementation plan](docs/CODEX-MONITORING-PLAN.md).
+
 ## About
 
 Focus Island is a fork of [open-vibe-island](https://github.com/Octane0411/open-vibe-island) (GPL v3), adapted specifically for Claude Code. It was built as a personal productivity tool for working with Claude Code in the terminal on macOS 14+.

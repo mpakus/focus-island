@@ -21,10 +21,11 @@ Package.resolved
 .playwright-mcp/
 output/
 
-# Local design docs: only demo media and release notes are tracked
+# Local design docs, with explicit tracked documentation exceptions
 docs/*
 !docs/media/
 !docs/releases/
+!docs/CODEX-MONITORING-PLAN.md
 
 # Logs and temp files
 *.log
