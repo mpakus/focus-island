@@ -15,7 +15,7 @@
 4. In the island under the notch, click "Connect" to open Setup, then install hooks for Claude Code, Codex, or both. For Codex, also complete the hook trust step below.
 
 > [!NOTE]
-> The v0.5.1 binaries use ad-hoc signing and are **not notarized by Apple**. macOS may block the first launch. After attempting to open the app, use System Settings → Privacy & Security → Open Anyway if needed. Only open a download you trust.
+> The v0.5.2 binaries use ad-hoc signing and are **not notarized by Apple**. macOS may block the first launch. After attempting to open the app, use System Settings → Privacy & Security → Open Anyway if needed. Only open a download you trust.
 
 ## Features
 
@@ -118,13 +118,13 @@ Daily, weekly and task work totals use the union of Claude and Codex intervals; 
    acli jira auth login --web
    ```
 
-2. Open **Settings → Focus → Jira → Connect signed-in account**. Focus Island verifies the CLI account and reads its assigned, unfinished issues.
-3. Open the board (⌥⌘B), choose **Jira → Add from Jira**, select issues, choose Backlog or Todo and optionally a local project folder, then import.
-4. Use **Jira → Refresh linked tasks** to fetch current issue text/status. **Reload issues** in the import sheet refreshes the list of available assignments.
+2. Open **Settings → Setup → Jira authorization**. **Authorize Jira…** opens the installed CLI in Terminal for browser sign-in. Finish that flow, then choose **Connect signed-in account**. Already signed-in users can connect directly.
+3. Choose **Sync my Jira tasks** in Setup or the board’s Jira menu. It imports all assigned, unfinished issues into Backlog and refreshes existing linked cards, including issues no longer in the discovery list. Repeat syncs reuse cards and preserve local columns, notes, sessions, and timers.
+4. For selected imports or a different destination, use **Jira → Add from Jira**. **Refresh linked tasks** updates existing cards without importing new assignments.
 
-Focus Island uses the official CLI's read commands; it never collects API tokens, reads CLI credential files, or writes Jira issues. The CLI is not bundled. It must be installed at `/opt/homebrew/bin/acli`, `/usr/local/bin/acli`, or `~/.local/bin/acli`. Changing the CLI account requires disconnecting and reconnecting in Focus Island. Disconnect does not sign the CLI out or remove existing tasks. **Detach from Jira** makes a card's title and description locally editable.
+Authorization launches the official CLI’s browser login in Terminal. Jira data access uses the CLI’s read commands; it never collects API tokens, reads CLI credential files, or writes Jira issues. The CLI is not bundled. It must be installed at `/opt/homebrew/bin/acli`, `/usr/local/bin/acli`, or `~/.local/bin/acli`. Changing the CLI account requires disconnecting and reconnecting in Focus Island. Disconnect does not sign the CLI out or remove existing tasks. **Detach from Jira** makes a card's title and description locally editable.
 
-Supported scope: one Jira Cloud account/site at a time, ordinary `*.atlassian.net` sites, assigned issues of all types, selected import, and manual refresh. Jira Data Center, custom domains, automatic polling, workflow transitions, comments, attachments, and worklogs are not included. Descriptions are converted from ADF to plain text; formatting and embedded media may be omitted. Follow the issue link for the original.
+Supported scope: one Jira Cloud account/site at a time, ordinary `*.atlassian.net` sites, assigned issues of all types, selected import, manual assignment sync, and manual refresh. Jira Data Center, custom domains, automatic polling, workflow transitions, comments, attachments, and worklogs are not included. Descriptions are converted from ADF to plain text; formatting and embedded media may be omitted. Follow the issue link for the original.
 
 The verified CLI is `1.3.39-stable`. Live authentication, assigned-issue search, detail retrieval, and import/refresh passed on one Jira Cloud account using a disposable board; local notes and completion survived refresh. Use **v0.5.1 or later**: v0.5.0 requested search fields that ACLI rejects. Migration, cancellation, malformed responses, and UI rendering also have automated coverage. The in-app connection requires a successful search; errors leave cached tasks available. Other tenants and CLI versions still need verification.
 
@@ -133,10 +133,10 @@ Migration `v7` saves a consistent `before-jira-*.sqlite` snapshot before updatin
 ## Releasing
 
 ```bash
-OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.5.1
+OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.5.2
 ```
 
-Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.5.1.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs the tests, builds and verifies a universal DMG and ZIP, tags `v0.5.1`, and publishes the GitHub Release.
+Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.5.2.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs the tests, builds and verifies a universal DMG and ZIP, tags `v0.5.2`, and publishes the GitHub Release.
 
 `OPEN_ISLAND_SIGN_IDENTITY=-` selects ad-hoc signing. To use the local certificate instead, run `zsh scripts/setup-dev-signing.sh` once and omit that variable. Neither option provides Apple notarization. `VERSION` also supplies the version shown in packaged and development app bundles; `OPEN_ISLAND_VERSION` can override it for local builds.
 
@@ -163,6 +163,8 @@ App data is stored in `~/Library/Application Support/FocusIsland/`.
 Checks: `zsh scripts/harness.sh ci`, tests: `zsh scripts/test-clt.sh`.
 
 Implementation and validation: [Codex monitoring plan and evidence](docs/CODEX-MONITORING-PLAN.md).
+
+The app icon is generated from [Assets/Brand/icon.png](Assets/Brand/icon.png), preserving its transparency and proportions. The generated ICNS is used by the release and development app bundles for Dock, Finder, and About.
 
 Jira implementation and limitations: [Jira import plan and evidence](docs/JIRA-INTEGRATION-PLAN.md), with [API and authentication research](docs/JIRA-API-RESEARCH.md).
 

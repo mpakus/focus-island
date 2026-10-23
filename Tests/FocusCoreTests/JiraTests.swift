@@ -267,4 +267,18 @@ struct JiraClientTests {
         let output = try await JiraCommand.run(["-c", "printf '[]'"], executable: shell)
         #expect(output == Data("[]".utf8))
     }
+
+    @Test func concurrentCommandsFinishAfterExiting() async throws {
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for _ in 0..<8 {
+                group.addTask {
+                    for _ in 0..<3 {
+                        let output = try await JiraCommand.run(["-c", "sleep 0.02; printf '[]'"], executable: URL(fileURLWithPath: "/bin/sh"), timeout: 2)
+                        #expect(output == Data("[]".utf8))
+                    }
+                }
+            }
+            try await group.waitForAll()
+        }
+    }
 }

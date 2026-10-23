@@ -1,6 +1,6 @@
 # Jira tasks on the Focus Island board
 
-Status: implemented as an opt-in CLI preview; live verified with the v0.5.1 fix on 2026-10-23. Original analysis baseline: `c9282f3`; the original proposed design is preserved in commit `2e38acd`.
+Status: opt-in CLI integration for v0.5.2, 2026-10-23, with Setup authorization and manual assignment sync. Original analysis baseline: `c9282f3`; the original proposed design is preserved in commit `2e38acd`.
 
 ## Result and implementation decision
 
@@ -12,9 +12,9 @@ The initial plan proposed a personal token experiment and left public authentica
 
 ## User flow
 
-1. Install ACLI and sign in using its browser flow. Focus Island looks in `/opt/homebrew/bin`, `/usr/local/bin`, and `~/.local/bin`.
-2. Settings → Focus → Jira → Connect signed-in account verifies the CLI account, resolves the site's cloud ID, and requires a successful assigned-issue search.
-3. Board → Jira → Add from Jira lists assigned, unfinished issues with their issue key (including the project key), type, status, and priority. Existing imports show “On board”. Select issues, a local destination, and optionally a repository folder.
+1. Install ACLI. In Settings → Setup → Jira authorization, Authorize Jira launches the installed CLI’s browser login in Terminal using the existing launcher and quoted executable path. Focus Island looks in `/opt/homebrew/bin`, `/usr/local/bin`, and `~/.local/bin`.
+2. Finish sign-in, then Connect signed-in account verifies the CLI account, resolves the site's cloud ID, and requires a successful assigned-issue search.
+3. Sync my Jira tasks, available in Setup and the board’s Jira menu, imports all assigned unfinished issues into Backlog and refreshes existing linked cards. It does not start focus or timers. New imports are fetched before one atomic batch insert; refresh retains cached data on failures. Linked issues missing from discovery are fetched independently, and detach/delete during a pending sync is respected. For selected imports, Board → Jira → Add from Jira lists assigned, unfinished issues with their issue key (including the project key), type, status, and priority. Existing imports show “On board”. Select issues, a local destination, and optionally a repository folder.
 4. Import fetches selected descriptions and inserts the batch atomically. Backlog is the default; importing never starts focus or a timer.
 5. Work with the task as usual. Its issue key opens Jira. Source title/description are read-only while linked; notes and criteria remain local and editable.
 6. Refresh linked tasks manually. Reload issues refreshes the discovery list separately. Cached cards work offline. Disconnect cancels pending work, clears the app's connection metadata, and keeps cards/history; it leaves the CLI login alone.
@@ -58,7 +58,7 @@ assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC, key A
 
 The CLI search requests `summary,status,issuetype,priority,assignee` with `--paginate --json`. ACLI search rejects `project` and `updated`; those fields and `description` are requested only by the issue-detail command. Discovery accepts a missing update timestamp, but detail reads, imports, and refreshes require a valid timestamp before writing. The app validates the complete response before publishing it and rejects incomplete pagination envelopes. Details are read by stable issue ID independently of the discovery query, so completed and reassigned imported issues can still refresh. No local task is removed because it disappeared from search. An unavailable issue keeps its cached text/history; a command failure leaves prior results intact.
 
-The CLI owns HTTP transport, pagination and any HTTP retry behavior. Focus Island bounds each command to 90 seconds and 16 MiB of output, uses private temporary files, discards raw diagnostics, and cancels the process on disconnect. It does not blindly retry failed commands. Requests use explicit argument arrays without a shell; remote content is never executed. The app does not inspect CLI credential files. Before and after each read, CLI account/site must match the saved connection; account changes require reconnection.
+The CLI owns HTTP transport, pagination and any HTTP retry behavior. Focus Island bounds each command to 90 seconds and 16 MiB of output, uses private temporary files, discards raw diagnostics, and cancels the process on disconnect. It does not blindly retry failed commands. Data reads use explicit argument arrays without a shell; remote content is never executed. The app does not inspect CLI credential files. Before and after each read, CLI account/site must match the saved connection; account changes require reconnection.
 
 ACLI 1.3 exposes human-readable auth status rather than JSON. The adapter accepts the inspected Site/Email labels and fails closed on unfamiliar output. This is a compatibility boundary requiring live acceptance for future CLI versions. Cloud IDs come from Atlassian's documented unauthenticated `/_edge/tenant_info` endpoint. Ordinary HTTPS `*.atlassian.net` sites are supported; custom domains, Government Cloud, and Data Center are not claimed.
 
@@ -100,6 +100,10 @@ The live check passed after the fix: browser-authenticated account verification,
 For v0.5.1, `FOCUS_ISLAND_JIRA_LIVE_EXECUTABLE=/tmp/focus-island-jira-tools/acli rtk proxy bin/test.dev` passed with 916 tests reported across 88 suites, including the live check; only the optional localized settings preview was skipped. Localization and whitespace checks passed again. Standards and specification reviews found no remaining issues in the patch.
 
 The integration remains an opt-in preview. Live evidence covers one Jira Cloud account and a small result set, not large-volume pagination, every tenant's policy, or future CLI versions. Fixture tests use synthetic issues; the live test uses a disposable in-memory board and only reads Jira. The user's real Focus Island board is untouched.
+
+For v0.5.2, the full suite passed with 922 tests reported across 88 suites, including both live checks running concurrently; only the optional localized settings preview was skipped. The new live coordinator test syncs all assignments into a disposable board, then repeats sync and verifies card count, local notes, and completion. Fixture tests cover authorization command quoting and launch failures, new-batch failure, cancellation, missing discovery issues, and detach/delete while sync is pending. The first concurrent live run exposed a blocking `Process.waitUntilExit()` cleanup; the stack trace identified the wait after CLI exit. Removing that redundant wait allowed the original concurrent run to complete. Normal exit is already observed asynchronously, and failure cleanup still kills running children.
+
+Setup authorization and connected sync controls passed rendered UI checks and visual inspection. All 986 localization keys passed validation. The supplied `Assets/Brand/icon.png` generated ten transparent macOS icon sizes and the ICNS used by both packaging scripts; aspect ratio and image dimensions were checked. Standards and specification reviews found no remaining issues.
 
 ## Scope retained for later
 

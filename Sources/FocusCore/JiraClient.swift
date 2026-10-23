@@ -136,7 +136,6 @@ public enum JiraCommand {
         do { try process.run() } catch { throw JiraError.commandFailed }
         defer {
             if process.isRunning { kill(process.processIdentifier, SIGKILL) }
-            process.waitUntilExit()
         }
         let deadline = Date().addingTimeInterval(timeout)
         while process.isRunning {
