@@ -40,10 +40,12 @@ build_flags+=(--sdk "$sdk_path")
 echo "Using SDK: $sdk_path"
 
 products=(OpenIslandApp OpenIslandHooks OpenIslandSetup)
+build_triple="$(uname -m)-apple-macosx14.0"
+# Dependencies also target macOS 14; older targets need compatibility libraries missing for Intel in CLT 27.
 for product in "${products[@]}"; do
-    swift build "${build_flags[@]}" --product "$product"
+    swift build "${build_flags[@]}" --triple "$build_triple" -Xswiftc -target -Xswiftc "$build_triple" --product "$product"
 done
-build_bin_dir="$(swift build "${build_flags[@]}" --show-bin-path)"
+build_bin_dir="$(swift build "${build_flags[@]}" --triple "$build_triple" -Xswiftc -target -Xswiftc "$build_triple" --show-bin-path)"
 app_binary="$build_bin_dir/OpenIslandApp"
 hooks_binary="$build_bin_dir/OpenIslandHooks"
 setup_binary="$build_bin_dir/OpenIslandSetup"
@@ -52,9 +54,9 @@ if [[ "${OPEN_ISLAND_UNIVERSAL:-false}" == "true" ]]; then
     other_triple="x86_64-apple-macosx14.0"
     [[ "$(uname -m)" == "x86_64" ]] && other_triple="arm64-apple-macosx14.0"
     for product in "${products[@]}"; do
-        swift build "${build_flags[@]}" --triple "$other_triple" --product "$product"
+        swift build "${build_flags[@]}" --triple "$other_triple" -Xswiftc -target -Xswiftc "$other_triple" --product "$product"
     done
-    other_bin_dir="$(swift build "${build_flags[@]}" --triple "$other_triple" --show-bin-path)"
+    other_bin_dir="$(swift build "${build_flags[@]}" --triple "$other_triple" -Xswiftc -target -Xswiftc "$other_triple" --show-bin-path)"
     universal_dir="$package_root/universal"
     rm -rf "$universal_dir"
     mkdir -p "$universal_dir"
