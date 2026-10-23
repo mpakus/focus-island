@@ -111,6 +111,15 @@ struct JiraBrowserTests {
         await #expect(throws: CancellationError.self) { try await waiting.value }
     }
 
+    @Test @MainActor func browserFailureCannotLeaveAuthorizationWaitingForever() async throws {
+        let server = try JiraOAuthCallback()
+        _ = try await server.start()
+        defer { server.stop() }
+        await #expect(throws: JiraError.authorizationTimedOut) {
+            try await server.open(URL(string: "https://auth.atlassian.com/authorize?state=expected")!, timeout: .milliseconds(20), browser: { _ in })
+        }
+    }
+
     @Test func authorizationEndpointsCannotRedirectCredentialsToAnotherHost() throws {
         for url in ["https://evil.example/token", "http://auth.atlassian.com/token", "https://auth.atlassian.com.evil.example/token", "https://user@auth.atlassian.com/token"] {
             #expect(throws: JiraError.invalidResponse) { try JiraOAuth.endpoint(url) }
@@ -181,6 +190,7 @@ private actor OAuthFixture {
         #expect(value("code_challenge_method") == "S256")
         #expect(value("scope") == "read:me offline_access read:jira:agent-interface search:jira:agent-interface")
         #expect(value("resource") == "https://mcp.atlassian.com/v2/mcp")
+        #expect(value("prompt") == "consent")
         challenge = value("code_challenge")
         let callback = try #require(value("redirect_uri"))
         return URL(string: "\(callback)?state=\(try #require(value("state")))&code=authorized")!

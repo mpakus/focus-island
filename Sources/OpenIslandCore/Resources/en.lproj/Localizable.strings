@@ -1065,3 +1065,6 @@
 "settings.about.license" = "Based on Open Vibe Island. Licensed under GPL v3.";
 
 "jira.authorizing" = "Waiting for Jira authorization in your browser…";
+
+/* Jira browser authorization deadline. */
+"jira.error.authorizationTimedOut" = "Jira sign-in did not finish. Check your browser for an error, then choose Integrate Jira to try again.";

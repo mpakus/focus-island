@@ -9,6 +9,7 @@ final class JiraOAuthCallback {
     private var result: CheckedContinuation<URL, any Error>?
     private var state: String?
     private var callback: URL?
+    private var timeoutTask: Task<Void, Never>?
     private var connections: [NWConnection] = []
 
     init() throws {
@@ -49,12 +50,17 @@ final class JiraOAuthCallback {
         } onCancel: { Task { @MainActor in self.stop() } }
     }
 
-    func open(_ url: URL, browser: @escaping @Sendable (URL) async throws -> Void) async throws -> URL {
+    func open(_ url: URL, timeout: Duration = .seconds(300), browser: @escaping @Sendable (URL) async throws -> Void) async throws -> URL {
         state = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "state" }?.value
         return try await withTaskCancellationHandler {
             try Task.checkCancellation()
             return try await withCheckedThrowingContinuation { result in
                 self.result = result
+                timeoutTask = Task {
+                    do { try await Task.sleep(for: timeout) }
+                    catch { return }
+                    self.stop(error: JiraError.authorizationTimedOut)
+                }
                 Task {
                     do { try await browser(url) }
                     catch { self.stop(error: error) }
@@ -64,6 +70,7 @@ final class JiraOAuthCallback {
     }
 
     func stop(error: any Error = CancellationError()) {
+        timeoutTask?.cancel(); timeoutTask = nil
         listener.cancel()
         for connection in connections { connection.cancel() }
         connections = []
@@ -102,7 +109,10 @@ final class JiraOAuthCallback {
                     Task { @MainActor in
                         guard let self else { return }
                         self.close(connection)
-                        if let url { self.result?.resume(returning: url); self.result = nil }
+                        if let url {
+                            self.timeoutTask?.cancel(); self.timeoutTask = nil
+                            self.result?.resume(returning: url); self.result = nil
+                        }
                     }
                 })
             }

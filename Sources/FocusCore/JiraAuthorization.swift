@@ -157,7 +157,7 @@ enum JiraOAuth {
         let verifier = try random(), state = try random()
         var authorization = URLComponents(url: try endpoint(metadata["authorization_endpoint"]), resolvingAgainstBaseURL: false)!
         authorization.queryItems = ["client_id": clientID, "redirect_uri": callback.absoluteString, "scope": scopes,
-            "response_type": "code", "state": state, "code_challenge_method": "S256",
+            "response_type": "code", "state": state, "code_challenge_method": "S256", "prompt": "consent",
             "code_challenge": base64(Data(SHA256.hash(data: Data(verifier.utf8)))), "resource": resource.absoluteString]
             .map { URLQueryItem(name: $0.key, value: $0.value) }
         let result = try await browser(authorization.url!)
