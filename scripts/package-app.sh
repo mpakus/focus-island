@@ -62,7 +62,7 @@ if [[ "${OPEN_ISLAND_UNIVERSAL:-false}" == "true" ]]; then
     mkdir -p "$universal_dir"
     for product in "${products[@]}"; do
         lipo -create "$build_bin_dir/$product" "$other_bin_dir/$product" -output "$universal_dir/$product"
-        lipo -verify_arch arm64 x86_64 "$universal_dir/$product"
+        lipo "$universal_dir/$product" -verify_arch arm64 x86_64
     done
     app_binary="$universal_dir/OpenIslandApp"
     hooks_binary="$universal_dir/OpenIslandHooks"
