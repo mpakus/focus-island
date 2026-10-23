@@ -9,9 +9,11 @@ public enum BoardError: Error, Equatable {
 
 public struct BoardSnapshot: Equatable, Sendable {
     public var tasks: [FocusTask]
+    public var jiraLinks: [String: JiraTaskLink]
 
-    public init(tasks: [FocusTask]) {
+    public init(tasks: [FocusTask], jiraLinks: [String: JiraTaskLink] = [:]) {
         self.tasks = tasks
+        self.jiraLinks = jiraLinks
     }
 
     public func tasks(in column: BoardColumn) -> [FocusTask] {
@@ -47,7 +49,8 @@ public final class BoardService: Sendable {
 
     public func snapshot() throws -> BoardSnapshot {
         try store.dbQueue.read { db in
-            BoardSnapshot(tasks: try FocusTask.order(Column("position")).fetchAll(db))
+            BoardSnapshot(tasks: try FocusTask.order(Column("position")).fetchAll(db),
+                          jiraLinks: Dictionary(uniqueKeysWithValues: try JiraTaskLink.fetchAll(db).map { ($0.taskId, $0) }))
         }
     }
 
@@ -63,8 +66,10 @@ public final class BoardService: Sendable {
         guard !trimmed.isEmpty else { throw BoardError.emptyTitle }
         try store.dbQueue.write { db in
             guard var stored = try FocusTask.fetchOne(db, key: task.id) else { throw BoardError.unknownTask }
-            stored.title = trimmed
-            stored.details = task.details
+            if try !JiraTaskLink.exists(db, key: task.id) {
+                stored.title = trimmed
+                stored.details = task.details
+            }
             stored.projectPath = task.projectPath
             stored.note = task.note
             stored.updatedAt = now
@@ -85,6 +90,7 @@ public final class BoardService: Sendable {
             try db.execute(sql: "UPDATE queued_prompts SET taskId = NULL WHERE taskId = ?", arguments: [id])
             try db.execute(sql: "UPDATE activity_spans SET taskId = NULL WHERE taskId = ?", arguments: [id])
             try db.execute(sql: "DELETE FROM task_criteria WHERE taskId = ?", arguments: [id])
+            _ = try JiraTaskLink.deleteOne(db, key: id)
             _ = try FocusTask.deleteOne(db, key: id)
         }
     }
@@ -124,7 +130,7 @@ public final class BoardService: Sendable {
         }
     }
 
-    private static func insertTask(title: String, column: BoardColumn, projectPath: String?, details: String?, now: Date, db: Database) throws -> FocusTask {
+    static func insertTask(title: String, column: BoardColumn, projectPath: String?, details: String?, now: Date, db: Database) throws -> FocusTask {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw BoardError.emptyTitle }
         let task = FocusTask(

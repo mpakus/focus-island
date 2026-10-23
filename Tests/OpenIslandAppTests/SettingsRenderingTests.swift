@@ -86,6 +86,29 @@ struct SettingsRenderingTests {
         #expect(text.contains("Codex"))
     }
 
+    @Test func jiraSetupImportAndLinkedTaskRender() async throws {
+        let store = try FocusStore.inMemory()
+        let model = AppModel(focusStore: store, claudeRegistry: .temporaryForTesting(), runBackfill: false)
+        let defaults = UserDefaults(suiteName: "JiraRendering.\(UUID().uuidString)")!
+        let focus = FocusCoordinator(store: store, defaults: defaults, launcher: RecordingLauncher(), runBackfill: false, jiraClient: StubJiraClient())
+        focus.start(initialSessions: [])
+        let setup = try await render(JiraConnectionView(jira: focus.jira).padding(), name: "jira-setup", model: model)
+        #expect(setup.contains("Atlassian CLI"))
+        #expect(setup.contains("acli jira auth login"))
+        focus.jira.connect()
+        await focus.jira.operation?.value
+        let picker = try await render(JiraImportView(focus: focus), name: "jira-import", model: model)
+        #expect(picker.contains("TEST-1"))
+        #expect(picker.contains("Backlog"))
+        focus.jira.importIssues(ids: ["10001"], column: .backlog, projectPath: nil)
+        await focus.jira.operation?.value
+        let task = try #require(focus.board.tasks.first)
+        let detail = try await render(TaskDetailView(focus: focus, task: task), name: "jira-task", model: model)
+        #expect(detail.contains("Jira: In Progress"))
+        #expect(detail.contains("Detach from Jira"))
+        #expect(detail.contains("Source description"))
+    }
+
     private func render(_ view: some View, name: String, model: AppModel) async throws -> String {
         _ = NSApplication.shared
         let temporary = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

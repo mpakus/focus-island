@@ -962,3 +962,35 @@
 "approval.searching" = "поиск";
 "approval.globally" = "глобально";
 "question.other" = "Другой ответ";
+
+/* Jira import */
+"jira.disconnect" = "Отключить Jira";
+"jira.disconnect_hint" = "Локальные задачи и история останутся на этом Mac. Вход в Atlassian CLI сохранится.";
+"jira.setup_hint" = "Установите Atlassian CLI, войдите через Терминал и подключитесь здесь. Focus Island только читает задачи Jira.";
+"jira.install_cli" = "Установить Atlassian CLI";
+"jira.copy_login" = "Копировать команду";
+"jira.connect" = "Подключить текущий аккаунт";
+"jira.loading" = "Чтение Jira…";
+"jira.refreshed" = "Последнее полное обновление: %@";
+"jira.add_from_jira" = "Добавить из Jira";
+"jira.import_hint" = "Выберите назначенные вам незавершённые задачи. Колонки доски не зависят от статуса Jira.";
+"jira.search" = "Поиск среди задач";
+"jira.on_board" = "На доске";
+"jira.no_issues" = "Для этого аккаунта нет доступных незавершённых назначенных задач.";
+"jira.choose_folder" = "Выбрать папку…";
+"jira.reload_issues" = "Обновить список";
+"jira.import_selected" = "Импортировать выбранные (%@)";
+"jira.refresh_linked" = "Обновить связанные задачи";
+"jira.status" = "Jira: %@";
+"jira.unavailable" = "Задача недоступна; показаны сохранённые данные.";
+"jira.detach" = "Отвязать от Jira";
+"jira.local_progress" = "Колонки, заметки, критерии и время фокуса хранятся локально. Закрытие задачи не меняет Jira.";
+"jira.partial_refresh" = "%@ задач недоступны. Их сохранённые данные и локальная работа сохранены.";
+"jira.error.cliMissing" = "Установите Atlassian CLI в /opt/homebrew/bin, /usr/local/bin или ~/.local/bin и повторите попытку.";
+"jira.error.signInRequired" = "Войдите через acli jira auth login --web в Терминале и подключитесь снова.";
+"jira.error.accountChanged" = "Аккаунт Atlassian CLI изменился. Отключите и снова подключите Jira.";
+"jira.error.invalidResponse" = "Jira вернула неполные или неподдерживаемые данные. Обновите Atlassian CLI и повторите попытку. Задачи сохранены.";
+"jira.error.unavailable" = "Задача недоступна или доступ запрещён. Существующие задачи сохранены.";
+"jira.error.commandFailed" = "Не удалось завершить операцию Jira. Проверьте сеть и доступ Atlassian CLI, затем повторите попытку. Локальная работа сохранена.";
+"jira.error.timedOut" = "Jira не ответила вовремя. Повторите обновление позже; локальная работа сохранена.";
+"jira.error.databaseUnavailable" = "Импорт Jira отключён: локальная база данных недоступна. Устраните проблему с хранилищем и перезапустите приложение.";

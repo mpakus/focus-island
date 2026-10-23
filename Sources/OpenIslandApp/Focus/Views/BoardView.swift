@@ -68,6 +68,7 @@ struct BoardRootView: View {
     @Bindable var state: BoardWindowState
     @State private var projectFilter: String?
     @State private var showsArchive = false
+    @State private var showsJira = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -83,6 +84,7 @@ struct BoardRootView: View {
         .sheet(item: startTaskBinding) { item in
             StartTaskSheet(focus: focus, taskID: item.id).id(item.id)
         }
+        .sheet(isPresented: $showsJira) { JiraImportView(focus: focus) }
     }
 
     private var startTaskBinding: Binding<StartTaskItem?> {
@@ -128,6 +130,12 @@ struct BoardRootView: View {
                 Text(BoardView.reviewLabel(counts.review))
             }
             if state.tab == .board {
+                Menu("Jira") {
+                    Button(L10n.tr("jira.add_from_jira")) { showsJira = true }
+                    Button(L10n.tr("jira.refresh_linked")) { focus.jira.refresh(links: Array(focus.board.jiraLinks.values)) }
+                        .disabled(focus.jira.connection == nil || focus.jira.isBusy)
+                }
+                .fixedSize()
                 filterMenu
             }
         }
@@ -164,7 +172,10 @@ struct BoardRootView: View {
     private var content: some View {
         switch state.tab {
         case .board:
-            BoardView(focus: focus, projectFilter: projectFilter, showsArchive: showsArchive)
+            VStack(spacing: 0) {
+                JiraOperationStatus(jira: focus.jira).padding(.horizontal, 16)
+                BoardView(focus: focus, projectFilter: projectFilter, showsArchive: showsArchive)
+            }
         case .today:
             DaySummaryView(focus: focus)
         case .week:
@@ -367,6 +378,7 @@ struct TaskCardView: View {
             ForEach(rows) { row in
                 sessionLine(row)
             }
+            if let link = focus.board.jiraLinks[task.id] { JiraTaskBadge(link: link) }
             if let summary = Self.pastSummary(records: records, live: live), !isDone {
                 HStack(spacing: 8) {
                     StatusDot(color: FocusStyle.parkedDot)

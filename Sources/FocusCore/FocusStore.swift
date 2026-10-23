@@ -37,10 +37,12 @@ public final class FocusStore: Sendable {
         let queue = try DatabaseQueue(path: fileURL.path, configuration: configuration)
         // Keep a consistent pre-migration snapshot; never restore it automatically over later work.
         try queue.writeWithoutTransaction { db in
-            if try db.tableExists("grdb_migrations"),
-               try !String.fetchAll(db, sql: "SELECT identifier FROM grdb_migrations").contains("v6") {
-                let backup = fileURL.appendingPathExtension("before-codex-\(UUID().uuidString).sqlite")
-                try db.execute(sql: "VACUUM INTO ?", arguments: [backup.path])
+            if try db.tableExists("grdb_migrations") {
+                let applied = try String.fetchAll(db, sql: "SELECT identifier FROM grdb_migrations")
+                for (version, name) in [("v6", "codex"), ("v7", "jira")] where !applied.contains(version) {
+                    let backup = fileURL.appendingPathExtension("before-\(name)-\(UUID().uuidString).sqlite")
+                    try db.execute(sql: "VACUUM INTO ?", arguments: [backup.path])
+                }
             }
         }
         do {
@@ -83,14 +85,8 @@ public final class FocusStore: Sendable {
             return databaseError.resultCode == .SQLITE_CORRUPT || databaseError.resultCode == .SQLITE_NOTADB
         }
         guard case let FocusStoreOpenError.migrationFailed(underlying) = error else { return false }
-        guard let databaseError = underlying as? DatabaseError else { return true }
-        return !transientResultCodes.contains(databaseError.resultCode)
+        return isCorruption(underlying)
     }
-
-    private static let transientResultCodes: [ResultCode] = [
-        .SQLITE_BUSY, .SQLITE_LOCKED, .SQLITE_CANTOPEN, .SQLITE_PERM, .SQLITE_READONLY,
-        .SQLITE_IOERR, .SQLITE_FULL, .SQLITE_NOMEM, .SQLITE_AUTH, .SQLITE_INTERRUPT,
-    ]
 
     private init(queue: DatabaseQueue) throws {
         dbQueue = queue
@@ -218,6 +214,23 @@ public final class FocusStore: Sendable {
                 t.add(column: "nativeSessionID", .text).notNull().defaults(to: "")
             }
             try db.execute(sql: "UPDATE sessions SET nativeSessionID = id")
+        }
+        if identifier == "v6" { return migrator }
+        migrator.registerMigration("v7") { db in
+            try db.create(table: "jira_task_links") { t in
+                t.primaryKey("taskId", .text).references("tasks", onDelete: .cascade)
+                t.column("cloudID", .text).notNull()
+                t.column("site", .text).notNull()
+                t.column("issueID", .text).notNull()
+                t.column("key", .text).notNull()
+                t.column("status", .text).notNull()
+                t.column("statusCategory", .text)
+                t.column("assigneeID", .text)
+                t.column("remoteUpdatedAt", .datetime).notNull()
+                t.column("refreshedAt", .datetime).notNull()
+                t.column("unavailable", .boolean).notNull().defaults(to: false)
+                t.uniqueKey(["cloudID", "issueID"])
+            }
         }
         return migrator
     }

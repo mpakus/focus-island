@@ -2,7 +2,13 @@
 
 Checked against official documentation on **October 23, 2026**. This API research used public documentation only; no credentials were read and no Jira changes were made. The accompanying [integration plan](JIRA-INTEGRATION-PLAN.md) records the separate connected-account feasibility check and the chosen implementation scope. Jira Data Center is outside this proposal.
 
-## Recommendation and the authentication decision
+## Implemented release path
+
+The v0.5.0 implementation uses a separately installed **Atlassian CLI** with its documented browser OAuth login, plus `jira workitem search --paginate --json` and `jira workitem view --json`. This avoids implementing the direct API-token/3LO approaches investigated below. Focus Island invokes fixed read commands and stores no credentials. The CLI is not bundled; setup and its account remain user-controlled. CLI `1.3.39-stable` help was inspected; live authenticated acceptance is still pending. See the [implementation and validation record](JIRA-INTEGRATION-PLAN.md).
+
+Primary references: [browser login](https://developer.atlassian.com/cloud/acli/reference/commands/jira-auth-login/), [search](https://developer.atlassian.com/cloud/acli/reference/commands/jira-workitem-search/), [issue read](https://developer.atlassian.com/cloud/acli/reference/commands/jira-workitem-view/), [macOS installation](https://developer.atlassian.com/cloud/acli/guides/install-macos/).
+
+## Original direct-API research and authentication decision
 
 Start with a small, read-only personal feasibility test and a local import flow: fetch assigned work, let the user select issues, then attach their Jira identity to ordinary Focus Island tasks. Keep Focus Island scheduling, focus sessions, and completion under local control. The HTTP/data mapping work is straightforward; authentication for a distributed desktop application is the principal design constraint.
 

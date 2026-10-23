@@ -15,7 +15,7 @@
 4. In the island under the notch, click "Connect" to open Setup, then install hooks for Claude Code, Codex, or both. For Codex, also complete the hook trust step below.
 
 > [!NOTE]
-> The v0.4.0 binaries use ad-hoc signing and are **not notarized by Apple**. macOS may block the first launch. After attempting to open the app, use System Settings → Privacy & Security → Open Anyway if needed. Only open a download you trust.
+> The v0.5.0 binaries use ad-hoc signing and are **not notarized by Apple**. macOS may block the first launch. After attempting to open the app, use System Settings → Privacy & Security → Open Anyway if needed. Only open a download you trust.
 
 ## Features
 
@@ -52,6 +52,12 @@
 **Board and task card** (⌥⌘B)
 - Kanban Backlog → Todo → In progress → Done with drag & drop; badges for progress, definition of done and "prompt queued".
 - Task card: description, definition of done, "Where you left off", queued prompt, all task sessions with "Open" / "Resume" / "Unbind", "+ Add session" (same picker screen), "Close task".
+
+**Jira tasks (opt-in preview)**
+- Import selected assigned issues into Backlog or Todo, then use the same sessions, timers, notes, criteria, and reports.
+- Issue keys link to Jira; remote status appears separately from the local column. Closing a local task never changes Jira.
+- Manual refresh preserves local work. Imported tasks remain usable offline; disconnect keeps their history.
+- Requires a separately installed and signed-in Atlassian CLI. See [Jira setup](#jira-setup-opt-in-preview).
 
 **Reports**
 - "Today" — a daily summary: "You were working", "Agents were working", "Sessions waited for you", distractions, a time strip by task, "Done", "Still open", "Start tomorrow with"; "Copy to note" puts a markdown summary on the clipboard.
@@ -102,13 +108,35 @@ Codex hooks have no heartbeat. After 15 minutes without a signal, the session be
 
 Daily, weekly and task work totals use the union of Claude and Codex intervals; overlapping sessions are not added twice. Daily exports and the timeline retain provider subtotals. SQLite migration `v6` saves a consistent `before-codex-*.sqlite` snapshot before upgrading existing data. Prefer disconnecting Codex to downgrading the app; older builds do not understand the new provider/activity values. Preserve the current database before restoring any older backup.
 
+## Jira setup (opt-in preview)
+
+1. Install [Atlassian CLI](https://developer.atlassian.com/cloud/acli/guides/install-macos/) and sign in from Terminal:
+
+   ```bash
+   brew tap atlassian/homebrew-acli
+   brew install acli
+   acli jira auth login --web
+   ```
+
+2. Open **Settings → Focus → Jira → Connect signed-in account**. Focus Island verifies the CLI account and reads its assigned, unfinished issues.
+3. Open the board (⌥⌘B), choose **Jira → Add from Jira**, select issues, choose Backlog or Todo and optionally a local project folder, then import.
+4. Use **Jira → Refresh linked tasks** to fetch current issue text/status. **Reload issues** in the import sheet refreshes the list of available assignments.
+
+Focus Island uses the official CLI's read commands; it never collects API tokens, reads CLI credential files, or writes Jira issues. The CLI is not bundled. It must be installed at `/opt/homebrew/bin/acli`, `/usr/local/bin/acli`, or `~/.local/bin/acli`. Changing the CLI account requires disconnecting and reconnecting in Focus Island. Disconnect does not sign the CLI out or remove existing tasks. **Detach from Jira** makes a card's title and description locally editable.
+
+Supported scope: one Jira Cloud account/site at a time, ordinary `*.atlassian.net` sites, assigned issues of all types, selected import, and manual refresh. Jira Data Center, custom domains, automatic polling, workflow transitions, comments, attachments, and worklogs are not included. Descriptions are converted from ADF to plain text; formatting and embedded media may be omitted. Follow the issue link for the original.
+
+The inspected CLI was `1.3.39-stable`. Command contracts, fixture-based imports, storage migration, cancellation, and UI rendering are tested. A live authenticated CLI import has not yet been certified. The in-app connection requires a successful search; errors leave cached tasks available.
+
+Migration `v7` saves a consistent `before-jira-*.sqlite` snapshot before updating an existing database. It preserves tasks, Claude/Codex sessions, notes, criteria, prompts, activity, and timers. Prefer disconnecting Jira to restoring an old database; restoring a backup would discard later local work.
+
 ## Releasing
 
 ```bash
-OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.4.0
+OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.5.0
 ```
 
-Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.4.0.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs the tests, builds and verifies a universal DMG and ZIP, tags `v0.4.0`, and publishes the GitHub Release.
+Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.5.0.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs the tests, builds and verifies a universal DMG and ZIP, tags `v0.5.0`, and publishes the GitHub Release.
 
 `OPEN_ISLAND_SIGN_IDENTITY=-` selects ad-hoc signing. To use the local certificate instead, run `zsh scripts/setup-dev-signing.sh` once and omit that variable. Neither option provides Apple notarization. `VERSION` also supplies the version shown in packaged and development app bundles; `OPEN_ISLAND_VERSION` can override it for local builds.
 
@@ -136,7 +164,7 @@ Checks: `zsh scripts/harness.sh ci`, tests: `zsh scripts/test-clt.sh`.
 
 Implementation and validation: [Codex monitoring plan and evidence](docs/CODEX-MONITORING-PLAN.md).
 
-Proposed work: [Jira task import and refresh plan](docs/JIRA-INTEGRATION-PLAN.md), with [API and authentication research](docs/JIRA-API-RESEARCH.md). Jira integration is not implemented yet.
+Jira implementation and limitations: [Jira import plan and evidence](docs/JIRA-INTEGRATION-PLAN.md), with [API and authentication research](docs/JIRA-API-RESEARCH.md).
 
 ## About
 

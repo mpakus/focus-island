@@ -962,3 +962,35 @@
 "approval.searching" = "buscar";
 "approval.globally" = "globalmente";
 "question.other" = "Otra respuesta";
+
+/* Jira import */
+"jira.disconnect" = "Desconectar Jira";
+"jira.disconnect_hint" = "Las tareas y el historial permanecen en este Mac. Atlassian CLI sigue conectado.";
+"jira.setup_hint" = "Instala Atlassian CLI, inicia sesión desde Terminal y conecta aquí. Focus Island solo lee tus incidencias de Jira.";
+"jira.install_cli" = "Instalar Atlassian CLI";
+"jira.copy_login" = "Copiar comando";
+"jira.connect" = "Conectar cuenta iniciada";
+"jira.loading" = "Leyendo Jira…";
+"jira.refreshed" = "Última actualización completa: %@";
+"jira.add_from_jira" = "Añadir desde Jira";
+"jira.import_hint" = "Elige incidencias asignadas sin finalizar. Las columnas del tablero son independientes del estado en Jira.";
+"jira.search" = "Buscar en estas incidencias";
+"jira.on_board" = "En el tablero";
+"jira.no_issues" = "Esta cuenta no tiene incidencias asignadas abiertas visibles.";
+"jira.choose_folder" = "Elegir carpeta…";
+"jira.reload_issues" = "Recargar incidencias";
+"jira.import_selected" = "Importar selección (%@)";
+"jira.refresh_linked" = "Actualizar tareas vinculadas";
+"jira.status" = "Jira: %@";
+"jira.unavailable" = "Incidencia no disponible; se muestra la información guardada.";
+"jira.detach" = "Desvincular de Jira";
+"jira.local_progress" = "Las columnas, notas, criterios y el tiempo de concentración son locales. Cerrar esta tarea no cambia Jira.";
+"jira.partial_refresh" = "%@ incidencias no están disponibles. Se conservaron su contenido y trabajo local.";
+"jira.error.cliMissing" = "Instala Atlassian CLI en /opt/homebrew/bin, /usr/local/bin o ~/.local/bin e inténtalo de nuevo.";
+"jira.error.signInRequired" = "Inicia sesión con acli jira auth login --web en Terminal y vuelve a conectar.";
+"jira.error.accountChanged" = "La cuenta de Atlassian CLI cambió. Desconecta y vuelve a conectar Jira.";
+"jira.error.invalidResponse" = "Jira devolvió datos incompletos o no compatibles. Actualiza Atlassian CLI y reintenta. Las tareas se conservaron.";
+"jira.error.unavailable" = "Una incidencia no está disponible o se denegó el acceso. Las tareas se conservaron.";
+"jira.error.commandFailed" = "Jira no pudo completar la operación. Comprueba la conexión y el acceso de Atlassian CLI y reintenta. El trabajo local está guardado.";
+"jira.error.timedOut" = "Jira tardó demasiado en responder. Actualiza más tarde; el trabajo local se conservó.";
+"jira.error.databaseUnavailable" = "La importación de Jira está desactivada porque la base local no está disponible. Reinicia tras resolver el problema.";

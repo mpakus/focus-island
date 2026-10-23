@@ -997,3 +997,35 @@
 "approval.searching" = "searching";
 "approval.globally" = "globally";
 "question.other" = "Other";
+
+/* Jira import */
+"jira.disconnect" = "Disconnect Jira";
+"jira.disconnect_hint" = "Local tasks and history stay on this Mac. Atlassian CLI remains signed in.";
+"jira.setup_hint" = "Install Atlassian CLI, sign in from Terminal, then connect here. Focus Island only reads your Jira issues.";
+"jira.install_cli" = "Install Atlassian CLI";
+"jira.copy_login" = "Copy command";
+"jira.connect" = "Connect signed-in account";
+"jira.loading" = "Reading Jira…";
+"jira.refreshed" = "Last full refresh: %@";
+"jira.add_from_jira" = "Add from Jira";
+"jira.import_hint" = "Choose assigned, unfinished issues. Your board columns stay independent of Jira status.";
+"jira.search" = "Search these issues";
+"jira.on_board" = "On board";
+"jira.no_issues" = "No open assigned issues are visible to this account.";
+"jira.choose_folder" = "Choose folder…";
+"jira.reload_issues" = "Reload issues";
+"jira.import_selected" = "Import selected (%@)";
+"jira.refresh_linked" = "Refresh linked tasks";
+"jira.status" = "Jira: %@";
+"jira.unavailable" = "Issue unavailable; showing cached information.";
+"jira.detach" = "Detach from Jira";
+"jira.local_progress" = "Columns, notes, criteria and focus time are local. Closing this task does not change Jira.";
+"jira.partial_refresh" = "%@ issues are unavailable. Their cached content and local work were kept.";
+"jira.error.cliMissing" = "Install Atlassian CLI in /opt/homebrew/bin, /usr/local/bin or ~/.local/bin, then try again.";
+"jira.error.signInRequired" = "Sign in with acli jira auth login --web in Terminal, then reconnect.";
+"jira.error.accountChanged" = "The Atlassian CLI account changed. Disconnect and reconnect Jira to continue.";
+"jira.error.invalidResponse" = "Jira returned incomplete or unsupported data. Update Atlassian CLI and retry. Existing tasks were kept.";
+"jira.error.unavailable" = "An issue is unavailable or access was denied. Existing tasks were kept.";
+"jira.error.commandFailed" = "Jira could not finish this operation. Check your connection and Atlassian CLI access, then retry. Local work is safe.";
+"jira.error.timedOut" = "Jira took too long to respond. Try refreshing again later; local work was kept.";
+"jira.error.databaseUnavailable" = "Jira import is disabled because the local database is unavailable. Restart after resolving the storage problem.";
