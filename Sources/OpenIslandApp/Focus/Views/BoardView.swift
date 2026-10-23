@@ -136,6 +136,11 @@ struct BoardRootView: View {
                     Button(L10n.tr("jira.add_from_jira")) { showsJira = true }
                     Button(L10n.tr("jira.refresh_linked")) { focus.jira.refresh(links: Array(focus.board.jiraLinks.values)) }
                         .disabled(focus.jira.connection == nil || focus.jira.isBusy)
+                    Divider()
+                    Button(L10n.tr("jira.reconnect")) { focus.jira.reconnect() }
+                        .disabled(focus.jira.isBusy)
+                    Button(L10n.tr("jira.disconnect")) { focus.jira.disconnect() }
+                        .disabled(focus.jira.connection == nil && focus.jira.error == nil && !focus.jira.isBusy)
                 }
                 .fixedSize()
                 filterMenu

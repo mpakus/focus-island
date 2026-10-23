@@ -12,10 +12,11 @@ struct JiraConnectionView: View {
             if let connection = jira.connection {
                 Text(connection.site).fontWeight(.medium)
                 Text(connection.email).foregroundStyle(.secondary)
+                if jira.usesCLI { Text(L10n.tr("jira.cli_connected")).font(.caption).foregroundStyle(.secondary) }
                 Button(L10n.tr("jira.sync_assigned")) { jira.syncAssignedIssues(links: Array(focus.board.jiraLinks.values)) }
                     .disabled(jira.isBusy || focus.storeIsInMemoryFallback)
                 Text(L10n.tr("jira.sync_hint")).font(.caption).foregroundStyle(.secondary)
-                if jira.error != nil { Button(L10n.tr("jira.authorize")) { jira.authorize() }.disabled(jira.isBusy) }
+                Button(L10n.tr("jira.reconnect")) { jira.reconnect() }.disabled(jira.isBusy)
                 Button(L10n.tr("jira.disconnect")) { jira.disconnect() }
                 Text(L10n.tr("jira.disconnect_hint")).font(.caption).foregroundStyle(.secondary)
             } else {
@@ -23,7 +24,12 @@ struct JiraConnectionView: View {
                 Button(L10n.tr("jira.authorize")) { jira.authorize() }
                     .buttonStyle(.borderedProminent)
                     .disabled(jira.isBusy)
+                Button(L10n.tr("jira.connect_cli")) { jira.connectUsingCLI() }.disabled(jira.isBusy)
                 if jira.isBusy { Button(L10n.tr("focus.cancel")) { jira.disconnect() } }
+                else if jira.error != nil { Button(L10n.tr("jira.disconnect")) { jira.disconnect() } }
+                Text(L10n.tr("jira.cli_trust_hint")).font(.caption).foregroundStyle(.secondary)
+                Text("brew trust --formula atlassian/acli/acli")
+                    .font(.caption.monospaced()).textSelection(.enabled)
             }
             JiraOperationStatus(jira: jira)
         }
@@ -123,7 +129,7 @@ struct JiraImportView: View {
             HStack { Spacer(); Button(L10n.tr("ui.done")) { dismiss() }.keyboardShortcut(.cancelAction) }
         }
         .padding(24)
-        .frame(width: 740, height: focus.jira.connection == nil ? 350 : 540)
+        .frame(width: 740, height: focus.jira.connection == nil ? 440 : 540)
         .onAppear { if focus.jira.connection != nil { focus.jira.loadIssues() } }
         .onChange(of: imported) { _, links in selected.subtract(links.keys) }
         .onChange(of: focus.jira.issues.map(\.id)) { _, ids in selected.formIntersection(ids) }

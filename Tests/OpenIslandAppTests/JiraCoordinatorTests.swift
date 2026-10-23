@@ -6,6 +6,7 @@ import Testing
 actor StubJiraClient: JiraProviding {
     let connection = JiraConnection(site: "https://example.atlassian.net", email: "person@example.com", cloudID: "00000000-0000-0000-0000-000000000001")
     var failSearch = false
+    var connectionError: JiraError?
     var holdIssue = false
     var issueStarted = false
     var pending: CheckedContinuation<Void, Never>?
@@ -14,6 +15,7 @@ actor StubJiraClient: JiraProviding {
     var failingIssueID: String?
 
     func setFailure() { failSearch = true }
+    func failConnection(_ error: JiraError?) { connectionError = error }
     func hold() { holdIssue = true }
     func release() { holdIssue = false; pending?.resume(); pending = nil }
     func assign(_ ids: [String]) { assignedIDs = ids }
@@ -24,7 +26,11 @@ actor StubJiraClient: JiraProviding {
         return try JSONDecoder().decode(JiraIssue.self, from: JSONSerialization.data(withJSONObject: object))
     }
 
-    func connect() async throws -> JiraConnection { requests.append("connect"); return connection }
+    func connect() async throws -> JiraConnection {
+        requests.append("connect")
+        if let connectionError { throw connectionError }
+        return connection
+    }
     func search(connection: JiraConnection) async throws -> [JiraIssue] {
         requests.append("search")
         if failSearch { throw JiraError.commandFailed }
@@ -42,6 +48,38 @@ actor StubJiraClient: JiraProviding {
 @MainActor
 struct JiraCoordinatorTests {
     func defaults() -> UserDefaults { UserDefaults(suiteName: "JiraTests.\(UUID().uuidString)")! }
+
+    @Test func cliConnectionRetriesRestoresReconnectsAndForgetsWithoutDeletingCards() async throws {
+        let store = try FocusStore.inMemory()
+        let preferences = defaults()
+        let browser = StubJiraClient(), cli = StubJiraClient()
+        let coordinator = JiraCoordinator(store: store, defaults: preferences, durable: true, client: browser, cliClient: cli)
+        await cli.failConnection(.cliMissing)
+        coordinator.connectUsingCLI()
+        await coordinator.operation?.value
+        #expect(coordinator.error == JiraError.cliMissing.localizedDescription)
+        await cli.failConnection(nil)
+        coordinator.connectUsingCLI()
+        await coordinator.operation?.value
+        #expect(coordinator.error == nil && coordinator.usesCLI)
+        coordinator.syncAssignedIssues(links: [])
+        await coordinator.operation?.value
+        let snapshot = try BoardService(store: store).snapshot()
+        #expect(snapshot.tasks.count == 1)
+        let restored = JiraCoordinator(store: store, defaults: preferences, durable: true, client: browser, cliClient: cli)
+        #expect(restored.usesCLI && restored.connection == coordinator.connection)
+        restored.reconnect()
+        await restored.operation?.value
+        #expect(restored.usesCLI && restored.error == nil && restored.connection != nil)
+        #expect(await browser.requests.isEmpty)
+        restored.disconnect()
+        #expect(restored.connection == nil && !restored.usesCLI && restored.error == nil)
+        #expect(preferences.data(forKey: JiraCoordinator.connectionKey) == nil)
+        #expect(try BoardService(store: store).snapshot().tasks == snapshot.tasks)
+        #expect(try BoardService(store: store).snapshot().jiraLinks == snapshot.jiraLinks)
+        let forgotten = JiraCoordinator(store: store, defaults: preferences, durable: true, client: browser, cliClient: cli)
+        #expect(!forgotten.usesCLI && forgotten.connection == nil)
+    }
 
     @Test func connectImportAndRestartPreserveSourceAndLocalState() async throws {
         let store = try FocusStore.inMemory()
@@ -196,15 +234,14 @@ struct JiraCoordinatorTests {
         #expect(try board.snapshot().tasks.count == (delete ? 0 : 1))
     }
 
-    @Test(.enabled(if: ProcessInfo.processInfo.environment["FOCUS_ISLAND_JIRA_LIVE_EXECUTABLE"] != nil))
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["FOCUS_ISLAND_JIRA_LIVE_INSTALLED"] == "1"))
     func liveSyncUsesADisposableBoard() async throws {
-        let path = try #require(ProcessInfo.processInfo.environment["FOCUS_ISLAND_JIRA_LIVE_EXECUTABLE"])
-        let client = JiraCLIClient(run: { try await JiraCommand.run($0, executable: URL(fileURLWithPath: path)) })
+        try #require(JiraCommand.executable() != nil)
         let store = try FocusStore.inMemory()
-        let coordinator = JiraCoordinator(store: store, defaults: defaults(), durable: true, client: client)
-        coordinator.connect()
+        let coordinator = JiraCoordinator(store: store, defaults: defaults(), durable: true, client: StubJiraClient())
+        coordinator.connectUsingCLI()
         await coordinator.operation?.value
-        #expect(coordinator.error == nil)
+        try #require(coordinator.error == nil && coordinator.connection != nil && coordinator.usesCLI)
         coordinator.syncAssignedIssues(links: [])
         await coordinator.operation?.value
         #expect(coordinator.error == nil)
@@ -221,6 +258,12 @@ struct JiraCoordinatorTests {
         #expect(try board.snapshot().tasks.count == count)
         #expect(try board.snapshot().task(id: task.id)?.note == task.note)
         #expect(try board.snapshot().task(id: task.id)?.boardColumn == .done)
+        coordinator.reconnect()
+        await coordinator.operation?.value
+        #expect(coordinator.error == nil && coordinator.usesCLI && coordinator.connection != nil)
+        coordinator.disconnect()
+        #expect(coordinator.connection == nil && coordinator.error == nil)
+        #expect(try board.snapshot().tasks.count == count)
     }
 
     @Test(.enabled(if: ProcessInfo.processInfo.environment["FOCUS_ISLAND_JIRA_BROWSER_KEYCHAIN"] != nil))

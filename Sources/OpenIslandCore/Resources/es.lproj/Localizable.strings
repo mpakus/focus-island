@@ -964,9 +964,9 @@
 "question.other" = "Otra respuesta";
 
 /* Jira import */
-"jira.disconnect" = "Desconectar Jira";
-"jira.disconnect_hint" = "Las tareas y el historial permanecen en este Mac. Atlassian CLI sigue conectado.";
-"jira.setup_hint" = "Conecta tu cuenta de Jira en el navegador. Focus Island solo lee tus incidencias.";
+"jira.disconnect" = "Olvidar Jira";
+"jira.disconnect_hint" = "Elimina la conexión y las credenciales del navegador de esta app. Conserva las tarjetas y el progreso local; Atlassian CLI sigue conectado.";
+"jira.setup_hint" = "Conecta en el navegador o usa una cuenta con sesión iniciada en Atlassian CLI si falla la autorización. Focus Island solo lee tus incidencias.";
 "jira.install_cli" = "Instalar Atlassian CLI";
 "jira.copy_login" = "Copiar comando";
 "jira.connect" = "Conectar";
@@ -987,7 +987,7 @@
 "jira.local_progress" = "Las columnas, notas, criterios y el tiempo de concentración son locales. Cerrar esta tarea no cambia Jira.";
 "jira.partial_refresh" = "%@ incidencias no están disponibles. Se conservaron su contenido y trabajo local.";
 "jira.error.cliMissing" = "Instala Atlassian CLI en /opt/homebrew/bin, /usr/local/bin o ~/.local/bin e inténtalo de nuevo.";
-"jira.error.signInRequired" = "Tu conexión de Jira ha caducado. Elige Integrar Jira para iniciar sesión de nuevo.";
+"jira.error.signInRequired" = "Vuelve a iniciar sesión con Integrar Jira o inicia sesión en Atlassian CLI y reconecta.";
 "jira.error.accountChanged" = "La cuenta de Atlassian CLI cambió. Desconecta y vuelve a conectar Jira.";
 "jira.error.invalidResponse" = "Jira devolvió datos incompletos o no compatibles. Actualiza Atlassian CLI y reintenta. Las tareas se conservaron.";
 "jira.error.unavailable" = "Una incidencia no está disponible o se denegó el acceso. Las tareas se conservaron.";
@@ -1033,3 +1033,11 @@
 
 /* Jira browser authorization deadline. */
 "jira.error.authorizationTimedOut" = "No se completó el inicio de sesión en Jira. Comprueba si hay un error en el navegador y elige Integrar Jira para volver a intentarlo.";
+
+"jira.cli_trust_hint" = "Si instalas Atlassian CLI manualmente y Homebrew indica que el tap no es de confianza, ejecuta este comando y vuelve a intentar la instalación:";
+
+"jira.connect_cli" = "Conectar Atlassian CLI con sesión iniciada";
+
+"jira.cli_connected" = "Conectado mediante Atlassian CLI";
+
+"jira.reconnect" = "Reconectar Jira";

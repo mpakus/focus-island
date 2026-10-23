@@ -999,9 +999,9 @@
 "question.other" = "Other";
 
 /* Jira import */
-"jira.disconnect" = "Disconnect Jira";
-"jira.disconnect_hint" = "Local tasks and history stay on this Mac. Atlassian CLI remains signed in.";
-"jira.setup_hint" = "Connect your Jira account in your browser. Focus Island only reads your issues.";
+"jira.disconnect" = "Forget Jira";
+"jira.disconnect_hint" = "Removes this app’s connection and browser credentials. Cards and local progress stay; Atlassian CLI remains signed in.";
+"jira.setup_hint" = "Connect in your browser, or use an already signed-in Atlassian CLI account if browser authorization fails. Focus Island only reads your issues.";
 "jira.install_cli" = "Install Atlassian CLI";
 "jira.copy_login" = "Copy command";
 "jira.connect" = "Connect";
@@ -1022,7 +1022,7 @@
 "jira.local_progress" = "Columns, notes, criteria and focus time are local. Closing this task does not change Jira.";
 "jira.partial_refresh" = "%@ issues are unavailable. Their cached content and local work were kept.";
 "jira.error.cliMissing" = "Install Atlassian CLI in /opt/homebrew/bin, /usr/local/bin or ~/.local/bin, then try again.";
-"jira.error.signInRequired" = "Your Jira connection has expired. Choose Integrate Jira to sign in again.";
+"jira.error.signInRequired" = "Sign in again using Integrate Jira, or sign in to Atlassian CLI and reconnect.";
 "jira.error.accountChanged" = "The Atlassian CLI account changed. Disconnect and reconnect Jira to continue.";
 "jira.error.invalidResponse" = "Jira returned incomplete or unsupported data. Update Atlassian CLI and retry. Existing tasks were kept.";
 "jira.error.unavailable" = "An issue is unavailable or access was denied. Existing tasks were kept.";
@@ -1068,3 +1068,11 @@
 
 /* Jira browser authorization deadline. */
 "jira.error.authorizationTimedOut" = "Jira sign-in did not finish. Check your browser for an error, then choose Integrate Jira to try again.";
+
+"jira.cli_trust_hint" = "If you install Atlassian CLI manually and Homebrew reports an untrusted tap, run this command, then retry installation:";
+
+"jira.connect_cli" = "Connect signed-in Atlassian CLI";
+
+"jira.cli_connected" = "Connected through Atlassian CLI";
+
+"jira.reconnect" = "Reconnect Jira";

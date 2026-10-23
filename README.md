@@ -57,7 +57,7 @@
 - Import selected assigned issues into Backlog or Todo, then use the same sessions, timers, notes, criteria, and reports.
 - Issue keys link to Jira; remote status appears separately from the local column. Closing a local task never changes Jira.
 - Manual refresh preserves local work. Imported tasks remain usable offline; disconnect keeps their history.
-- Connect with **Integrate Jira** in Setup; browser authorization requires no extra installation. See [Jira setup](#jira-setup-opt-in-preview).
+- Connect with **Integrate Jira** in Setup, or use an already signed-in Atlassian CLI account. See [Jira setup](#jira-setup-opt-in-preview).
 
 **Reports**
 - "Today" — a daily summary: "You were working", "Agents were working", "Sessions waited for you", distractions, a time strip by task, "Done", "Still open", "Start tomorrow with"; "Copy to note" puts a markdown summary on the clipboard.
@@ -115,9 +115,18 @@ Daily, weekly and task work totals use the union of Claude and Codex intervals; 
 3. Choose **Sync my Jira tasks** in Setup or the board’s Jira menu. It imports assigned, unfinished issues into Backlog and refreshes linked cards. Repeat syncs reuse cards and preserve local columns, notes, sessions, and timers.
 4. For selected imports or a different destination, use **Jira → Add from Jira**. **Refresh linked tasks** updates existing cards without importing new assignments.
 
-Sign-in uses Atlassian's hosted MCP service with OAuth PKCE and a temporary loopback callback. No CLI, command copying, API token, shared client secret, or Focus Island backend is required. Credentials stay in macOS Keychain and expire/refresh automatically. The app calls only fixed read operations; it never writes Jira issues. Your organization's Atlassian MCP access policy still applies.
+Browser sign-in uses Atlassian's hosted MCP service with OAuth PKCE and a temporary loopback callback. No CLI, command copying, API token, shared client secret, or Focus Island backend is required. Credentials stay in macOS Keychain and expire/refresh automatically. The app calls only fixed read operations; it never writes Jira issues. Your organization's Atlassian MCP access policy still applies.
 
-Upgrading from v0.5.x requires one browser authorization; existing cards and history remain. **Disconnect** cancels pending work and removes the app's local credentials while keeping cards/history. Revoke the app's grant in your Atlassian account to remove server-side access. **Detach from Jira** makes a card's title and description locally editable.
+Browser consent currently fails for the verified account with Atlassian’s `invalid_request` after Accept. If this happens, cancel the pending connection and choose **Connect signed-in Atlassian CLI** in Setup. This uses your installed CLI account and remembers that choice; it does not copy its credentials. Then choose **Sync my Jira tasks**. Connecting alone does not import cards.
+
+For manual Atlassian CLI installation, if Homebrew refuses the untrusted `atlassian/acli` tap, trust only the ACLI formula and retry installation:
+
+```bash
+brew trust --formula atlassian/acli/acli
+brew install atlassian/acli/acli
+```
+
+After upgrading from v0.5.x, connect once using either route; existing cards and history remain. **Reconnect Jira** retries the selected route. **Forget Jira**, in Setup and the board’s Jira menu, cancels pending work and removes the app’s connection and browser credentials while keeping cards/history. Atlassian CLI stays signed in for other uses. Revoke the app's grant in your Atlassian account to remove server-side access. **Detach from Jira** makes a card's title and description locally editable.
 
 Supported scope: one Jira Cloud account/site at a time, ordinary `*.atlassian.net` sites, assigned issues of all types, selected import, manual assignment sync, and manual refresh. Jira Data Center, custom domains, automatic polling, workflow transitions, comments, attachments, and worklogs are not included. Descriptions retain readable text; formatting and embedded media may be omitted. Follow the issue link for the original.
 

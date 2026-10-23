@@ -8,6 +8,7 @@ import OpenIslandCore
 @Observable
 final class JiraCoordinator {
     private(set) var connection: JiraConnection?
+    private(set) var usesCLI: Bool
     private(set) var issues: [JiraIssue] = []
     private(set) var isBusy = false
     private(set) var isAuthorizing = false
@@ -15,15 +16,20 @@ final class JiraCoordinator {
     private(set) var lastRefresh: Date?
     @ObservationIgnored private(set) var operation: Task<Void, Never>?
     @ObservationIgnored var onChange: (() -> Void)?
-    @ObservationIgnored private let client: any JiraProviding
+    @ObservationIgnored private let browserClient: any JiraProviding
+    @ObservationIgnored private let cliClient: any JiraProviding
+    private var client: any JiraProviding { usesCLI ? cliClient : browserClient }
     @ObservationIgnored private let service: JiraTaskService
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let durable: Bool
     @ObservationIgnored private var generation = UUID()
     static let connectionKey = "focus.jira.browserConnection"
+    private static let cliKey = "focus.jira.useCLI"
 
-    init(store: FocusStore, defaults: UserDefaults, durable: Bool, client: any JiraProviding = JiraBrowserAuthorization.client()) {
-        self.client = client
+    init(store: FocusStore, defaults: UserDefaults, durable: Bool, client: (any JiraProviding)? = nil, cliClient: any JiraProviding = JiraCLIClient()) {
+        browserClient = client ?? JiraBrowserAuthorization.client()
+        self.cliClient = cliClient
+        usesCLI = defaults.bool(forKey: Self.cliKey)
         service = JiraTaskService(store: store)
         self.defaults = defaults
         self.durable = durable
@@ -41,13 +47,32 @@ final class JiraCoordinator {
             let issues = try await self.client.search(connection: connection)
             try Task.checkCancellation()
             self.defaults.set(try JSONEncoder().encode(connection), forKey: Self.connectionKey)
+            self.defaults.set(self.usesCLI, forKey: Self.cliKey)
             self.connection = connection
             self.issues = issues
             if authorize { NSApp?.activate() }
         }
     }
 
-    func authorize() { connect(authorize: true) }
+    func authorize() {
+        guard !isBusy else { return }
+        disconnect()
+        guard error == nil else { return }
+        connect(authorize: true)
+    }
+
+    func connectUsingCLI() {
+        guard !isBusy else { return }
+        disconnect()
+        guard error == nil else { return }
+        usesCLI = true
+        connect()
+    }
+
+    func reconnect() {
+        if usesCLI { connectUsingCLI() }
+        else { authorize() }
+    }
 
     func loadIssues() {
         guard let connection else { return }
@@ -130,12 +155,17 @@ final class JiraCoordinator {
         isBusy = false
         isAuthorizing = false
         connection = nil
+        usesCLI = false
         issues = []
         error = nil
         lastRefresh = nil
         defaults.removeObject(forKey: Self.connectionKey)
-        do { try client.disconnect() }
-        catch { self.error = JiraError.credentialsUnavailable.localizedDescription }
+        defaults.removeObject(forKey: Self.cliKey)
+        defaults.removeObject(forKey: "focus.jira.connection")
+        for client in [browserClient, cliClient] {
+            do { try client.disconnect() }
+            catch { self.error = JiraError.credentialsUnavailable.localizedDescription }
+        }
     }
 
     private func perform(authorizing: Bool = false, _ action: @escaping @MainActor () async throws -> Void) {

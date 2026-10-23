@@ -1,6 +1,6 @@
 # Jira tasks on the Focus Island board
 
-Status: browser authorization for v0.6.0, 2026-10-23, with manual assignment sync. Original analysis baseline: `c9282f3`; the original proposed design is preserved in commit `2e38acd`.
+Status: v0.6.0 browser authorization preview and installed-CLI connection, 2026-10-23, with manual assignment sync. Original analysis baseline: `c9282f3`; the original proposed design is preserved in commit `2e38acd`.
 
 ## Result and implementation decision
 
@@ -8,7 +8,7 @@ The board can import selected assigned Jira Cloud issues into Backlog or Todo, r
 
 The v0.6.0 client uses **Atlassian's hosted MCP v2 service** with dynamically registered public-client OAuth, PKCE S256, random state, and a temporary listener bound exclusively to `127.0.0.1`. The browser returns to that listener and the app activates after connecting. No separate CLI, client secret, token entry, Node proxy, or Focus Island server is needed. Requested scopes are `read:me offline_access read:jira:agent-interface search:jira:agent-interface`.
 
-The earlier CLI adapter remains for regression coverage and historical live checks; it is no longer the app's default. Existing linked cards do not need migration. Organization access policy remains enforced by Atlassian; custom callbacks may be blocked, whereas loopback callbacks are documented for native clients.
+The CLI adapter is also available explicitly through **Connect signed-in Atlassian CLI**. The app remembers the chosen route; this provides a verified working option while browser consent is blocked for the tested account. Existing linked cards do not need migration. Organization access policy remains enforced by Atlassian; custom callbacks may be blocked, whereas loopback callbacks are documented for native clients.
 
 [Official MCP documentation](https://atlassian.github.io/atlassian-mcp-server/) · [Supported tools](https://support.atlassian.com/atlassian-ai-gateway/docs/supported-tools/) · [Supported callback domains](https://support.atlassian.com/security-and-access-policies/docs/available-atlassian-mcp-server-domains/)
 
@@ -19,7 +19,7 @@ The earlier CLI adapter remains for regression coverage and historical live chec
 3. Sync my Jira tasks, available in Setup and the board’s Jira menu, imports all assigned unfinished issues into Backlog and refreshes existing linked cards. It does not start focus or timers. New imports are fetched before one atomic batch insert; refresh retains cached data on failures. Linked issues missing from discovery are fetched independently, and detach/delete during a pending sync is respected. For selected imports, Board → Jira → Add from Jira lists assigned, unfinished issues with their issue key (including the project key), type, status, and priority. Existing imports show “On board”. Select issues, a local destination, and optionally a repository folder.
 4. Import fetches selected descriptions and inserts the batch atomically. Backlog is the default; importing never starts focus or a timer.
 5. Work with the task as usual. Its issue key opens Jira. Source title/description are read-only while linked; notes and criteria remain local and editable.
-6. Refresh linked tasks manually. Reload issues refreshes the discovery list separately. Cached cards work offline. Disconnect cancels pending work, clears the app's connection metadata and local Keychain credentials, and keeps cards/history. Server-side revocation is available in the user's Atlassian account.
+6. Refresh linked tasks manually. Reload issues refreshes the discovery list separately. Cached cards work offline. Reconnect Jira retries the chosen route. Forget Jira cancels pending work, clears the app’s connection metadata and local Keychain credentials, and keeps cards/history. It leaves the shared CLI account signed in. Server-side revocation is available in the user’s Atlassian account.
 7. Detach explicitly removes a card's Jira link, keeping its current text and local history. Delete uses the existing local task confirmation and cleanup and never deletes the remote issue.
 
 The interface is localized into English, Spanish, and Russian. Issue content remains as written.
@@ -120,4 +120,14 @@ Live browser authorization is blocked as of October 23, 2026: the disposable app
 
 The current request follows the discovered authorization server, exact registered callback, PKCE S256, public-client authentication, and advertised read/search scopes. [Atlassian's consent troubleshooting](https://support.atlassian.com/rovo/kb/fix-oauth-consent-block-for-atlassian-rovo-mcp-server-in-atlassian-cloud/) identifies organization callback policy as a possible cause. [An independent SDK report](https://community.developer.atlassian.com/t/rovo-mcp-oauth-returns-invalid-request-after-consent-reproduced-with-independent-python-mcp-sdk-client/103197) describes the same failure. Neither establishes this account's root cause; an organization-policy check or provider-side trace is required before more speculative client changes.
 
-Official Sparkle tools verified the signed feed and archive and rejected a tampered feed. A disposable host also detected a newer version, recognized the current version, and rejected the tampered feed. Update installation/relaunch remains untested. Release publication is held pending successful browser authorization and disposable-board sync.
+Official Sparkle tools verified the signed feed and archive and rejected a tampered feed. A disposable host also detected a newer version, recognized the current version, and rejected the tampered feed. Update installation/relaunch remains untested. The release documents browser consent as a known limitation and retains the verified CLI route.
+
+### Installed CLI, reconnect, and icon follow-up
+
+The user was running an unbundled debug executable built before the browser/sign-in changes. The installed Homebrew ACLI is executable at the standard discovery path. The live CLI check additionally exposed a Swift async allocation crash during the default site-ID lookup. Moving that lookup to a named function using the existing bounded HTTP client eliminated the reproduced crash.
+
+The installed-CLI coordinator test uses normal executable discovery and a disposable in-memory board. Connect, assigned-issue sync, repeat sync preserving a local note and Done column, Reconnect, and Forget passed. Fixture coverage checks retry after a missing CLI, persistence of the selected route, and preservation of cards/links after Forget. Run the core live check with `FOCUS_ISLAND_JIRA_LIVE_EXECUTABLE=/opt/homebrew/bin/acli` and the installed-CLI coordinator check with `FOCUS_ISLAND_JIRA_LIVE_INSTALLED=1`; both only read Jira.
+
+Setup includes the formula-specific Homebrew trust command. The app icon now uses a dark blue background, with the committed app icon sizes and ICNS regenerated from the brand master.
+
+Final follow-up validation: `FOCUS_ISLAND_JIRA_LIVE_INSTALLED=1 FOCUS_ISLAND_JIRA_LIVE_EXECUTABLE=/opt/homebrew/bin/acli rtk proxy bash bin/test.dev` passed with 933 tests in 89 suites, including both live CLI checks. The browser live check and optional language preview were skipped. All 1007 localization keys passed; Setup and connected Jira renders were visually inspected. Both review axes found no actionable issues.

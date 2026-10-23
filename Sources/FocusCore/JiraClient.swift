@@ -22,20 +22,17 @@ public struct JiraCLIClient: JiraProviding {
 
     public init(
         run: @escaping @Sendable ([String]) async throws -> Data = { try await JiraCommand.run($0) },
-        cloudID: @escaping @Sendable (String) async throws -> String = { site in
-            let configuration = URLSessionConfiguration.ephemeral
-            configuration.timeoutIntervalForRequest = 15
-            let session = URLSession(configuration: configuration)
-            defer { session.invalidateAndCancel() }
-            let (data, response) = try await session.data(from: URL(string: "\(site)/_edge/tenant_info")!)
-            guard (response as? HTTPURLResponse)?.statusCode == 200,
-                  let value = try JSONSerialization.jsonObject(with: data) as? [String: String],
-                  let id = value["cloudId"], UUID(uuidString: id) != nil else { throw JiraError.invalidResponse }
-            return id
-        }
+        cloudID: (@Sendable (String) async throws -> String)? = nil
     ) {
         self.run = run
-        self.cloudID = cloudID
+        self.cloudID = cloudID ?? Self.loadCloudID
+    }
+
+    private static func loadCloudID(_ site: String) async throws -> String {
+        let response = try await JiraHTTP.send(JiraHTTP.request(URL(string: "\(site)/_edge/tenant_info")!))
+        let value = try JiraHTTP.object(response)
+        guard let id = value["cloudId"] as? String, UUID(uuidString: id) != nil else { throw JiraError.invalidResponse }
+        return id
     }
 
     public func connect() async throws -> JiraConnection {
