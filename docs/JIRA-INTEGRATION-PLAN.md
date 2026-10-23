@@ -1,6 +1,6 @@
 # Jira tasks on the Focus Island board
 
-Status: implemented as an opt-in CLI preview for v0.5.0, 2026-10-23. Original analysis baseline: `c9282f3`; the original proposed design is preserved in commit `2e38acd`.
+Status: implemented as an opt-in CLI preview; live verified with the v0.5.1 fix on 2026-10-23. Original analysis baseline: `c9282f3`; the original proposed design is preserved in commit `2e38acd`.
 
 ## Result and implementation decision
 
@@ -14,7 +14,7 @@ The initial plan proposed a personal token experiment and left public authentica
 
 1. Install ACLI and sign in using its browser flow. Focus Island looks in `/opt/homebrew/bin`, `/usr/local/bin`, and `~/.local/bin`.
 2. Settings → Focus → Jira → Connect signed-in account verifies the CLI account, resolves the site's cloud ID, and requires a successful assigned-issue search.
-3. Board → Jira → Add from Jira lists assigned, unfinished issues with type, status, project, and priority. Existing imports show “On board”. Select issues, a local destination, and optionally a repository folder.
+3. Board → Jira → Add from Jira lists assigned, unfinished issues with their issue key (including the project key), type, status, and priority. Existing imports show “On board”. Select issues, a local destination, and optionally a repository folder.
 4. Import fetches selected descriptions and inserts the batch atomically. Backlog is the default; importing never starts focus or a timer.
 5. Work with the task as usual. Its issue key opens Jira. Source title/description are read-only while linked; notes and criteria remain local and editable.
 6. Refresh linked tasks manually. Reload issues refreshes the discovery list separately. Cached cards work offline. Disconnect cancels pending work, clears the app's connection metadata, and keeps cards/history; it leaves the CLI login alone.
@@ -56,7 +56,7 @@ Discovery uses:
 assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC, key ASC
 ```
 
-The CLI search requests only needed fields with `--paginate --json`. The app validates the complete response before publishing it and rejects incomplete pagination envelopes. Details are read by stable issue ID independently of the discovery query, so completed and reassigned imported issues can still refresh. No local task is removed because it disappeared from search. An unavailable issue keeps its cached text/history; a command failure leaves prior results intact.
+The CLI search requests `summary,status,issuetype,priority,assignee` with `--paginate --json`. ACLI search rejects `project` and `updated`; those fields and `description` are requested only by the issue-detail command. Discovery accepts a missing update timestamp, but detail reads, imports, and refreshes require a valid timestamp before writing. The app validates the complete response before publishing it and rejects incomplete pagination envelopes. Details are read by stable issue ID independently of the discovery query, so completed and reassigned imported issues can still refresh. No local task is removed because it disappeared from search. An unavailable issue keeps its cached text/history; a command failure leaves prior results intact.
 
 The CLI owns HTTP transport, pagination and any HTTP retry behavior. Focus Island bounds each command to 90 seconds and 16 MiB of output, uses private temporary files, discards raw diagnostics, and cancels the process on disconnect. It does not blindly retry failed commands. Requests use explicit argument arrays without a shell; remote content is never executed. The app does not inspect CLI credential files. Before and after each read, CLI account/site must match the saved connection; account changes require reconnection.
 
@@ -83,7 +83,7 @@ Automated coverage is in [JiraTests](../Tests/FocusCoreTests/JiraTests.swift), [
 - Connect/import/restart/disconnect, cancellation of an in-flight import, stale selections rejected before any writes, discovery failure retaining prior data, and disabled imports with in-memory fallback.
 - Rendered setup, import and linked-task UI, plus all three localization catalogs.
 
-Validation on 2026-10-23:
+Initial v0.5.0 validation on 2026-10-23:
 
 - `rtk proxy bin/test.dev` passed: 915 tests reported across 88 suites; the opt-in live Jira check and optional localized settings preview were skipped. Debug app and helpers built successfully.
 - `rtk proxy zsh scripts/lint-strings.sh` passed for 982 keys in English, Spanish, and Russian; `rtk git diff --check` passed.
@@ -93,7 +93,13 @@ Validation on 2026-10-23:
 
 The opt-in live test runs only when `FOCUS_ISLAND_JIRA_LIVE_EXECUTABLE` points to an authenticated ACLI executable. It imports and refreshes one assigned issue in a disposable in-memory board, retaining a local note and completed column, and performs no Jira writes.
 
-Inspected CLI: **1.3.39-stable**. Its actual help and unauthenticated behavior were checked. The earlier assistant-connected Jira feasibility query returned assigned issues, but that connection is independent of ACLI and does not validate the native path. **Live authenticated ACLI import is not yet certified**; the release is an opt-in preview. All implementation tests use disposable databases and synthetic issue data, never the user's real board or Jira writes.
+Verified CLI: **1.3.39-stable**. Post-release live testing found that v0.5.0 passed unsupported fields to search. The v0.5.1 regression test reproduces both the rejected arguments and the missing search timestamp; it failed before the fix and passed afterward. It also verifies that incomplete detail snapshots cannot import tasks or change an existing task/link.
+
+The live check passed after the fix: browser-authenticated account verification, cloud-ID lookup, discovery of four assigned issues, detail retrieval by stable numeric ID, one selected import, and refresh preserving a local note and completed column. The issue's Jira status stayed unchanged. The eight client tests, including this live check, passed together. Private issue content and account identifiers are excluded from repository fixtures and logs.
+
+For v0.5.1, `FOCUS_ISLAND_JIRA_LIVE_EXECUTABLE=/tmp/focus-island-jira-tools/acli rtk proxy bin/test.dev` passed with 916 tests reported across 88 suites, including the live check; only the optional localized settings preview was skipped. Localization and whitespace checks passed again. Standards and specification reviews found no remaining issues in the patch.
+
+The integration remains an opt-in preview. Live evidence covers one Jira Cloud account and a small result set, not large-volume pagination, every tenant's policy, or future CLI versions. Fixture tests use synthetic issues; the live test uses a disposable in-memory board and only reads Jira. The user's real Focus Island board is untouched.
 
 ## Scope retained for later
 

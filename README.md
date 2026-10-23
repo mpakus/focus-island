@@ -15,7 +15,7 @@
 4. In the island under the notch, click "Connect" to open Setup, then install hooks for Claude Code, Codex, or both. For Codex, also complete the hook trust step below.
 
 > [!NOTE]
-> The v0.5.0 binaries use ad-hoc signing and are **not notarized by Apple**. macOS may block the first launch. After attempting to open the app, use System Settings → Privacy & Security → Open Anyway if needed. Only open a download you trust.
+> The v0.5.1 binaries use ad-hoc signing and are **not notarized by Apple**. macOS may block the first launch. After attempting to open the app, use System Settings → Privacy & Security → Open Anyway if needed. Only open a download you trust.
 
 ## Features
 
@@ -126,17 +126,17 @@ Focus Island uses the official CLI's read commands; it never collects API tokens
 
 Supported scope: one Jira Cloud account/site at a time, ordinary `*.atlassian.net` sites, assigned issues of all types, selected import, and manual refresh. Jira Data Center, custom domains, automatic polling, workflow transitions, comments, attachments, and worklogs are not included. Descriptions are converted from ADF to plain text; formatting and embedded media may be omitted. Follow the issue link for the original.
 
-The inspected CLI was `1.3.39-stable`. Command contracts, fixture-based imports, storage migration, cancellation, and UI rendering are tested. A live authenticated CLI import has not yet been certified. The in-app connection requires a successful search; errors leave cached tasks available.
+The verified CLI is `1.3.39-stable`. Live authentication, assigned-issue search, detail retrieval, and import/refresh passed on one Jira Cloud account using a disposable board; local notes and completion survived refresh. Use **v0.5.1 or later**: v0.5.0 requested search fields that ACLI rejects. Migration, cancellation, malformed responses, and UI rendering also have automated coverage. The in-app connection requires a successful search; errors leave cached tasks available. Other tenants and CLI versions still need verification.
 
 Migration `v7` saves a consistent `before-jira-*.sqlite` snapshot before updating an existing database. It preserves tasks, Claude/Codex sessions, notes, criteria, prompts, activity, and timers. Prefer disconnecting Jira to restoring an old database; restoring a backup would discard later local work.
 
 ## Releasing
 
 ```bash
-OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.5.0
+OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.5.1
 ```
 
-Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.5.0.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs the tests, builds and verifies a universal DMG and ZIP, tags `v0.5.0`, and publishes the GitHub Release.
+Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.5.1.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs the tests, builds and verifies a universal DMG and ZIP, tags `v0.5.1`, and publishes the GitHub Release.
 
 `OPEN_ISLAND_SIGN_IDENTITY=-` selects ad-hoc signing. To use the local certificate instead, run `zsh scripts/setup-dev-signing.sh` once and omit that variable. Neither option provides Apple notarization. `VERSION` also supplies the version shown in packaged and development app bundles; `OPEN_ISLAND_VERSION` can override it for local builds.
 
