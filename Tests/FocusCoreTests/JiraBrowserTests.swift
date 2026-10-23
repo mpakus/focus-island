@@ -6,9 +6,11 @@ import Testing
 final class MemoryJiraCredentials: JiraCredentialStoring, @unchecked Sendable {
     private let lock = NSLock()
     private var data: Data?
+    var beforeSave: (@Sendable () -> Void)?
+    var beforeRemove: (@Sendable () -> Void)?
     func load() -> Data? { lock.withLock { data } }
-    func save(_ data: Data) { lock.withLock { self.data = data } }
-    func remove() { lock.withLock { data = nil } }
+    func save(_ data: Data) { beforeSave?(); lock.withLock { self.data = data } }
+    func remove() { beforeRemove?(); lock.withLock { data = nil } }
 }
 
 actor BrowserJiraFixture {
@@ -135,6 +137,32 @@ struct JiraBrowserTests {
         try client.disconnect()
         #expect(store.load() == nil)
         await #expect(throws: JiraError.signInRequired) { try await client.search(connection: connection) }
+    }
+
+    @Test func disconnectCannotBeUndoneByACancelledCredentialSave() async throws {
+        let store = MemoryJiraCredentials(), fixture = BrowserJiraFixture()
+        let saved = JiraOAuthCredentials(clientID: "client", accessToken: "expired", refreshToken: "refresh", expiresAt: .distantPast, tokenEndpoint: URL(string: "https://auth.atlassian.com/oauth/token")!)
+        store.save(try JSONEncoder().encode(saved))
+        let saving = DispatchSemaphore(value: 0), release = DispatchSemaphore(value: 0)
+        store.beforeSave = { saving.signal(); release.wait() }
+        let client = JiraMCPClient(credentials: store, send: { try await fixture.send($0) }, browser: { _ in }, chooseSite: { $0[0] })
+        let operation = Task { try await client.connect() }
+        let started = await withCheckedContinuation { continuation in
+            DispatchQueue.global().async { continuation.resume(returning: saving.wait(timeout: .now() + 5) == .success) }
+        }
+        #expect(started)
+        operation.cancel()
+        let removing = DispatchSemaphore(value: 0)
+        store.beforeRemove = { removing.signal() }
+        let disconnect = Task.detached { try client.disconnect() }
+        let removedWhileSaving = await withCheckedContinuation { continuation in
+            DispatchQueue.global().async { continuation.resume(returning: removing.wait(timeout: .now() + 0.2) == .success) }
+        }
+        release.signal()
+        #expect(!removedWhileSaving)
+        _ = try? await operation.value
+        try await disconnect.value
+        #expect(store.load() == nil)
     }
 
     @Test func malformedIssueAndMismatchedRPCResponsesAreRejected() throws {

@@ -112,4 +112,8 @@ Automatic polling, custom JQL/filters, simultaneous accounts, workflow mapping/t
 
 ## v0.6.0 verification
 
-Full `bin/test.dev`: 930 tests in 89 suites passed, with live checks skipped. All 1002 localization keys pass. Live browser consent and update signing await user interaction.
+Full `bin/test.dev`: 931 tests in 89 suites passed, with the three live Jira checks and optional localized preview skipped. All 1002 localization keys pass. OAuth fixtures cover PKCE/read scopes, exact callback/state, real loopback rejection and cancellation, refresh rotation, pagination, session recovery, and malformed responses. The credential-save/disconnect regression covers serialized teardown.
+
+Rendered Setup/About checks and visual inspection confirm the one-button entry point, version, update controls, and all author credits. A universal package preflight verified Apple Silicon/Intel binaries, embedded Sparkle and nested signatures, and launch outside the checkout. Both review axes are complete; the discovered disconnect race was fixed and rechecked.
+
+The disposable app reaches an enabled Atlassian read/search consent page. Live authorization is awaiting the user's Accept action; the signed feed/ZIP rehearsal is awaiting macOS Keychain approval for official Sparkle tools. These outcomes and an actual update installation are not claimed by the automated test count.

@@ -2,6 +2,7 @@ import Foundation
 
 /// A fixed set of read operations; no model, local proxy, or executable is involved.
 public actor JiraMCPClient: JiraProviding {
+    private nonisolated let credentialLock = NSLock()
     private nonisolated let credentials: any JiraCredentialStoring
     private let send: JiraHTTP.Send
     private let browser: @Sendable (URL) async throws -> Void
@@ -19,12 +20,21 @@ public actor JiraMCPClient: JiraProviding {
     public func authorize() async throws -> JiraConnection {
         let tokens = try await JiraOAuthCallback.authorize(send: send, browser: browser)
         try Task.checkCancellation()
-        try credentials.save(JSONEncoder().encode(tokens))
+        try save(tokens)
         initialized = false; sessionID = nil
         return try await connect()
     }
 
-    public nonisolated func disconnect() throws { try credentials.remove() }
+    public nonisolated func disconnect() throws {
+        try credentialLock.withLock { try credentials.remove() }
+    }
+
+    private func save(_ tokens: JiraOAuthCredentials) throws {
+        try credentialLock.withLock {
+            try Task.checkCancellation()
+            try credentials.save(JSONEncoder().encode(tokens))
+        }
+    }
 
     private func tokens() async throws -> JiraOAuthCredentials {
         guard let data = try credentials.load(), var tokens = try? JSONDecoder().decode(JiraOAuthCredentials.self, from: data) else { throw JiraError.signInRequired }
@@ -33,7 +43,7 @@ public actor JiraMCPClient: JiraProviding {
             tokens = try await JiraOAuth.token(send: send, endpoint: tokens.tokenEndpoint, clientID: tokens.clientID,
                                               body: ["grant_type": "refresh_token", "refresh_token": refresh], previous: tokens)
             try Task.checkCancellation()
-            try credentials.save(JSONEncoder().encode(tokens))
+            try save(tokens)
         }
         return tokens
     }
@@ -60,7 +70,7 @@ public actor JiraMCPClient: JiraProviding {
         saved = try await tokens()
         saved.cloudID = connection.cloudID
         try Task.checkCancellation()
-        try credentials.save(JSONEncoder().encode(saved))
+        try save(saved)
         return connection
     }
 

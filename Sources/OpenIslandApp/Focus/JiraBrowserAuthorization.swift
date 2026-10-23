@@ -11,6 +11,7 @@ enum JiraBrowserAuthorization {
             }
         }, chooseSite: { sites in
             try await MainActor.run {
+                NSApp?.activate()
                 let alert = NSAlert()
                 alert.messageText = L10n.tr("jira.choose_site")
                 alert.addButton(withTitle: L10n.tr("jira.connect"))
