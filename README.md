@@ -57,7 +57,7 @@
 - Import selected assigned issues into Backlog or Todo, then use the same sessions, timers, notes, criteria, and reports.
 - Issue keys link to Jira; remote status appears separately from the local column. Closing a local task never changes Jira.
 - Manual refresh preserves local work. Imported tasks remain usable offline; disconnect keeps their history.
-- Requires a separately installed and signed-in Atlassian CLI. See [Jira setup](#jira-setup-opt-in-preview).
+- Connect with **Integrate Jira** in Setup; browser authorization requires no extra installation. See [Jira setup](#jira-setup-opt-in-preview).
 
 **Reports**
 - "Today" — a daily summary: "You were working", "Agents were working", "Sessions waited for you", distractions, a time strip by task, "Done", "Still open", "Start tomorrow with"; "Copy to note" puts a markdown summary on the clipboard.
@@ -110,35 +110,38 @@ Daily, weekly and task work totals use the union of Claude and Codex intervals; 
 
 ## Jira setup (opt-in preview)
 
-1. Install [Atlassian CLI](https://developer.atlassian.com/cloud/acli/guides/install-macos/) and sign in from Terminal:
-
-   ```bash
-   brew tap atlassian/homebrew-acli
-   brew install acli
-   acli jira auth login --web
-   ```
-
-2. Open **Settings → Setup → Jira authorization**. **Authorize Jira…** opens the installed CLI in Terminal for browser sign-in. Finish that flow, then choose **Connect signed-in account**. Already signed-in users can connect directly.
-3. Choose **Sync my Jira tasks** in Setup or the board’s Jira menu. It imports all assigned, unfinished issues into Backlog and refreshes existing linked cards, including issues no longer in the discovery list. Repeat syncs reuse cards and preserve local columns, notes, sessions, and timers.
+1. Open **Settings → Setup → Jira authorization** and click **Integrate Jira**.
+2. Approve read/search access in your browser. Focus Island returns to the foreground when connected. If your account has several Jira sites, choose one in the app.
+3. Choose **Sync my Jira tasks** in Setup or the board’s Jira menu. It imports assigned, unfinished issues into Backlog and refreshes linked cards. Repeat syncs reuse cards and preserve local columns, notes, sessions, and timers.
 4. For selected imports or a different destination, use **Jira → Add from Jira**. **Refresh linked tasks** updates existing cards without importing new assignments.
 
-Authorization launches the official CLI’s browser login in Terminal. Jira data access uses the CLI’s read commands; it never collects API tokens, reads CLI credential files, or writes Jira issues. The CLI is not bundled. It must be installed at `/opt/homebrew/bin/acli`, `/usr/local/bin/acli`, or `~/.local/bin/acli`. Changing the CLI account requires disconnecting and reconnecting in Focus Island. Disconnect does not sign the CLI out or remove existing tasks. **Detach from Jira** makes a card's title and description locally editable.
+Sign-in uses Atlassian's hosted MCP service with OAuth PKCE and a temporary loopback callback. No CLI, command copying, API token, shared client secret, or Focus Island backend is required. Credentials stay in macOS Keychain and expire/refresh automatically. The app calls only fixed read operations; it never writes Jira issues. Your organization's Atlassian MCP access policy still applies.
 
-Supported scope: one Jira Cloud account/site at a time, ordinary `*.atlassian.net` sites, assigned issues of all types, selected import, manual assignment sync, and manual refresh. Jira Data Center, custom domains, automatic polling, workflow transitions, comments, attachments, and worklogs are not included. Descriptions are converted from ADF to plain text; formatting and embedded media may be omitted. Follow the issue link for the original.
+Upgrading from v0.5.x requires one browser authorization; existing cards and history remain. **Disconnect** cancels pending work and removes the app's local credentials while keeping cards/history. Revoke the app's grant in your Atlassian account to remove server-side access. **Detach from Jira** makes a card's title and description locally editable.
 
-The verified CLI is `1.3.39-stable`. Live authentication, assigned-issue search, detail retrieval, and import/refresh passed on one Jira Cloud account using a disposable board; local notes and completion survived refresh. Use **v0.5.1 or later**: v0.5.0 requested search fields that ACLI rejects. Migration, cancellation, malformed responses, and UI rendering also have automated coverage. The in-app connection requires a successful search; errors leave cached tasks available. Other tenants and CLI versions still need verification.
+Supported scope: one Jira Cloud account/site at a time, ordinary `*.atlassian.net` sites, assigned issues of all types, selected import, manual assignment sync, and manual refresh. Jira Data Center, custom domains, automatic polling, workflow transitions, comments, attachments, and worklogs are not included. Descriptions retain readable text; formatting and embedded media may be omitted. Follow the issue link for the original.
+
+Authorization, callback validation, token refresh, pagination, cancellation, board preservation, and Settings rendering have automated coverage. Live verification uses a disposable board; see the [verification record](docs/JIRA-INTEGRATION-PLAN.md). Failed reads leave cached tasks available.
 
 Migration `v7` saves a consistent `before-jira-*.sqlite` snapshot before updating an existing database. It preserves tasks, Claude/Codex sessions, notes, criteria, prompts, activity, and timers. Prefer disconnecting Jira to restoring an old database; restoring a backup would discard later local work.
+
+## App updates
+
+Open **Settings → About** to check the installed version against the latest GitHub release. **Check for Updates…** opens the update dialog; Sparkle downloads, verifies, installs, and relaunches the app after you confirm. **Automatically check for updates** controls background checks. Development and harness builds do not check for releases.
+
+Install v0.6.0 manually once if you are on v0.5.x. Subsequent releases use a signed feed and signed ZIP from this repository's GitHub Releases. System profiling is disabled. The app and feed verify against the committed public key; the private update-signing key stays in the maintainer's macOS Keychain.
 
 ## Releasing
 
 ```bash
-OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.5.2
+OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.6.0
 ```
 
-Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.5.2.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs the tests, builds and verifies a universal DMG and ZIP, tags `v0.5.2`, and publishes the GitHub Release.
+Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.6.0.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs tests, builds and verifies a universal DMG and ZIP, signs `appcast.xml` and its ZIP enclosure, tags the version, and publishes all three assets to GitHub Releases.
 
-`OPEN_ISLAND_SIGN_IDENTITY=-` selects ad-hoc signing. To use the local certificate instead, run `zsh scripts/setup-dev-signing.sh` once and omit that variable. Neither option provides Apple notarization. `VERSION` also supplies the version shown in packaged and development app bundles; `OPEN_ISLAND_VERSION` can override it for local builds.
+Sparkle tools are downloaded from the pinned official release with a SHA-256 check. Releases require the existing Keychain signing key under account `focus-island`; its public half must match `config/packaging/sparkle-public-key.txt`. Preserve this private key securely for future releases. A missing key stops the release; generating a replacement would break updates for existing installations.
+
+`OPEN_ISLAND_SIGN_IDENTITY=-` selects ad-hoc application signing. To use the local certificate instead, run `zsh scripts/setup-dev-signing.sh` once and omit that variable. Neither option provides Apple notarization. Sparkle's Ed25519 update signature is separate from Apple code signing. `VERSION` also supplies the version shown in packaged and development app bundles; `OPEN_ISLAND_VERSION` can override it for local builds.
 
 ## Building and running the dev version
 
@@ -171,6 +174,8 @@ Jira implementation and limitations: [Jira import plan and evidence](docs/JIRA-I
 ## About
 
 This fork is maintained by **Renat "MpaK" Ibragimov** — [@mpakus on GitHub](https://github.com/mpakus) · [aomega.co](https://aomega.co). It adds Codex monitoring alongside Claude Code and an English, Spanish, and Russian interface.
+
+Made in Austin ☆ Texas
 
 Focus Island builds on [Dias Zhanabayev's Focus Island](https://github.com/dias-zhanabayev/focus-island), which was forked from [open-vibe-island](https://github.com/Octane0411/open-vibe-island). Thanks to the original authors and contributors. This fork remains licensed under [GPL v3](LICENSE).
 

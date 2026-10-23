@@ -22,6 +22,7 @@ final class OpenIslandAppDelegate: NSObject, NSApplicationDelegate {
         )
         ProcessInfo.processInfo.disableSuddenTermination()
         NSApp.setActivationPolicy(model.showDockIcon ? .regular : .accessory)
+        if harnessLaunchConfiguration.scenario == nil { AppUpdates.shared.start() }
         harnessRuntimeMonitor.recordMilestone("applicationDidFinishLaunching")
 
         DispatchQueue.main.async { [self] in

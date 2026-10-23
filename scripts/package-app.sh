@@ -100,6 +100,8 @@ cp "$hooks_binary" "$bundle_dir/Contents/Helpers/OpenIslandHooks"
 cp "$setup_binary" "$bundle_dir/Contents/Helpers/OpenIslandSetup"
 cp "$brand_icon" "$bundle_dir/Contents/Resources/OpenIsland.icns"
 cp "$repo_root/LICENSE" "$bundle_dir/Contents/Resources/LICENSE"
+zsh "$repo_root/scripts/embed-sparkle.sh" "$bundle_dir" "${signing_identity:--}"
+sparkle_public_key="$(cat "$repo_root/config/packaging/sparkle-public-key.txt")"
 
 # Copy SPM resource bundle into Contents/Resources/ so the .app root stays
 # clean for code signing (no unsealed contents). Our custom
@@ -143,6 +145,18 @@ cat > "$bundle_dir/Contents/Info.plist" <<EOF
     <string>$version</string>
     <key>CFBundleVersion</key>
     <string>$build_number</string>
+    <key>SUFeedURL</key>
+    <string>https://github.com/mpakus/focus-island/releases/latest/download/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>$sparkle_public_key</string>
+    <key>SURequireSignedFeed</key>
+    <true/>
+    <key>SUVerifyUpdateBeforeExtraction</key>
+    <true/>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUSendProfileInfo</key>
+    <false/>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>NSAppleEventsUsageDescription</key>
@@ -163,6 +177,7 @@ for required in \
     "Contents/MacOS/OpenIslandApp" \
     "Contents/Helpers/OpenIslandHooks" \
     "Contents/Helpers/OpenIslandSetup" \
+    "Contents/Frameworks/Sparkle.framework" \
     "Contents/Resources/OpenIsland.icns" \
     "Contents/Resources/OpenIsland_OpenIslandCore.bundle" \
 ; do

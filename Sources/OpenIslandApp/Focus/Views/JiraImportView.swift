@@ -15,20 +15,15 @@ struct JiraConnectionView: View {
                 Button(L10n.tr("jira.sync_assigned")) { jira.syncAssignedIssues(links: Array(focus.board.jiraLinks.values)) }
                     .disabled(jira.isBusy || focus.storeIsInMemoryFallback)
                 Text(L10n.tr("jira.sync_hint")).font(.caption).foregroundStyle(.secondary)
+                if jira.error != nil { Button(L10n.tr("jira.authorize")) { jira.authorize() }.disabled(jira.isBusy) }
                 Button(L10n.tr("jira.disconnect")) { jira.disconnect() }
                 Text(L10n.tr("jira.disconnect_hint")).font(.caption).foregroundStyle(.secondary)
             } else {
                 Text(L10n.tr("jira.setup_hint"))
-                Link(L10n.tr("jira.install_cli"), destination: URL(string: "https://developer.atlassian.com/cloud/acli/guides/install-macos/")!)
-                Button(L10n.tr("jira.authorize")) { jira.authorize() }.disabled(jira.isBusy)
-                HStack {
-                    Text("acli jira auth login --web").font(.system(.caption, design: .monospaced)).textSelection(.enabled)
-                    Button(L10n.tr("jira.copy_login")) {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString("acli jira auth login --web", forType: .string)
-                    }
-                }
-                Button(L10n.tr("jira.connect")) { jira.connect() }.disabled(jira.isBusy)
+                Button(L10n.tr("jira.authorize")) { jira.authorize() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(jira.isBusy)
+                if jira.isBusy { Button(L10n.tr("focus.cancel")) { jira.disconnect() } }
             }
             JiraOperationStatus(jira: jira)
         }
@@ -40,7 +35,7 @@ struct JiraOperationStatus: View {
 
     var body: some View {
         if jira.isBusy {
-            HStack { ProgressView().controlSize(.small); Text(L10n.tr("jira.loading")) }
+            HStack { ProgressView().controlSize(.small); Text(L10n.tr(jira.isAuthorizing ? "jira.authorizing" : "jira.loading")) }
         }
         if let error = jira.error {
             Text(error).foregroundStyle(.orange).textSelection(.enabled)

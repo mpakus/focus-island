@@ -3,7 +3,7 @@ import GRDB
 import OpenIslandCore
 
 public enum JiraError: Error, Equatable, LocalizedError {
-    case cliMissing, signInRequired, accountChanged, invalidResponse, unavailable, commandFailed, timedOut, databaseUnavailable
+    case cliMissing, signInRequired, accountChanged, invalidResponse, unavailable, commandFailed, timedOut, databaseUnavailable, credentialsUnavailable
 
     public var errorDescription: String? { L10n.tr("jira.error.\(self)") }
 }

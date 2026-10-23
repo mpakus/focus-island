@@ -60,9 +60,9 @@ The project is past MVP and welcomes new ideas and creative directions, but the 
 
 ## Release
 
-- Local, from a clean `main` equal to `origin/main`: `zsh scripts/release.sh X.Y.Z`. It runs tests, builds a universal DMG/ZIP signed with the local "Open Island Dev Local" identity (`scripts/setup-dev-signing.sh`), tags `vX.Y.Z`, pushes the tag and creates the GitHub Release with the DMG and ZIP. No notarization, no Sparkle.
+- Local, from a clean `main` equal to `origin/main`: `zsh scripts/release.sh X.Y.Z`. It runs tests, builds a universal DMG/ZIP signed with the local "Open Island Dev Local" identity (`scripts/setup-dev-signing.sh`), tags `vX.Y.Z`, pushes the tag and creates the GitHub Release with the DMG and ZIP. It also publishes the signed Sparkle appcast; the existing `focus-island` Keychain signing key is required (see README → Releasing). No notarization.
 - Write repository documentation and GitHub release titles and notes in English. Notes live in `docs/releases/vX.Y.Z.md`; the first line `# Focus Island vX.Y.Z — Title` becomes the release title. Before writing them, review `git log` since the last tag.
-- Install/update for users: download `Focus.Island.dmg` from Releases and drag it to Applications (steps in `README.md`).
+- First install: download `Focus.Island.dmg` from Releases and drag it to Applications. From v0.6.0 onward, Settings → About checks and installs signed GitHub release updates (steps in `README.md`).
 - CI (`.github/workflows/ci.yml`) is manual-only (`workflow_dispatch`) to save private-repo macOS minutes; run `zsh scripts/harness.sh ci` locally.
 
 ## Conventions

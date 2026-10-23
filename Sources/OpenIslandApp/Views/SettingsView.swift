@@ -321,6 +321,7 @@ struct SoundSettingsPane: View {
 
 struct AboutSettingsPane: View {
     var model: AppModel
+    @State private var updates = AppUpdates.shared
 
     private var lang: LanguageManager { model.lang }
     private let primaryInk = Color.white.opacity(0.94)
@@ -350,6 +351,27 @@ struct AboutSettingsPane: View {
             Divider()
 
             Form {
+                Section(lang.t("updates.title")) {
+                    Text(updates.status).foregroundStyle(.secondary)
+                    HStack {
+                        Button(lang.t("updates.check")) { updates.check(showInstaller: true) }
+                            .disabled(!updates.canCheck)
+                        if updates.availableVersion != nil {
+                            Button(lang.t("updates.install")) { updates.check(showInstaller: true) }
+                                .disabled(!updates.canCheck)
+                        }
+                        Link(lang.t("updates.releases"), destination: URL(string: "https://github.com/mpakus/focus-island/releases")!)
+                    }
+                    Toggle(lang.t("updates.automatic"), isOn: Binding(get: { updates.automaticallyChecks }, set: { updates.automaticallyChecks = $0 }))
+                        .disabled(!updates.canCheck)
+                }
+                Section(lang.t("settings.about.credits")) {
+                    Link("Renat \"MpaK\" Ibragimov · aomega.co", destination: URL(string: "https://aomega.co")!)
+                    Text("Made in Austin ☆ Texas").foregroundStyle(.secondary)
+                    Link("Dias Zhanabayev · Focus Island", destination: URL(string: "https://github.com/dias-zhanabayev/focus-island")!)
+                    Link("Octane0411 · Open Vibe Island", destination: URL(string: "https://github.com/Octane0411/open-vibe-island")!)
+                    Text(lang.t("settings.about.license")).font(.caption).foregroundStyle(.secondary)
+                }
                 Section {
                     aboutActionRow(
                         title: lang.t("settings.about.quitApp"),
@@ -368,6 +390,7 @@ struct AboutSettingsPane: View {
         }
         .frame(maxWidth: .infinity)
         .navigationTitle(lang.t("settings.tab.about"))
+        .onAppear { updates.check() }
     }
 
     private func aboutActionRow(

@@ -1,3 +1,4 @@
+import AppKit
 import FocusCore
 import Foundation
 import Observation
@@ -9,6 +10,7 @@ final class JiraCoordinator {
     private(set) var connection: JiraConnection?
     private(set) var issues: [JiraIssue] = []
     private(set) var isBusy = false
+    private(set) var isAuthorizing = false
     private(set) var error: String?
     private(set) var lastRefresh: Date?
     @ObservationIgnored private(set) var operation: Task<Void, Never>?
@@ -18,9 +20,9 @@ final class JiraCoordinator {
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let durable: Bool
     @ObservationIgnored private var generation = UUID()
-    static let connectionKey = "focus.jira.connection"
+    static let connectionKey = "focus.jira.browserConnection"
 
-    init(store: FocusStore, defaults: UserDefaults, durable: Bool, client: any JiraProviding = JiraCLIClient()) {
+    init(store: FocusStore, defaults: UserDefaults, durable: Bool, client: any JiraProviding = JiraBrowserAuthorization.client()) {
         self.client = client
         service = JiraTaskService(store: store)
         self.defaults = defaults
@@ -32,26 +34,20 @@ final class JiraCoordinator {
         }
     }
 
-    func connect() {
-        perform {
-            let connection = try await self.client.connect()
-            // A successful search verifies access, not just the presence of a CLI login.
+    func connect(authorize: Bool = false) {
+        perform(authorizing: authorize) {
+            let connection = try await (authorize ? self.client.authorize() : self.client.connect())
+            // Verify issue access before publishing the connection.
             let issues = try await self.client.search(connection: connection)
             try Task.checkCancellation()
             self.defaults.set(try JSONEncoder().encode(connection), forKey: Self.connectionKey)
             self.connection = connection
             self.issues = issues
+            if authorize { NSApp?.activate() }
         }
     }
 
-    func authorize(executable: URL? = JiraCommand.executable(), launcher: any TerminalLaunching = AppleScriptTerminalLauncher()) {
-        guard !isBusy else { return }
-        guard let executable else { error = JiraError.cliMissing.localizedDescription; return }
-        do {
-            try launcher.run(command: "\(ShellQuoting.singleQuoted(executable.path)) jira auth login --web", in: .terminal)
-            error = nil
-        } catch { self.error = L10n.tr("jira.error.commandFailed") }
-    }
+    func authorize() { connect(authorize: true) }
 
     func loadIssues() {
         guard let connection else { return }
@@ -132,22 +128,26 @@ final class JiraCoordinator {
         operation?.cancel()
         operation = nil
         isBusy = false
+        isAuthorizing = false
         connection = nil
         issues = []
         error = nil
         lastRefresh = nil
         defaults.removeObject(forKey: Self.connectionKey)
+        do { try client.disconnect() }
+        catch { self.error = JiraError.credentialsUnavailable.localizedDescription }
     }
 
-    private func perform(_ action: @escaping @MainActor () async throws -> Void) {
+    private func perform(authorizing: Bool = false, _ action: @escaping @MainActor () async throws -> Void) {
         guard !isBusy else { return }
         guard durable else { error = JiraError.databaseUnavailable.localizedDescription; return }
         isBusy = true
+        isAuthorizing = authorizing
         error = nil
         let generation = generation
         operation = Task { [weak self] in
             guard let self else { return }
-            defer { if self.generation == generation { self.isBusy = false; self.operation = nil } }
+            defer { if self.generation == generation { self.isBusy = false; self.isAuthorizing = false; self.operation = nil } }
             do { try await action() }
             catch is CancellationError { }
             catch {

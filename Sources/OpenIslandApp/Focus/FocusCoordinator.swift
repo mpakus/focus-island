@@ -256,7 +256,7 @@ final class FocusCoordinator {
         gitDiff: GitDiffProviding = GitDiffProvider(),
         clipboard: @escaping (String) -> Void = FocusCoordinator.copyToPasteboard,
         runBackfill: Bool = true,
-        jiraClient: any JiraProviding = JiraCLIClient()
+        jiraClient: any JiraProviding = JiraBrowserAuthorization.client()
     ) {
         self.store = store
         self.storeOutcome = storeOutcome

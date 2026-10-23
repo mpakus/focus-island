@@ -966,10 +966,10 @@
 /* Jira import */
 "jira.disconnect" = "Отключить Jira";
 "jira.disconnect_hint" = "Локальные задачи и история останутся на этом Mac. Вход в Atlassian CLI сохранится.";
-"jira.setup_hint" = "Установите Atlassian CLI, нажмите «Авторизовать Jira», завершите вход через браузер из Терминала и подключитесь здесь. Focus Island только читает задачи Jira.";
+"jira.setup_hint" = "Подключите учётную запись Jira в браузере. Focus Island только читает ваши задачи.";
 "jira.install_cli" = "Установить Atlassian CLI";
 "jira.copy_login" = "Копировать команду";
-"jira.connect" = "Подключить текущий аккаунт";
+"jira.connect" = "Подключить";
 "jira.loading" = "Чтение Jira…";
 "jira.refreshed" = "Последнее полное обновление: %@";
 "jira.add_from_jira" = "Добавить из Jira";
@@ -987,7 +987,7 @@
 "jira.local_progress" = "Колонки, заметки, критерии и время фокуса хранятся локально. Закрытие задачи не меняет Jira.";
 "jira.partial_refresh" = "%@ задач недоступны. Их сохранённые данные и локальная работа сохранены.";
 "jira.error.cliMissing" = "Установите Atlassian CLI в /opt/homebrew/bin, /usr/local/bin или ~/.local/bin и повторите попытку.";
-"jira.error.signInRequired" = "Войдите через acli jira auth login --web в Терминале и подключитесь снова.";
+"jira.error.signInRequired" = "Срок действия подключения к Jira истёк. Нажмите «Подключить Jira», чтобы войти снова.";
 "jira.error.accountChanged" = "Аккаунт Atlassian CLI изменился. Отключите и снова подключите Jira.";
 "jira.error.invalidResponse" = "Jira вернула неполные или неподдерживаемые данные. Обновите Atlassian CLI и повторите попытку. Задачи сохранены.";
 "jira.error.unavailable" = "Задача недоступна или доступ запрещён. Существующие задачи сохранены.";
@@ -995,6 +995,38 @@
 "jira.error.timedOut" = "Jira не ответила вовремя. Повторите обновление позже; локальная работа сохранена.";
 "jira.error.databaseUnavailable" = "Импорт Jira отключён: локальная база данных недоступна. Устраните проблему с хранилищем и перезапустите приложение.";
 "jira.authorization" = "Авторизация Jira";
-"jira.authorize" = "Авторизовать Jira…";
+"jira.authorize" = "Подключить Jira";
 "jira.sync_assigned" = "Синхронизировать мои задачи Jira";
 "jira.sync_hint" = "Импортировать назначенные незавершённые задачи в бэклог и обновить связанные задачи. Локальный прогресс сохранится.";
+
+"jira.choose_site" = "Выберите сайт Jira";
+
+"jira.error.credentialsUnavailable" = "Не удалось получить доступ к авторизации Jira в Связке ключей. Разблокируйте её и повторите попытку.";
+
+"updates.title" = "Обновления";
+
+"updates.check" = "Проверить обновления…";
+
+"updates.install" = "Обновить и перезапустить…";
+
+"updates.releases" = "Релизы на GitHub";
+
+"updates.automatic" = "Автоматически проверять обновления";
+
+"updates.checking" = "Проверяем обновления…";
+
+"updates.available" = "Доступна версия %@.";
+
+"updates.current" = "У вас последняя совместимая версия.";
+
+"updates.failed" = "Не удалось проверить обновления. Повторите попытку или откройте релизы на GitHub.";
+
+"updates.installed_only" = "Обновления доступны в установленной версии приложения.";
+
+"updates.ready" = "Обновления загружаются из релизов GitHub.";
+
+"settings.about.credits" = "Авторы и участники";
+
+"settings.about.license" = "На основе Open Vibe Island. Лицензия GPL v3.";
+
+"jira.authorizing" = "Ожидание авторизации Jira в браузере…";

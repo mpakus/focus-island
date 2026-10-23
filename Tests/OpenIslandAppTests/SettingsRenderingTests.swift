@@ -52,7 +52,7 @@ struct SettingsRenderingTests {
         #expect(text.contains("trust"))
         #expect(text.contains("Install"))
         #expect(text.contains("Jira authorization"))
-        #expect(text.contains("Authorize Jira"))
+        #expect(text.contains("Integrate Jira"))
         if installed {
             #expect(text.contains("Configured"))
             #expect(text.contains("Uninstall"))
@@ -88,6 +88,14 @@ struct SettingsRenderingTests {
         #expect(text.contains("Codex"))
     }
 
+    @Test func aboutShowsUpdatesAndBothGenerationsOfCredits() async throws {
+        let model = AppModel(focusStore: try FocusStore.inMemory(), claudeRegistry: .temporaryForTesting(), runBackfill: false)
+        let text = try await render(AboutSettingsPane(model: model), name: "about", model: model)
+        for label in ["Check for Updates", "GitHub releases", "Renat", "MpaK", "aomega.co", "Austin", "Texas", "Dias Zhanabayev", "Open Vibe Island"] {
+            #expect(text.contains(label))
+        }
+    }
+
     @Test func jiraSetupImportAndLinkedTaskRender() async throws {
         let store = try FocusStore.inMemory()
         let model = AppModel(focusStore: store, claudeRegistry: .temporaryForTesting(), runBackfill: false)
@@ -95,8 +103,8 @@ struct SettingsRenderingTests {
         let focus = FocusCoordinator(store: store, defaults: defaults, launcher: RecordingLauncher(), runBackfill: false, jiraClient: StubJiraClient())
         focus.start(initialSessions: [])
         let setup = try await render(JiraConnectionView(focus: focus).padding(), name: "jira-setup", model: model)
-        #expect(setup.contains("Atlassian CLI"))
-        #expect(setup.contains("acli jira auth login"))
+        #expect(setup.contains("Integrate Jira"))
+        #expect(!setup.contains("acli"))
         focus.jira.connect()
         await focus.jira.operation?.value
         let connected = try await render(JiraConnectionView(focus: focus).padding(), name: "jira-connected", model: model)

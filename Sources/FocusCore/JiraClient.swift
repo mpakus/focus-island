@@ -1,9 +1,16 @@
 import Foundation
 
 public protocol JiraProviding: Sendable {
+    func authorize() async throws -> JiraConnection
+    func disconnect() throws
     func connect() async throws -> JiraConnection
     func search(connection: JiraConnection) async throws -> [JiraIssue]
     func issue(id: String, connection: JiraConnection) async throws -> JiraIssue
+}
+
+public extension JiraProviding {
+    func authorize() async throws -> JiraConnection { try await connect() }
+    func disconnect() throws { }
 }
 
 public struct JiraCLIClient: JiraProviding {

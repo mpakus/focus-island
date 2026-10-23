@@ -30,6 +30,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/gonzalezreal/swift-markdown-ui", from: "2.4.1"),
         .package(url: "https://github.com/groue/GRDB.swift", from: "7.0.0"),
+        .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.10.0"),
     ],
     targets: [
         .target(
@@ -57,7 +58,9 @@ let package = Package(
                 "OpenIslandCore",
                 "FocusCore",
                 .product(name: "MarkdownUI", package: "swift-markdown-ui"),
-            ]
+                .product(name: "Sparkle", package: "Sparkle"),
+            ],
+            linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
         ),
         .testTarget(
             name: "OpenIslandCoreTests",

@@ -58,6 +58,7 @@ command cp "$app_binary" "$bundle_binary"
 command cp "$hooks_binary" "$bundle_dir/Contents/Helpers/OpenIslandHooks"
 command cp "$setup_binary" "$bundle_dir/Contents/Helpers/OpenIslandSetup"
 command cp "$brand_icon" "$bundle_dir/Contents/Resources/OpenIsland.icns"
+zsh "$repo_root/scripts/embed-sparkle.sh" "$bundle_dir"
 chmod +x "$bundle_binary" "$bundle_dir/Contents/Helpers/OpenIslandHooks" "$bundle_dir/Contents/Helpers/OpenIslandSetup"
 
 # Copy the shared catalog, then move it into Contents/Resources before signing.

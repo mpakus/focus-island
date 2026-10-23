@@ -29,6 +29,11 @@ if [[ ! -f "$notes_path" ]]; then
     echo "Missing release notes: docs/releases/$tag.md (first line: # Focus Island $tag — Title)" >&2
     exit 1
 fi
+sparkle_tools="$(zsh scripts/sparkle-tools.sh)"
+[[ "$("$sparkle_tools/generate_keys" --account focus-island -p)" == "$(cat config/packaging/sparkle-public-key.txt)" ]] || {
+    echo "The Focus Island update signing key is missing or does not match the committed public key." >&2
+    exit 1
+}
 if [[ "$sign_identity" == "-" ]]; then
     sign_identity=""
 elif ! security find-identity -p codesigning -v | grep -q "\"$sign_identity\""; then
@@ -48,12 +53,22 @@ OPEN_ISLAND_VERSION="$version" \
 OPEN_ISLAND_SIGN_IDENTITY="$sign_identity" \
     zsh scripts/package-app.sh
 
+appcast_dir="$package_root/appcast"
+rm -rf "$appcast_dir"
+mkdir -p "$appcast_dir"
+cp "$package_root/$app_name.zip" "$appcast_dir/Focus.Island.zip"
+cp "$notes_path" "$appcast_dir/Focus.Island.md"
+"$sparkle_tools/generate_appcast" --account focus-island --maximum-deltas 0 --embed-release-notes \
+    --download-url-prefix "https://github.com/mpakus/focus-island/releases/download/$tag/" \
+    --link "https://github.com/mpakus/focus-island/releases/tag/$tag" "$appcast_dir"
+
 git tag -a "$tag" -m "$title"
 git push origin "$tag"
 
 gh release create "$tag" \
     "$package_root/$app_name.dmg" \
     "$package_root/$app_name.zip" \
+    "$appcast_dir/appcast.xml" \
     --title "$title" \
     --notes-file "$body_path" \
     --verify-tag

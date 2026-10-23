@@ -1001,10 +1001,10 @@
 /* Jira import */
 "jira.disconnect" = "Disconnect Jira";
 "jira.disconnect_hint" = "Local tasks and history stay on this Mac. Atlassian CLI remains signed in.";
-"jira.setup_hint" = "Install Atlassian CLI, choose Authorize Jira to finish browser sign-in in Terminal, then connect here. Focus Island only reads your Jira issues.";
+"jira.setup_hint" = "Connect your Jira account in your browser. Focus Island only reads your issues.";
 "jira.install_cli" = "Install Atlassian CLI";
 "jira.copy_login" = "Copy command";
-"jira.connect" = "Connect signed-in account";
+"jira.connect" = "Connect";
 "jira.loading" = "Reading Jira…";
 "jira.refreshed" = "Last full refresh: %@";
 "jira.add_from_jira" = "Add from Jira";
@@ -1022,7 +1022,7 @@
 "jira.local_progress" = "Columns, notes, criteria and focus time are local. Closing this task does not change Jira.";
 "jira.partial_refresh" = "%@ issues are unavailable. Their cached content and local work were kept.";
 "jira.error.cliMissing" = "Install Atlassian CLI in /opt/homebrew/bin, /usr/local/bin or ~/.local/bin, then try again.";
-"jira.error.signInRequired" = "Sign in with acli jira auth login --web in Terminal, then reconnect.";
+"jira.error.signInRequired" = "Your Jira connection has expired. Choose Integrate Jira to sign in again.";
 "jira.error.accountChanged" = "The Atlassian CLI account changed. Disconnect and reconnect Jira to continue.";
 "jira.error.invalidResponse" = "Jira returned incomplete or unsupported data. Update Atlassian CLI and retry. Existing tasks were kept.";
 "jira.error.unavailable" = "An issue is unavailable or access was denied. Existing tasks were kept.";
@@ -1030,6 +1030,38 @@
 "jira.error.timedOut" = "Jira took too long to respond. Try refreshing again later; local work was kept.";
 "jira.error.databaseUnavailable" = "Jira import is disabled because the local database is unavailable. Restart after resolving the storage problem.";
 "jira.authorization" = "Jira authorization";
-"jira.authorize" = "Authorize Jira…";
+"jira.authorize" = "Integrate Jira";
 "jira.sync_assigned" = "Sync my Jira tasks";
 "jira.sync_hint" = "Import assigned, unfinished issues into Backlog and refresh linked tasks. Local progress stays unchanged.";
+
+"jira.choose_site" = "Choose your Jira site";
+
+"jira.error.credentialsUnavailable" = "Focus Island could not access Jira authorization in Keychain. Unlock your Keychain and try again.";
+
+"updates.title" = "Updates";
+
+"updates.check" = "Check for Updates…";
+
+"updates.install" = "Update and Restart…";
+
+"updates.releases" = "GitHub releases";
+
+"updates.automatic" = "Automatically check for updates";
+
+"updates.checking" = "Checking for updates…";
+
+"updates.available" = "Version %@ is available.";
+
+"updates.current" = "You have the latest compatible version.";
+
+"updates.failed" = "Could not check for updates. Try again or open GitHub releases.";
+
+"updates.installed_only" = "Updates are available in the installed release app.";
+
+"updates.ready" = "Updates are downloaded from GitHub releases.";
+
+"settings.about.credits" = "Authors and contributors";
+
+"settings.about.license" = "Based on Open Vibe Island. Licensed under GPL v3.";
+
+"jira.authorizing" = "Waiting for Jira authorization in your browser…";

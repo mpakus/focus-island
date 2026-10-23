@@ -125,16 +125,13 @@ struct JiraCoordinatorTests {
         #expect(await client.requests == ["connect", "search"])
     }
 
-    @Test func authorizationUsesTheInstalledCLIAndReportsLaunchFailures() throws {
-        let coordinator = JiraCoordinator(store: try FocusStore.inMemory(), defaults: defaults(), durable: true, client: StubJiraClient())
-        let launcher = RecordingLauncher()
-        coordinator.authorize(executable: nil, launcher: launcher)
-        #expect(coordinator.error != nil && launcher.commands.isEmpty)
-        coordinator.authorize(executable: URL(fileURLWithPath: "/tmp/quoted ' folder/acli"), launcher: launcher)
-        #expect(launcher.commands == ["'/tmp/quoted '\\'' folder/acli' jira auth login --web"])
-        #expect(coordinator.error == nil && coordinator.connection == nil)
-        coordinator.authorize(executable: URL(fileURLWithPath: "/tmp/acli"), launcher: ThrowingLauncher(error: JiraError.commandFailed))
-        #expect(coordinator.error != nil)
+    @Test func browserAuthorizationConnectsWithoutASeparateConnectAction() async throws {
+        let client = StubJiraClient()
+        let coordinator = JiraCoordinator(store: try FocusStore.inMemory(), defaults: defaults(), durable: true, client: client)
+        coordinator.authorize()
+        await coordinator.operation?.value
+        #expect(coordinator.connection != nil && coordinator.issues.count == 1 && coordinator.error == nil)
+        #expect(await client.requests == ["connect", "search"])
     }
 
     @Test func syncImportsAssignmentsAndRefreshesMissingLinkedIssuesWithoutDuplicates() async throws {
@@ -224,5 +221,26 @@ struct JiraCoordinatorTests {
         #expect(try board.snapshot().tasks.count == count)
         #expect(try board.snapshot().task(id: task.id)?.note == task.note)
         #expect(try board.snapshot().task(id: task.id)?.boardColumn == .done)
+    }
+
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["FOCUS_ISLAND_JIRA_BROWSER_KEYCHAIN"] != nil))
+    func liveBrowserConnectionSyncsADisposableBoard() async throws {
+        let service = try #require(ProcessInfo.processInfo.environment["FOCUS_ISLAND_JIRA_BROWSER_KEYCHAIN"])
+        let client = JiraMCPClient(credentials: JiraKeychain(service: service), browser: { _ in throw JiraError.signInRequired }, chooseSite: { $0[0] })
+        let store = try FocusStore.inMemory()
+        let coordinator = JiraCoordinator(store: store, defaults: defaults(), durable: true, client: client)
+        coordinator.connect()
+        await coordinator.operation?.value
+        try #require(coordinator.connection != nil, "Browser connection: \(coordinator.error ?? "cancelled")")
+        coordinator.syncAssignedIssues(links: [])
+        await coordinator.operation?.value
+        #expect(coordinator.error == nil)
+        let board = BoardService(store: store)
+        let before = try board.snapshot()
+        #expect(before.tasks.count == coordinator.issues.count)
+        coordinator.syncAssignedIssues(links: Array(before.jiraLinks.values))
+        await coordinator.operation?.value
+        #expect(coordinator.error == nil)
+        #expect(try board.snapshot().tasks.map(\.id).sorted() == before.tasks.map(\.id).sorted())
     }
 }

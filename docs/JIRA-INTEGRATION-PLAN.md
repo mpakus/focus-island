@@ -1,23 +1,25 @@
 # Jira tasks on the Focus Island board
 
-Status: opt-in CLI integration for v0.5.2, 2026-10-23, with Setup authorization and manual assignment sync. Original analysis baseline: `c9282f3`; the original proposed design is preserved in commit `2e38acd`.
+Status: browser authorization for v0.6.0, 2026-10-23, with manual assignment sync. Original analysis baseline: `c9282f3`; the original proposed design is preserved in commit `2e38acd`.
 
 ## Result and implementation decision
 
 The board can import selected assigned Jira Cloud issues into Backlog or Todo, refresh source text/status, and use the existing Claude/Codex sessions, timers, notes, criteria, and reports. Jira status and local progress are independent. This integration never transitions, edits, comments on, or deletes Jira issues.
 
-The initial plan proposed a personal token experiment and left public authentication unresolved. The implementation instead delegates authentication and reads to **Atlassian's official CLI**, installed separately by the user. It uses documented browser OAuth through `acli jira auth login --web`, with no embedded OAuth secret, token-entry form, credential-file reading, hosted broker, or new Swift dependency. This change keeps the app local and provides a distributable client architecture. It is not a certification of Atlassian policy compliance or every tenant's access policies.
+The v0.6.0 client uses **Atlassian's hosted MCP v2 service** with dynamically registered public-client OAuth, PKCE S256, random state, and a temporary listener bound exclusively to `127.0.0.1`. The browser returns to that listener and the app activates after connecting. No separate CLI, client secret, token entry, Node proxy, or Focus Island server is needed. Requested scopes are `read:me offline_access read:jira:agent-interface search:jira:agent-interface`.
 
-[Official CLI authentication](https://developer.atlassian.com/cloud/acli/reference/commands/jira-auth-login/) · [CLI installation](https://developer.atlassian.com/cloud/acli/guides/install-macos/) · [Search command](https://developer.atlassian.com/cloud/acli/reference/commands/jira-workitem-search/) · [Issue read command](https://developer.atlassian.com/cloud/acli/reference/commands/jira-workitem-view/)
+The earlier CLI adapter remains for regression coverage and historical live checks; it is no longer the app's default. Existing linked cards do not need migration. Organization access policy remains enforced by Atlassian; custom callbacks may be blocked, whereas loopback callbacks are documented for native clients.
+
+[Official MCP documentation](https://atlassian.github.io/atlassian-mcp-server/) · [Supported tools](https://support.atlassian.com/atlassian-ai-gateway/docs/supported-tools/) · [Supported callback domains](https://support.atlassian.com/security-and-access-policies/docs/available-atlassian-mcp-server-domains/)
 
 ## User flow
 
-1. Install ACLI. In Settings → Setup → Jira authorization, Authorize Jira launches the installed CLI’s browser login in Terminal using the existing launcher and quoted executable path. Focus Island looks in `/opt/homebrew/bin`, `/usr/local/bin`, and `~/.local/bin`.
-2. Finish sign-in, then Connect signed-in account verifies the CLI account, resolves the site's cloud ID, and requires a successful assigned-issue search.
+1. In Settings → Setup → Jira authorization, Integrate Jira opens the default browser.
+2. Approve read/search access. The callback exchanges the code, saves credentials in Keychain, selects a site if needed, and verifies profile/discovery before showing connected state.
 3. Sync my Jira tasks, available in Setup and the board’s Jira menu, imports all assigned unfinished issues into Backlog and refreshes existing linked cards. It does not start focus or timers. New imports are fetched before one atomic batch insert; refresh retains cached data on failures. Linked issues missing from discovery are fetched independently, and detach/delete during a pending sync is respected. For selected imports, Board → Jira → Add from Jira lists assigned, unfinished issues with their issue key (including the project key), type, status, and priority. Existing imports show “On board”. Select issues, a local destination, and optionally a repository folder.
 4. Import fetches selected descriptions and inserts the batch atomically. Backlog is the default; importing never starts focus or a timer.
 5. Work with the task as usual. Its issue key opens Jira. Source title/description are read-only while linked; notes and criteria remain local and editable.
-6. Refresh linked tasks manually. Reload issues refreshes the discovery list separately. Cached cards work offline. Disconnect cancels pending work, clears the app's connection metadata, and keeps cards/history; it leaves the CLI login alone.
+6. Refresh linked tasks manually. Reload issues refreshes the discovery list separately. Cached cards work offline. Disconnect cancels pending work, clears the app's connection metadata and local Keychain credentials, and keeps cards/history. Server-side revocation is available in the user's Atlassian account.
 7. Detach explicitly removes a card's Jira link, keeping its current text and local history. Delete uses the existing local task confirmation and cleanup and never deletes the remote issue.
 
 The interface is localized into English, Spanish, and Russian. Issue content remains as written.
@@ -26,8 +28,8 @@ The interface is localized into English, Spanish, and Russian. Issue content rem
 
 ```mermaid
 flowchart LR
-    Auth[User signs in with Atlassian CLI] --> CLI[Read-only CLI commands]
-    CLI --> Client[JiraCLIClient]
+    Auth[Browser OAuth and loopback callback] --> MCP[Atlassian read tools]
+    MCP --> Client[JiraMCPClient]
     Client --> UI[JiraCoordinator]
     UI --> Store[JiraTaskService and FocusStore]
     Store --> Board[Existing board and task details]
@@ -36,7 +38,8 @@ flowchart LR
 
 | Boundary | Implementation |
 | --- | --- |
-| [JiraClient](../Sources/FocusCore/JiraClient.swift) | Account verification, cloud-ID lookup, fixed search/view arguments, JSON validation, subprocess timeout/cancellation/output limits |
+| [JiraAuthorization](../Sources/FocusCore/JiraAuthorization.swift), [JiraOAuthCallback](../Sources/FocusCore/JiraOAuthCallback.swift) | OAuth discovery, PKCE/state validation, local callback, Keychain and bounded HTTP |
+| [JiraMCPClient](../Sources/FocusCore/JiraMCPClient.swift) | Fixed read tools, account/site verification, pagination, token refresh and response validation |
 | [JiraModels](../Sources/FocusCore/JiraModels.swift) | Typed issue data, validated site and identity, bounded plain-text ADF rendering, persisted link |
 | [JiraTaskService](../Sources/FocusCore/JiraTaskService.swift) | Atomic selected import, idempotency, refresh, unavailable state, detach |
 | [FocusStore](../Sources/FocusCore/FocusStore.swift) | Additive `v7` link table, consistent pre-Jira backup, non-corruption migration failures preserve the database |
@@ -46,7 +49,7 @@ flowchart LR
 | [JiraImportView](../Sources/OpenIslandApp/Focus/Views/JiraImportView.swift) | Connection/setup UI, picker, folder/destination choice, operation status, issue badge |
 | [BoardView](../Sources/OpenIslandApp/Focus/Views/BoardView.swift), [TaskDetailView](../Sources/OpenIslandApp/Focus/Views/TaskDetailView.swift), [FocusSettingsPane](../Sources/OpenIslandApp/Focus/Views/FocusSettingsPane.swift) | Existing user-facing entry points |
 
-Connection metadata (site, email, cloud ID) is stored in UserDefaults; the app stores no authentication secret. Existing `FocusTask` UUIDs and all relationships remain unchanged. `jira_task_links` is keyed by task ID with a unique `(cloudID, issueID)` constraint. Keys can change without creating another task. The side table records remote status/category, assignee ID, remote update time, successful fetch time, and availability. Summary/description stay in the existing task columns, protected from local edits while linked.
+Connection metadata (site, email, cloud ID) is stored in UserDefaults; OAuth access/refresh tokens and client metadata are stored only in macOS Keychain. Existing `FocusTask` UUIDs and all relationships remain unchanged. `jira_task_links` is keyed by task ID with a unique `(cloudID, issueID)` constraint. Keys can change without creating another task. The side table records remote status/category, assignee ID, remote update time, successful fetch time, and availability. Summary/description stay in the existing task columns, protected from local edits while linked.
 
 ## Read and preservation contract
 
@@ -56,11 +59,9 @@ Discovery uses:
 assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC, key ASC
 ```
 
-The CLI search requests `summary,status,issuetype,priority,assignee` with `--paginate --json`. ACLI search rejects `project` and `updated`; those fields and `description` are requested only by the issue-detail command. Discovery accepts a missing update timestamp, but detail reads, imports, and refreshes require a valid timestamp before writing. The app validates the complete response before publishing it and rejects incomplete pagination envelopes. Details are read by stable issue ID independently of the discovery query, so completed and reassigned imported issues can still refresh. No local task is removed because it disappeared from search. An unavailable issue keeps its cached text/history; a command failure leaves prior results intact.
+Search requests summary/status/type/priority/assignee, paging until completion and rejecting repeated cursors. Detail requests additionally include project, description, and updated time. Discovery accepts missing timestamps; imports/refresh require valid detail timestamps. Both JSON and SSE transport envelopes and Atlassian structured issue nodes are supported. Markdown descriptions become readable local snapshots.
 
-The CLI owns HTTP transport, pagination and any HTTP retry behavior. Focus Island bounds each command to 90 seconds and 16 MiB of output, uses private temporary files, discards raw diagnostics, and cancels the process on disconnect. It does not blindly retry failed commands. Data reads use explicit argument arrays without a shell; remote content is never executed. The app does not inspect CLI credential files. Before and after each read, CLI account/site must match the saved connection; account changes require reconnection.
-
-ACLI 1.3 exposes human-readable auth status rather than JSON. The adapter accepts the inspected Site/Email labels and fails closed on unfamiliar output. This is a compatibility boundary requiring live acceptance for future CLI versions. Cloud IDs come from Atlassian's documented unauthenticated `/_edge/tenant_info` endpoint. Ordinary HTTPS `*.atlassian.net` sites are supported; custom domains, Government Cloud, and Data Center are not claimed.
+Only `getAccessibleAtlassianResources`, `executeRead` with `getJiraCurrentUser`, `searchJiraIssuesUsingJql`, and `getJiraIssue` are called. HTTPS OAuth endpoints are restricted to Atlassian hosts and redirects are refused. HTTP responses are limited to 16 MiB and 120 seconds. Credentials refresh before expiry; an expired MCP session reinitializes once. Disconnect cancels pending work. No raw credentials or response diagnostics are logged, and no remote content is executed.
 
 A refreshed Jira issue can update source text and the remote badge, but never local column/order, completion time, notes, criteria, prompts, project folder, sessions, activity, or pomodoros. Saving or closing an editor opened before a refresh cannot restore stale source text. Refresh applies only if its original link is still current; late responses cannot undo detach/delete. Disconnect invalidates pending results before database writes.
 
@@ -107,4 +108,8 @@ Setup authorization and connected sync controls passed rendered UI checks and vi
 
 ## Scope retained for later
 
-Automatic polling, custom JQL/filters, simultaneous accounts, workflow mapping/transitions, comments, worklogs, attachments, sprint/board mirroring, custom acceptance-criteria extraction, and native OAuth are deferred. Reassignment is retained as remote assignee metadata; this version does not claim a separate “no longer assigned to me” indicator. Manual refresh and separate Jira/local status are the supported behavior.
+Automatic polling, custom JQL/filters, simultaneous accounts, workflow mapping/transitions, comments, worklogs, attachments, sprint/board mirroring, custom acceptance-criteria extraction are deferred. Reassignment is retained as remote assignee metadata; this version does not claim a separate “no longer assigned to me” indicator. Manual refresh and separate Jira/local status are the supported behavior.
+
+## v0.6.0 verification
+
+Full `bin/test.dev`: 930 tests in 89 suites passed, with live checks skipped. All 1002 localization keys pass. Live browser consent and update signing await user interaction.
