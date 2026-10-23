@@ -10,13 +10,17 @@ actor StubJiraClient: JiraProviding {
     var issueStarted = false
     var pending: CheckedContinuation<Void, Never>?
     var requests: [String] = []
+    var assignedIDs = ["10001"]
+    var failingIssueID: String?
 
     func setFailure() { failSearch = true }
     func hold() { holdIssue = true }
-    func release() { pending?.resume(); pending = nil }
+    func release() { holdIssue = false; pending?.resume(); pending = nil }
+    func assign(_ ids: [String]) { assignedIDs = ids }
+    func failIssue(_ id: String) { failingIssueID = id }
 
-    static func fixture(title: String = "Assigned Jira issue") throws -> JiraIssue {
-        let object: [String: Any] = ["id": "10001", "key": "TEST-1", "fields": ["summary": title, "updated": "2026-10-23T10:00:00.000Z", "status": ["name": "In Progress"], "description": ["type": "doc", "content": [["type": "paragraph", "content": [["type": "text", "text": "Source description"]]]]]]]
+    static func fixture(id: String = "10001", title: String = "Assigned Jira issue") throws -> JiraIssue {
+        let object: [String: Any] = ["id": id, "key": id == "10001" ? "TEST-1" : "TEST-\(id)", "fields": ["summary": title, "updated": "2026-10-23T10:00:00.000Z", "status": ["name": "In Progress"], "description": ["type": "doc", "content": [["type": "paragraph", "content": [["type": "text", "text": "Source description"]]]]]]]
         return try JSONDecoder().decode(JiraIssue.self, from: JSONSerialization.data(withJSONObject: object))
     }
 
@@ -24,13 +28,14 @@ actor StubJiraClient: JiraProviding {
     func search(connection: JiraConnection) async throws -> [JiraIssue] {
         requests.append("search")
         if failSearch { throw JiraError.commandFailed }
-        return [try Self.fixture()]
+        return try assignedIDs.map { try Self.fixture(id: $0) }
     }
     func issue(id: String, connection: JiraConnection) async throws -> JiraIssue {
         requests.append("read")
+        if id == failingIssueID { throw JiraError.commandFailed }
         issueStarted = true
         if holdIssue { await withCheckedContinuation { pending = $0 } }
-        return try Self.fixture(title: "Refreshed issue")
+        return try Self.fixture(id: id, title: "Refreshed issue")
     }
 }
 
@@ -64,14 +69,15 @@ struct JiraCoordinatorTests {
         #expect(await client.requests == ["connect", "search", "read", "read"])
     }
 
-    @Test func disconnectDuringImportDiscardsLateResult() async throws {
+    @Test(arguments: [false, true]) func disconnectDuringImportDiscardsLateResult(sync: Bool) async throws {
         let store = try FocusStore.inMemory()
         let client = StubJiraClient()
         let coordinator = JiraCoordinator(store: store, defaults: defaults(), durable: true, client: client)
         coordinator.connect()
         await coordinator.operation?.value
         await client.hold()
-        coordinator.importIssues(ids: ["10001"], column: .todo, projectPath: nil)
+        if sync { coordinator.syncAssignedIssues(links: []) }
+        else { coordinator.importIssues(ids: ["10001"], column: .todo, projectPath: nil) }
         let operation = coordinator.operation
         for _ in 0..<100 {
             if await client.issueStarted { break }
@@ -117,5 +123,106 @@ struct JiraCoordinatorTests {
         #expect(coordinator.error != nil && !coordinator.isBusy)
         #expect(try BoardService(store: store).snapshot().tasks.isEmpty)
         #expect(await client.requests == ["connect", "search"])
+    }
+
+    @Test func authorizationUsesTheInstalledCLIAndReportsLaunchFailures() throws {
+        let coordinator = JiraCoordinator(store: try FocusStore.inMemory(), defaults: defaults(), durable: true, client: StubJiraClient())
+        let launcher = RecordingLauncher()
+        coordinator.authorize(executable: nil, launcher: launcher)
+        #expect(coordinator.error != nil && launcher.commands.isEmpty)
+        coordinator.authorize(executable: URL(fileURLWithPath: "/tmp/quoted ' folder/acli"), launcher: launcher)
+        #expect(launcher.commands == ["'/tmp/quoted '\\'' folder/acli' jira auth login --web"])
+        #expect(coordinator.error == nil && coordinator.connection == nil)
+        coordinator.authorize(executable: URL(fileURLWithPath: "/tmp/acli"), launcher: ThrowingLauncher(error: JiraError.commandFailed))
+        #expect(coordinator.error != nil)
+    }
+
+    @Test func syncImportsAssignmentsAndRefreshesMissingLinkedIssuesWithoutDuplicates() async throws {
+        let store = try FocusStore.inMemory()
+        let client = StubJiraClient()
+        let coordinator = JiraCoordinator(store: store, defaults: defaults(), durable: true, client: client)
+        coordinator.connect()
+        await coordinator.operation?.value
+        coordinator.syncAssignedIssues(links: [])
+        await coordinator.operation?.value
+        let board = BoardService(store: store)
+        var task = try #require(board.snapshot().tasks.first)
+        #expect(task.boardColumn == .backlog)
+        task.note = "Keep local work"
+        try board.updateTask(task)
+        try board.moveTask(id: task.id, to: .done, beforeTaskID: nil)
+        await client.assign(["10002"])
+        for _ in 0..<2 {
+            coordinator.syncAssignedIssues(links: Array(try board.snapshot().jiraLinks.values))
+            await coordinator.operation?.value
+        }
+        let result = try board.snapshot()
+        #expect(result.tasks.count == 2 && result.jiraLinks.count == 2)
+        #expect(result.task(id: task.id)?.note == task.note && result.task(id: task.id)?.boardColumn == .done)
+        #expect(result.tasks.first { $0.id != task.id }?.boardColumn == .backlog)
+        #expect(coordinator.issues.map(\.id) == ["10002"] && coordinator.lastRefresh != nil && coordinator.error == nil)
+    }
+
+    @Test func syncDetailFailureLeavesTheWholeNewBatchUnimported() async throws {
+        let store = try FocusStore.inMemory()
+        let client = StubJiraClient()
+        let coordinator = JiraCoordinator(store: store, defaults: defaults(), durable: true, client: client)
+        coordinator.connect()
+        await coordinator.operation?.value
+        await client.assign(["10001", "10002"])
+        await client.failIssue("10002")
+        coordinator.syncAssignedIssues(links: [])
+        await coordinator.operation?.value
+        #expect(try BoardService(store: store).snapshot().tasks.isEmpty)
+        #expect(coordinator.error != nil && coordinator.lastRefresh == nil)
+    }
+
+    @Test(arguments: [false, true]) func syncCannotRestoreADetachedOrDeletedLink(delete: Bool) async throws {
+        let store = try FocusStore.inMemory()
+        let client = StubJiraClient()
+        let coordinator = JiraCoordinator(store: store, defaults: defaults(), durable: true, client: client)
+        coordinator.connect()
+        await coordinator.operation?.value
+        let id = try JiraTaskService(store: store).importIssues([StubJiraClient.fixture()], connection: #require(coordinator.connection))[0]
+        let board = BoardService(store: store)
+        await client.hold()
+        coordinator.syncAssignedIssues(links: Array(try board.snapshot().jiraLinks.values))
+        for _ in 0..<100 {
+            if await client.issueStarted { break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(await client.issueStarted)
+        if delete { try board.deleteTask(id: id) } else { coordinator.detach(taskID: id) }
+        await client.release()
+        await coordinator.operation?.value
+        #expect(try board.snapshot().jiraLinks.isEmpty)
+        #expect(try board.snapshot().tasks.count == (delete ? 0 : 1))
+    }
+
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["FOCUS_ISLAND_JIRA_LIVE_EXECUTABLE"] != nil))
+    func liveSyncUsesADisposableBoard() async throws {
+        let path = try #require(ProcessInfo.processInfo.environment["FOCUS_ISLAND_JIRA_LIVE_EXECUTABLE"])
+        let client = JiraCLIClient(run: { try await JiraCommand.run($0, executable: URL(fileURLWithPath: path)) })
+        let store = try FocusStore.inMemory()
+        let coordinator = JiraCoordinator(store: store, defaults: defaults(), durable: true, client: client)
+        coordinator.connect()
+        await coordinator.operation?.value
+        #expect(coordinator.error == nil)
+        coordinator.syncAssignedIssues(links: [])
+        await coordinator.operation?.value
+        #expect(coordinator.error == nil)
+        let board = BoardService(store: store)
+        var task = try #require(board.snapshot().tasks.first)
+        let count = try board.snapshot().tasks.count
+        #expect(count == coordinator.issues.count)
+        task.note = "Disposable sync verification"
+        try board.updateTask(task)
+        try board.moveTask(id: task.id, to: .done, beforeTaskID: nil)
+        coordinator.syncAssignedIssues(links: Array(try board.snapshot().jiraLinks.values))
+        await coordinator.operation?.value
+        #expect(coordinator.error == nil && coordinator.lastRefresh != nil)
+        #expect(try board.snapshot().tasks.count == count)
+        #expect(try board.snapshot().task(id: task.id)?.note == task.note)
+        #expect(try board.snapshot().task(id: task.id)?.boardColumn == .done)
     }
 }

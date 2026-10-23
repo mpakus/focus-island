@@ -131,6 +131,8 @@ struct BoardRootView: View {
             }
             if state.tab == .board {
                 Menu("Jira") {
+                    Button(L10n.tr("jira.sync_assigned")) { focus.jira.syncAssignedIssues(links: Array(focus.board.jiraLinks.values)) }
+                        .disabled(focus.jira.connection == nil || focus.jira.isBusy || focus.storeIsInMemoryFallback)
                     Button(L10n.tr("jira.add_from_jira")) { showsJira = true }
                     Button(L10n.tr("jira.refresh_linked")) { focus.jira.refresh(links: Array(focus.board.jiraLinks.values)) }
                         .disabled(focus.jira.connection == nil || focus.jira.isBusy)

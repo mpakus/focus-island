@@ -1001,7 +1001,7 @@
 /* Jira import */
 "jira.disconnect" = "Disconnect Jira";
 "jira.disconnect_hint" = "Local tasks and history stay on this Mac. Atlassian CLI remains signed in.";
-"jira.setup_hint" = "Install Atlassian CLI, sign in from Terminal, then connect here. Focus Island only reads your Jira issues.";
+"jira.setup_hint" = "Install Atlassian CLI, choose Authorize Jira to finish browser sign-in in Terminal, then connect here. Focus Island only reads your Jira issues.";
 "jira.install_cli" = "Install Atlassian CLI";
 "jira.copy_login" = "Copy command";
 "jira.connect" = "Connect signed-in account";
@@ -1029,3 +1029,7 @@
 "jira.error.commandFailed" = "Jira could not finish this operation. Check your connection and Atlassian CLI access, then retry. Local work is safe.";
 "jira.error.timedOut" = "Jira took too long to respond. Try refreshing again later; local work was kept.";
 "jira.error.databaseUnavailable" = "Jira import is disabled because the local database is unavailable. Restart after resolving the storage problem.";
+"jira.authorization" = "Jira authorization";
+"jira.authorize" = "Authorize Jira…";
+"jira.sync_assigned" = "Sync my Jira tasks";
+"jira.sync_hint" = "Import assigned, unfinished issues into Backlog and refresh linked tasks. Local progress stays unchanged.";

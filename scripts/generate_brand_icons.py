@@ -7,7 +7,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageDraw, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -289,22 +289,19 @@ def render_badge(size: int) -> Image.Image:
 
 
 def write_app_icons() -> None:
-    # v6 Bar+Dot master is the sole source. Run
-    # `swift scripts/generate-v6-appicon.swift` if it's missing.
-    source_path = BRAND_ROOT / "app-icon-v6.png"
+    source_path = BRAND_ROOT / "icon.png"
     if not source_path.exists():
         raise SystemExit(
             f"missing brand master at {source_path.relative_to(REPO_ROOT)} — "
-            "run `swift scripts/generate-v6-appicon.swift` first"
+            "add Assets/Brand/icon.png first"
         )
 
     src = Image.open(source_path).convert("RGBA")
     for filename, _, _, pixel_size in APP_ICON_SPECS:
         canvas = Image.new("RGBA", (pixel_size, pixel_size), (0, 0, 0, 0))
         content_size = max(1, round(pixel_size * MACOS_ICON_CONTENT_RATIO))
-        offset = (pixel_size - content_size) // 2
-        resized = src.resize((content_size, content_size), Image.Resampling.LANCZOS)
-        canvas.alpha_composite(resized, (offset, offset))
+        resized = ImageOps.contain(src, (content_size, content_size), Image.Resampling.LANCZOS)
+        canvas.alpha_composite(resized, ((pixel_size - resized.width) // 2, (pixel_size - resized.height) // 2))
         canvas.save(APP_ICONSET_DIR / filename)
         canvas.save(ICONSET_DIR / filename)
 

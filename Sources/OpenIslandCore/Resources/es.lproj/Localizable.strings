@@ -966,7 +966,7 @@
 /* Jira import */
 "jira.disconnect" = "Desconectar Jira";
 "jira.disconnect_hint" = "Las tareas y el historial permanecen en este Mac. Atlassian CLI sigue conectado.";
-"jira.setup_hint" = "Instala Atlassian CLI, inicia sesión desde Terminal y conecta aquí. Focus Island solo lee tus incidencias de Jira.";
+"jira.setup_hint" = "Instala Atlassian CLI, elige Autorizar Jira para completar el inicio de sesión en el navegador desde Terminal y conéctate aquí. Focus Island solo lee tus incidencias de Jira.";
 "jira.install_cli" = "Instalar Atlassian CLI";
 "jira.copy_login" = "Copiar comando";
 "jira.connect" = "Conectar cuenta iniciada";
@@ -994,3 +994,7 @@
 "jira.error.commandFailed" = "Jira no pudo completar la operación. Comprueba la conexión y el acceso de Atlassian CLI y reintenta. El trabajo local está guardado.";
 "jira.error.timedOut" = "Jira tardó demasiado en responder. Actualiza más tarde; el trabajo local se conservó.";
 "jira.error.databaseUnavailable" = "La importación de Jira está desactivada porque la base local no está disponible. Reinicia tras resolver el problema.";
+"jira.authorization" = "Autorización de Jira";
+"jira.authorize" = "Autorizar Jira…";
+"jira.sync_assigned" = "Sincronizar mis tareas de Jira";
+"jira.sync_hint" = "Importa las incidencias asignadas sin finalizar a Pendientes y actualiza las tareas vinculadas. Se conserva el progreso local.";

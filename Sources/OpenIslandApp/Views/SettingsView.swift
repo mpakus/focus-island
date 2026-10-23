@@ -408,6 +408,9 @@ struct SetupSettingsPane: View {
 
     var body: some View {
         Form {
+            Section(L10n.tr("jira.authorization")) {
+                JiraConnectionView(focus: model.focus)
+            }
             if !model.hasAnyInstalledAgent {
                 emptyStateBanner
             }

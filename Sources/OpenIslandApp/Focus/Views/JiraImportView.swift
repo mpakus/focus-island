@@ -4,18 +4,23 @@ import OpenIslandCore
 import SwiftUI
 
 struct JiraConnectionView: View {
-    @Bindable var jira: JiraCoordinator
+    @Bindable var focus: FocusCoordinator
+    private var jira: JiraCoordinator { focus.jira }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let connection = jira.connection {
                 Text(connection.site).fontWeight(.medium)
                 Text(connection.email).foregroundStyle(.secondary)
+                Button(L10n.tr("jira.sync_assigned")) { jira.syncAssignedIssues(links: Array(focus.board.jiraLinks.values)) }
+                    .disabled(jira.isBusy || focus.storeIsInMemoryFallback)
+                Text(L10n.tr("jira.sync_hint")).font(.caption).foregroundStyle(.secondary)
                 Button(L10n.tr("jira.disconnect")) { jira.disconnect() }
                 Text(L10n.tr("jira.disconnect_hint")).font(.caption).foregroundStyle(.secondary)
             } else {
                 Text(L10n.tr("jira.setup_hint"))
                 Link(L10n.tr("jira.install_cli"), destination: URL(string: "https://developer.atlassian.com/cloud/acli/guides/install-macos/")!)
+                Button(L10n.tr("jira.authorize")) { jira.authorize() }.disabled(jira.isBusy)
                 HStack {
                     Text("acli jira auth login --web").font(.system(.caption, design: .monospaced)).textSelection(.enabled)
                     Button(L10n.tr("jira.copy_login")) {
@@ -65,7 +70,7 @@ struct JiraImportView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(L10n.tr("jira.add_from_jira")).font(.title2)
             if focus.jira.connection == nil {
-                JiraConnectionView(jira: focus.jira)
+                JiraConnectionView(focus: focus)
             } else {
                 Text(L10n.tr("jira.import_hint")).foregroundStyle(.secondary)
                 TextField(L10n.tr("jira.search"), text: $search)

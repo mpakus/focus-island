@@ -50,9 +50,6 @@ struct FocusSettingsPane: View {
                 Toggle(L10n.tr("focus.show_hints_while_the_agent_works"), isOn: $focus.settings.nextActionEnabled)
                 Stepper(L10n.tr("focus.after_s", "\(Int(focus.settings.nextActionDelay))"), value: $focus.settings.nextActionDelay, in: 5...120, step: 5)
             }
-            Section("Jira") {
-                JiraConnectionView(jira: focus.jira)
-            }
             Section(L10n.tr("focus.focus_timer")) {
                 Stepper(L10n.tr("focus.focus_min", "\(focus.settings.pomodoroFocusMinutes)"), value: $focus.settings.pomodoroFocusMinutes, in: FocusSettings.pomodoroFocusRange, step: 5)
                 Stepper(L10n.tr("focus.min_break", "\(focus.settings.pomodoroBreakMinutes)"), value: $focus.settings.pomodoroBreakMinutes, in: FocusSettings.pomodoroBreakRange)

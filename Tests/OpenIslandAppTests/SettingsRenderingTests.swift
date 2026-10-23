@@ -51,6 +51,8 @@ struct SettingsRenderingTests {
         #expect(text.contains("/hooks"))
         #expect(text.contains("trust"))
         #expect(text.contains("Install"))
+        #expect(text.contains("Jira authorization"))
+        #expect(text.contains("Authorize Jira"))
         if installed {
             #expect(text.contains("Configured"))
             #expect(text.contains("Uninstall"))
@@ -92,11 +94,13 @@ struct SettingsRenderingTests {
         let defaults = UserDefaults(suiteName: "JiraRendering.\(UUID().uuidString)")!
         let focus = FocusCoordinator(store: store, defaults: defaults, launcher: RecordingLauncher(), runBackfill: false, jiraClient: StubJiraClient())
         focus.start(initialSessions: [])
-        let setup = try await render(JiraConnectionView(jira: focus.jira).padding(), name: "jira-setup", model: model)
+        let setup = try await render(JiraConnectionView(focus: focus).padding(), name: "jira-setup", model: model)
         #expect(setup.contains("Atlassian CLI"))
         #expect(setup.contains("acli jira auth login"))
         focus.jira.connect()
         await focus.jira.operation?.value
+        let connected = try await render(JiraConnectionView(focus: focus).padding(), name: "jira-connected", model: model)
+        #expect(connected.contains("Sync my Jira tasks"))
         let picker = try await render(JiraImportView(focus: focus), name: "jira-import", model: model)
         #expect(picker.contains("TEST-1"))
         #expect(picker.contains("Backlog"))

@@ -44,6 +44,15 @@ final class JiraCoordinator {
         }
     }
 
+    func authorize(executable: URL? = JiraCommand.executable(), launcher: any TerminalLaunching = AppleScriptTerminalLauncher()) {
+        guard !isBusy else { return }
+        guard let executable else { error = JiraError.cliMissing.localizedDescription; return }
+        do {
+            try launcher.run(command: "\(ShellQuoting.singleQuoted(executable.path)) jira auth login --web", in: .terminal)
+            error = nil
+        } catch { self.error = L10n.tr("jira.error.commandFailed") }
+    }
+
     func loadIssues() {
         guard let connection else { return }
         perform {
@@ -69,27 +78,48 @@ final class JiraCoordinator {
         }
     }
 
+    func syncAssignedIssues(links: [JiraTaskLink]) {
+        guard let connection else { return }
+        let linkedIDs = Set(links.filter { $0.cloudID == connection.cloudID }.map(\.issueID))
+        perform {
+            let issues = try await self.client.search(connection: connection)
+            var details: [JiraIssue] = []
+            for issue in issues {
+                details.append(try await self.client.issue(id: issue.id, connection: connection))
+                try Task.checkCancellation()
+            }
+            try Task.checkCancellation()
+            try self.service.importIssues(details.filter { !linkedIDs.contains($0.id) }, connection: connection)
+            self.issues = issues
+            self.onChange?()
+            try await self.refreshLinks(links, connection: connection, fetched: Dictionary(uniqueKeysWithValues: details.map { ($0.id, $0) }))
+        }
+    }
+
     func refresh(links: [JiraTaskLink]) {
         guard let connection else { return }
-        let links = links.filter { $0.cloudID == connection.cloudID }
-        perform {
-            var failed = 0
-            for link in links {
+        perform { try await self.refreshLinks(links, connection: connection) }
+    }
+
+    private func refreshLinks(_ links: [JiraTaskLink], connection: JiraConnection, fetched: [String: JiraIssue] = [:]) async throws {
+        var failed = 0
+        for link in links where link.cloudID == connection.cloudID {
+            try Task.checkCancellation()
+            do {
+                let issue: JiraIssue
+                if let cached = fetched[link.issueID] { issue = cached }
+                else { issue = try await client.issue(id: link.issueID, connection: connection) }
                 try Task.checkCancellation()
-                do {
-                    let issue = try await self.client.issue(id: link.issueID, connection: connection)
-                    try Task.checkCancellation()
-                    try self.service.refresh(issue, link: link)
-                } catch JiraError.unavailable {
-                    try Task.checkCancellation()
-                    try self.service.markUnavailable(link)
-                    failed += 1
-                }
-                self.onChange?()
+                try service.refresh(issue, link: link)
+            } catch JiraError.unavailable {
+                try Task.checkCancellation()
+                try service.markUnavailable(link)
+                failed += 1
             }
-            if failed == 0 { self.lastRefresh = .now }
-            else { self.error = L10n.tr("jira.partial_refresh", "\(failed)") }
+            onChange?()
         }
+        if failed == 0 { lastRefresh = .now }
+        else { error = L10n.tr("jira.partial_refresh", "\(failed)") }
     }
 
     func detach(taskID: String) {
