@@ -136,6 +136,8 @@ Checks: `zsh scripts/harness.sh ci`, tests: `zsh scripts/test-clt.sh`.
 
 Implementation and validation: [Codex monitoring plan and evidence](docs/CODEX-MONITORING-PLAN.md).
 
+Proposed work: [Jira task import and refresh plan](docs/JIRA-INTEGRATION-PLAN.md), with [API and authentication research](docs/JIRA-API-RESEARCH.md). Jira integration is not implemented yet.
+
 ## About
 
 This fork is maintained by **Renat "MpaK" Ibragimov** — [@mpakus on GitHub](https://github.com/mpakus) · [aomega.co](https://aomega.co). It adds Codex monitoring alongside Claude Code and an English, Spanish, and Russian interface.

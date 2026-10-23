@@ -26,6 +26,8 @@ docs/*
 !docs/media/
 !docs/releases/
 !docs/CODEX-MONITORING-PLAN.md
+!docs/JIRA-INTEGRATION-PLAN.md
+!docs/JIRA-API-RESEARCH.md
 
 # Logs and temp files
 *.log
