@@ -50,20 +50,21 @@ public struct JiraIssue: Codable, Equatable, Sendable, Identifiable {
         public let issuetype: Named?
         public let priority: Named?
         public let assignee: Assignee?
-        public let updated: String
+        public let updated: String?
     }
 
     public var updatedAt: Date? {
+        guard let updated = fields.updated else { return nil }
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: fields.updated) ?? ISO8601DateFormatter().date(from: fields.updated)
+        return formatter.date(from: updated) ?? ISO8601DateFormatter().date(from: updated)
     }
 
-    public func validate() throws {
+    public func validate(requireUpdatedAt: Bool = true) throws {
         guard id.range(of: "^[0-9]+$", options: .regularExpression) != nil,
               key.range(of: "^[A-Za-z][A-Za-z0-9_]*-[0-9]+$", options: .regularExpression) != nil,
               !fields.summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              updatedAt != nil else { throw JiraError.invalidResponse }
+              updatedAt != nil || (!requireUpdatedAt && fields.updated == nil) else { throw JiraError.invalidResponse }
     }
 }
 

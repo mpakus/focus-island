@@ -8,7 +8,8 @@ public protocol JiraProviding: Sendable {
 
 public struct JiraCLIClient: JiraProviding {
     public static let jql = "assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC, key ASC"
-    static let fields = "summary,status,project,issuetype,priority,assignee,updated"
+    // Search accepts fewer fields than view; full snapshots are fetched before any write.
+    static let fields = "summary,status,issuetype,priority,assignee"
     private let run: @Sendable ([String]) async throws -> Data
     private let cloudID: @Sendable (String) async throws -> String
 
@@ -49,7 +50,7 @@ public struct JiraCLIClient: JiraProviding {
     public func issue(id: String, connection: JiraConnection) async throws -> JiraIssue {
         guard id.range(of: "^[0-9]+$", options: .regularExpression) != nil else { throw JiraError.invalidResponse }
         try await verify(connection)
-        let data = try await run(["jira", "workitem", "view", id, "--fields", Self.fields + ",description", "--json"])
+        let data = try await run(["jira", "workitem", "view", id, "--fields", Self.fields + ",project,updated,description", "--json"])
         try await verify(connection)
         let issue: JiraIssue
         do { issue = try JSONDecoder().decode(JiraIssue.self, from: data) }
@@ -94,7 +95,7 @@ public struct JiraCLIClient: JiraProviding {
         } catch { throw JiraError.invalidResponse }
         var seen = Set<String>()
         return try issues.filter { issue in
-            try issue.validate()
+            try issue.validate(requireUpdatedAt: false)
             return seen.insert(issue.id).inserted
         }
     }

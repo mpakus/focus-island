@@ -184,6 +184,8 @@ struct JiraClientTests {
         #expect(try JiraCLIClient.decodeSearch(Data("[]".utf8)).isEmpty)
         let duplicated = try JSONEncoder().encode([jiraFixture(), jiraFixture()])
         #expect(try JiraCLIClient.decodeSearch(duplicated).count == 1)
+        let invalidDate = try JSONEncoder().encode([jiraFixture(updated: "invalid")])
+        #expect(throws: JiraError.invalidResponse) { try JiraCLIClient.decodeSearch(invalidDate) }
         #expect(try JiraCLIClient.decodeSearch(Data(#"{"issues":[],"isLast":true}"#.utf8)).isEmpty)
         for value in ["{\"issues\":[]}", "{\"issues\":[],\"total\":100,\"maxResults\":50}", "{\"issues\":[],\"isLast\":false}", "{\"issues\":[],\"nextPageToken\":\"next\"}", "{\"issues\":[{}]}", "not json"] {
             #expect(throws: JiraError.invalidResponse) { try JiraCLIClient.decodeSearch(Data(value.utf8)) }
@@ -193,7 +195,7 @@ struct JiraClientTests {
     @Test func issueReadIncludesDescriptionAndVerifiesIdentity() async throws {
         let client = JiraCLIClient(run: { arguments in
             if arguments == ["jira", "auth", "status"] { return Data("Site: example.atlassian.net\nEmail: person@example.com".utf8) }
-            #expect(arguments == ["jira", "workitem", "view", "10001", "--fields", JiraCLIClient.fields + ",description", "--json"])
+            #expect(arguments == ["jira", "workitem", "view", "10001", "--fields", "summary,status,issuetype,priority,assignee,project,updated,description", "--json"])
             return try JSONEncoder().encode(jiraFixture())
         })
         let issue = try await client.issue(id: "10001", connection: jiraTestConnection)
@@ -205,10 +207,35 @@ struct JiraClientTests {
         await #expect(throws: JiraError.invalidResponse) { try await wrongID.issue(id: "10001", connection: jiraTestConnection) }
     }
 
+    @Test func searchUsesSupportedFieldsAndRequiresDetailsBeforeWriting() async throws {
+        let data = Data(#"{"id":"10001","key":"TEST-1","fields":{"summary":"Search result","status":{"name":"Open"},"issuetype":{"name":"Task"},"priority":null,"assignee":null}}"#.utf8)
+        let client = JiraCLIClient(run: { arguments in
+            if arguments == ["jira", "auth", "status"] { return Data("Site: example.atlassian.net\nEmail: person@example.com".utf8) }
+            if arguments[2] == "search" {
+                #expect(arguments == ["jira", "workitem", "search", "--jql", JiraCLIClient.jql, "--fields", "summary,status,issuetype,priority,assignee", "--paginate", "--json"])
+                return Data("[".utf8) + data + Data("]".utf8)
+            }
+            return data
+        })
+        let result = try #require(try await client.search(connection: jiraTestConnection).first)
+        #expect(result.id == "10001" && result.updatedAt == nil)
+        await #expect(throws: JiraError.invalidResponse) { try await client.issue(id: result.id, connection: jiraTestConnection) }
+        let store = try FocusStore.inMemory()
+        let service = JiraTaskService(store: store)
+        #expect(throws: JiraError.invalidResponse) { try service.importIssues([result], connection: jiraTestConnection) }
+        let board = BoardService(store: store)
+        #expect(try board.snapshot().tasks.isEmpty)
+        let id = try service.importIssues([jiraFixture()], connection: jiraTestConnection)[0]
+        let before = try board.snapshot()
+        #expect(throws: JiraError.invalidResponse) { try service.refresh(result, link: #require(before.jiraLinks[id])) }
+        #expect(try board.snapshot().tasks == before.tasks)
+        #expect(try board.snapshot().jiraLinks == before.jiraLinks)
+    }
+
     @Test func onlyReadCommandsAndFullPaginationAreUsed() async throws {
         let client = JiraCLIClient(run: { arguments in
             if arguments == ["jira", "auth", "status"] { return Data("Site: example.atlassian.net\nEmail: person@example.com".utf8) }
-            #expect(arguments == ["jira", "workitem", "search", "--jql", JiraCLIClient.jql, "--fields", JiraCLIClient.fields, "--paginate", "--json"])
+            #expect(arguments == ["jira", "workitem", "search", "--jql", JiraCLIClient.jql, "--fields", "summary,status,issuetype,priority,assignee", "--paginate", "--json"])
             return Data("[]".utf8)
         }, cloudID: { _ in jiraTestConnection.cloudID })
         #expect(try await client.connect() == jiraTestConnection)
