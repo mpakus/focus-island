@@ -148,7 +148,7 @@ enum JiraOAuth {
               (metadata["code_challenge_methods_supported"] as? [String])?.contains("S256") == true,
               (metadata["token_endpoint_auth_methods_supported"] as? [String])?.contains("none") == true else { throw JiraError.invalidResponse }
         let registration = try JiraHTTP.object(await send(JiraHTTP.request(endpoint(metadata["registration_endpoint"]), body: [
-            "client_name": "Focus Island", "redirect_uris": [callback.absoluteString],
+            "client_name": "Focus Island", "application_type": "native", "redirect_uris": [callback.absoluteString],
             "grant_types": ["authorization_code", "refresh_token"], "response_types": ["code"],
             "token_endpoint_auth_method": "none", "scope": scopes,
         ])))

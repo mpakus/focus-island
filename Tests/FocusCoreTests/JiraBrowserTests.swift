@@ -205,6 +205,7 @@ private actor OAuthFixture {
         case "/register":
             let input = try #require(JSONSerialization.jsonObject(with: request.httpBody!) as? [String: Any])
             #expect(input["client_name"] as? String == "Focus Island")
+            #expect(input["application_type"] as? String == "native")
             #expect(input["token_endpoint_auth_method"] as? String == "none")
             let callback = try #require((input["redirect_uris"] as? [String])?.first.flatMap(URL.init(string:)))
             #expect(callback.host == "127.0.0.1" && callback.port != nil && callback.path == "/jira/callback")
