@@ -126,6 +126,8 @@ struct JiraImportView: View {
         .frame(width: 740, height: focus.jira.connection == nil ? 350 : 540)
         .onAppear { if focus.jira.connection != nil { focus.jira.loadIssues() } }
         .onChange(of: imported) { _, links in selected.subtract(links.keys) }
+        .onChange(of: focus.jira.issues.map(\.id)) { _, ids in selected.formIntersection(ids) }
+        .onChange(of: focus.jira.connection) { _, _ in selected = [] }
         .sheet(item: $editingTask) { task in TaskDetailView(focus: focus, task: task) }
     }
 }

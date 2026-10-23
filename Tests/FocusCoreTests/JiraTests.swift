@@ -148,6 +148,29 @@ struct JiraTaskServiceTests {
 }
 
 struct JiraClientTests {
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["FOCUS_ISLAND_JIRA_LIVE_EXECUTABLE"] != nil))
+    func liveAssignedIssueImportUsesDisposableStorage() async throws {
+        let path = try #require(ProcessInfo.processInfo.environment["FOCUS_ISLAND_JIRA_LIVE_EXECUTABLE"])
+        let client = JiraCLIClient(run: { try await JiraCommand.run($0, executable: URL(fileURLWithPath: path)) })
+        let connection = try await client.connect()
+        let issues = try await client.search(connection: connection)
+        let selected = try #require(issues.first)
+        let issue = try await client.issue(id: selected.id, connection: connection)
+        let store = try FocusStore.inMemory()
+        let service = JiraTaskService(store: store)
+        let board = BoardService(store: store)
+        let id = try service.importIssues([issue], connection: connection)[0]
+        var task = try #require(board.snapshot().task(id: id))
+        task.note = "Disposable verification note"
+        try board.updateTask(task)
+        try board.moveTask(id: id, to: .done, beforeTaskID: nil)
+        let again = try await client.issue(id: issue.id, connection: connection)
+        try service.refresh(again, link: #require(board.snapshot().jiraLinks[id]))
+        #expect(try board.snapshot().task(id: id)?.note == task.note)
+        #expect(try board.snapshot().task(id: id)?.boardColumn == .done)
+        #expect(again.fields.status == issue.fields.status)
+    }
+
     @Test func authStatusValidatesSiteAndAccount() throws {
         let account = try JiraCLIClient.account(from: Data("✓ Authenticated\n  Site: example.atlassian.net\n  Email: Person@example.com\n".utf8))
         #expect(account.site == jiraTestConnection.site && account.email == jiraTestConnection.email)
@@ -159,9 +182,27 @@ struct JiraClientTests {
 
     @Test func searchRejectsIncompleteOrMalformedData() throws {
         #expect(try JiraCLIClient.decodeSearch(Data("[]".utf8)).isEmpty)
-        for value in ["{\"issues\":[],\"isLast\":false}", "{\"issues\":[],\"nextPageToken\":\"next\"}", "{\"issues\":[{}]}", "not json"] {
+        let duplicated = try JSONEncoder().encode([jiraFixture(), jiraFixture()])
+        #expect(try JiraCLIClient.decodeSearch(duplicated).count == 1)
+        #expect(try JiraCLIClient.decodeSearch(Data(#"{"issues":[],"isLast":true}"#.utf8)).isEmpty)
+        for value in ["{\"issues\":[]}", "{\"issues\":[],\"total\":100,\"maxResults\":50}", "{\"issues\":[],\"isLast\":false}", "{\"issues\":[],\"nextPageToken\":\"next\"}", "{\"issues\":[{}]}", "not json"] {
             #expect(throws: JiraError.invalidResponse) { try JiraCLIClient.decodeSearch(Data(value.utf8)) }
         }
+    }
+
+    @Test func issueReadIncludesDescriptionAndVerifiesIdentity() async throws {
+        let client = JiraCLIClient(run: { arguments in
+            if arguments == ["jira", "auth", "status"] { return Data("Site: example.atlassian.net\nEmail: person@example.com".utf8) }
+            #expect(arguments == ["jira", "workitem", "view", "10001", "--fields", JiraCLIClient.fields + ",description", "--json"])
+            return try JSONEncoder().encode(jiraFixture())
+        })
+        let issue = try await client.issue(id: "10001", connection: jiraTestConnection)
+        #expect(issue.fields.description?.plainText == "Source description")
+        let wrongID = JiraCLIClient(run: { arguments in
+            if arguments == ["jira", "auth", "status"] { return Data("Site: example.atlassian.net\nEmail: person@example.com".utf8) }
+            return try JSONEncoder().encode(jiraFixture(id: "20002"))
+        })
+        await #expect(throws: JiraError.invalidResponse) { try await wrongID.issue(id: "10001", connection: jiraTestConnection) }
     }
 
     @Test func onlyReadCommandsAndFullPaginationAreUsed() async throws {

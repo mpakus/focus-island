@@ -77,7 +77,7 @@ public struct JiraCLIClient: JiraProviding {
     }
 
     static func decodeSearch(_ data: Data) throws -> [JiraIssue] {
-        struct Page: Decodable {
+        struct Page: Codable, Sendable {
             let issues: [JiraIssue]
             let isLast: Bool?
             let nextPageToken: String?
@@ -88,7 +88,7 @@ public struct JiraCLIClient: JiraProviding {
                 issues = array
             } else {
                 let page = try JSONDecoder().decode(Page.self, from: data)
-                guard page.isLast != false, page.nextPageToken == nil else { throw JiraError.invalidResponse }
+                guard page.isLast == true, page.nextPageToken == nil else { throw JiraError.invalidResponse }
                 issues = page.issues
             }
         } catch { throw JiraError.invalidResponse }

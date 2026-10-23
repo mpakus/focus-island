@@ -56,6 +56,7 @@ final class JiraCoordinator {
     func importIssues(ids: Set<String>, column: BoardColumn, projectPath: String?) {
         guard let connection else { return }
         let selected = issues.filter { ids.contains($0.id) }
+        guard selected.count == ids.count else { error = JiraError.invalidResponse.localizedDescription; return }
         guard !selected.isEmpty else { return }
         perform {
             var details: [JiraIssue] = []

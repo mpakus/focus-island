@@ -79,11 +79,19 @@ Automated coverage is in [JiraTests](../Tests/FocusCoreTests/JiraTests.swift), [
 - Idempotent batch import, separate sites, invalid batches, issue-key changes, older responses, unavailable issues, detach/delete races.
 - Stale editor saves preserve refreshed source text and local notes; session, criterion, prompt, activity, timer and day-plan rows survive refresh unchanged.
 - Real on-disk `v6` migration, one consistent backup, preserved records, and migration failure that leaves the original database intact.
-- Incomplete/malformed CLI output, host validation, fixed read commands, complete-pagination flag, account change, ADF text, process timeout and cancellation.
-- Connect/import/restart/disconnect, cancellation of an in-flight import, discovery failure retaining prior data, and disabled imports with in-memory fallback.
+- Incomplete/malformed CLI output, host validation, fixed read commands, positive issue-detail decoding, complete-pagination flag, duplicate results, account change, ADF text, process timeout and cancellation.
+- Connect/import/restart/disconnect, cancellation of an in-flight import, stale selections rejected before any writes, discovery failure retaining prior data, and disabled imports with in-memory fallback.
 - Rendered setup, import and linked-task UI, plus all three localization catalogs.
 
-Release checks use `rtk proxy bin/test.dev`, `rtk proxy zsh scripts/lint-strings.sh`, and `rtk git diff --check`, followed by the existing universal packaging/release script. Validation results are recorded in the release notes when complete.
+Validation on 2026-10-23:
+
+- `rtk proxy bin/test.dev` passed: 915 tests reported across 88 suites; the opt-in live Jira check and optional localized settings preview were skipped. Debug app and helpers built successfully.
+- `rtk proxy zsh scripts/lint-strings.sh` passed for 982 keys in English, Spanish, and Russian; `rtk git diff --check` passed.
+- The Jira setup, import, and linked-task rendering test passed separately with screenshots and text recognition; import and task screenshots were visually inspected.
+- Universal package preflight built the app and helpers for Apple Silicon and Intel, verified their architectures and signatures, launched the bundled app outside the repository, and produced DMG/ZIP files. The release script rebuilds these from the final clean `main` commit.
+- Independent standards and specification reviews completed; model conformance, stale selection handling, and incomplete pagination findings were corrected and covered by tests.
+
+The opt-in live test runs only when `FOCUS_ISLAND_JIRA_LIVE_EXECUTABLE` points to an authenticated ACLI executable. It imports and refreshes one assigned issue in a disposable in-memory board, retaining a local note and completed column, and performs no Jira writes.
 
 Inspected CLI: **1.3.39-stable**. Its actual help and unauthenticated behavior were checked. The earlier assistant-connected Jira feasibility query returned assigned issues, but that connection is independent of ACLI and does not validate the native path. **Live authenticated ACLI import is not yet certified**; the release is an opt-in preview. All implementation tests use disposable databases and synthetic issue data, never the user's real board or Jira writes.
 

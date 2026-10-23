@@ -30,19 +30,19 @@ public struct JiraConnection: Codable, Equatable, Sendable {
     }
 }
 
-public struct JiraIssue: Decodable, Equatable, Sendable, Identifiable {
+public struct JiraIssue: Codable, Equatable, Sendable, Identifiable {
     public let id: String
     public let key: String
     public let fields: Fields
 
-    public struct Named: Decodable, Equatable, Sendable { public let name: String }
-    public struct Status: Decodable, Equatable, Sendable {
+    public struct Named: Codable, Equatable, Sendable { public let name: String }
+    public struct Status: Codable, Equatable, Sendable {
         public let name: String
         public let statusCategory: Category?
-        public struct Category: Decodable, Equatable, Sendable { public let key: String }
+        public struct Category: Codable, Equatable, Sendable { public let key: String }
     }
-    public struct Assignee: Decodable, Equatable, Sendable { public let accountId: String }
-    public struct Fields: Decodable, Equatable, Sendable {
+    public struct Assignee: Codable, Equatable, Sendable { public let accountId: String }
+    public struct Fields: Codable, Equatable, Sendable {
         public let summary: String
         public let description: JiraDocument?
         public let status: Status
@@ -68,7 +68,7 @@ public struct JiraIssue: Decodable, Equatable, Sendable, Identifiable {
 }
 
 /// Text-only ADF rendering: unknown nodes retain their text; media stays in Jira.
-public struct JiraDocument: Decodable, Equatable, Sendable {
+public struct JiraDocument: Codable, Equatable, Sendable {
     let type: String
     let text: String?
     let content: [JiraDocument]?

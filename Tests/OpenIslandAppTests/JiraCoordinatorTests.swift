@@ -106,4 +106,16 @@ struct JiraCoordinatorTests {
         #expect(coordinator.error != nil && !coordinator.isBusy && coordinator.connection == nil)
         #expect(await client.requests.isEmpty)
     }
+
+    @Test func staleSelectionRejectsTheEntireImport() async throws {
+        let store = try FocusStore.inMemory()
+        let client = StubJiraClient()
+        let coordinator = JiraCoordinator(store: store, defaults: defaults(), durable: true, client: client)
+        coordinator.connect()
+        await coordinator.operation?.value
+        coordinator.importIssues(ids: ["10001", "disappeared"], column: .todo, projectPath: nil)
+        #expect(coordinator.error != nil && !coordinator.isBusy)
+        #expect(try BoardService(store: store).snapshot().tasks.isEmpty)
+        #expect(await client.requests == ["connect", "search"])
+    }
 }
