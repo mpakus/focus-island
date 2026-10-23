@@ -16,6 +16,7 @@ sign_identity="${OPEN_ISLAND_SIGN_IDENTITY:-Open Island Dev Local}"
 
 cd "$repo_root"
 
+[[ "$version" == "$(cat VERSION)" ]] || { echo "Update VERSION to $version before releasing." >&2; exit 1; }
 [[ "$(git rev-parse --abbrev-ref HEAD)" == "main" ]] || { echo "Release from main only." >&2; exit 1; }
 [[ -z "$(git status --porcelain)" ]] || { echo "Working tree is not clean — commit first." >&2; exit 1; }
 git fetch -q origin main --tags
@@ -28,7 +29,9 @@ if [[ ! -f "$notes_path" ]]; then
     echo "Missing release notes: docs/releases/$tag.md (first line: # Focus Island $tag — Title)" >&2
     exit 1
 fi
-if ! security find-identity -p codesigning -v | grep -q "\"$sign_identity\""; then
+if [[ "$sign_identity" == "-" ]]; then
+    sign_identity=""
+elif ! security find-identity -p codesigning -v | grep -q "\"$sign_identity\""; then
     echo "Signing identity \"$sign_identity\" not found — run: zsh scripts/setup-dev-signing.sh" >&2
     exit 1
 fi
@@ -38,7 +41,7 @@ body_path="$(mktemp)"
 tail -n +2 "$notes_path" > "$body_path"
 trap 'rm -f "$body_path"' EXIT
 
-zsh scripts/test-clt.sh
+bin/test.dev
 
 OPEN_ISLAND_UNIVERSAL=true \
 OPEN_ISLAND_VERSION="$version" \

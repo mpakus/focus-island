@@ -10,7 +10,7 @@ fi
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 app_name="${OPEN_ISLAND_APP_NAME:-Focus Island}"
 bundle_identifier="${OPEN_ISLAND_BUNDLE_ID:-dev.zhanabayev.focusisland}"
-version="${OPEN_ISLAND_VERSION:-0.1.0}"
+version="${OPEN_ISLAND_VERSION:-$(cat "$repo_root/VERSION")}"
 build_number="${OPEN_ISLAND_BUILD_NUMBER:-$(git -C "$repo_root" rev-list --count HEAD 2>/dev/null || echo 1)}"
 package_root="${OPEN_ISLAND_PACKAGE_ROOT:-$repo_root/output/package}"
 bundle_dir="${OPEN_ISLAND_BUNDLE_DIR:-$package_root/$app_name.app}"
@@ -25,11 +25,25 @@ entitlements_path="$repo_root/config/packaging/OpenIslandApp.entitlements"
 
 cd "$repo_root"
 
+developer_dir="$(xcode-select -p)"
+sdk_path="${SDKROOT:-$(xcrun --sdk macosx --show-sdk-path)}"
+build_flags=(-c release)
+if [[ -d "$developer_dir/Library/Developer/Frameworks/Testing.framework" ]]; then
+    build_flags+=(--build-system native)
+    # shortcut: CLT's macOS 27 SDK lacks SwiftUI macros; remove when CLT ships them.
+    if [[ -z "${SDKROOT:-}" && "$(xcrun --sdk macosx --show-sdk-version)" == 27.* \
+        && -d "$developer_dir/SDKs/MacOSX26.5.sdk" ]]; then
+        sdk_path="$developer_dir/SDKs/MacOSX26.5.sdk"
+    fi
+fi
+build_flags+=(--sdk "$sdk_path")
+echo "Using SDK: $sdk_path"
+
 products=(OpenIslandApp OpenIslandHooks OpenIslandSetup)
 for product in "${products[@]}"; do
-    swift build -c release --product "$product"
+    swift build "${build_flags[@]}" --product "$product"
 done
-build_bin_dir="$(swift build -c release --show-bin-path)"
+build_bin_dir="$(swift build "${build_flags[@]}" --show-bin-path)"
 app_binary="$build_bin_dir/OpenIslandApp"
 hooks_binary="$build_bin_dir/OpenIslandHooks"
 setup_binary="$build_bin_dir/OpenIslandSetup"
@@ -38,14 +52,15 @@ if [[ "${OPEN_ISLAND_UNIVERSAL:-false}" == "true" ]]; then
     other_triple="x86_64-apple-macosx14.0"
     [[ "$(uname -m)" == "x86_64" ]] && other_triple="arm64-apple-macosx14.0"
     for product in "${products[@]}"; do
-        swift build -c release --triple "$other_triple" --product "$product"
+        swift build "${build_flags[@]}" --triple "$other_triple" --product "$product"
     done
-    other_bin_dir="$(swift build -c release --triple "$other_triple" --show-bin-path)"
+    other_bin_dir="$(swift build "${build_flags[@]}" --triple "$other_triple" --show-bin-path)"
     universal_dir="$package_root/universal"
     rm -rf "$universal_dir"
     mkdir -p "$universal_dir"
     for product in "${products[@]}"; do
         lipo -create "$build_bin_dir/$product" "$other_bin_dir/$product" -output "$universal_dir/$product"
+        lipo -verify_arch arm64 x86_64 "$universal_dir/$product"
     done
     app_binary="$universal_dir/OpenIslandApp"
     hooks_binary="$universal_dir/OpenIslandHooks"
@@ -78,6 +93,7 @@ cp "$app_binary" "$bundle_dir/Contents/MacOS/OpenIslandApp"
 cp "$hooks_binary" "$bundle_dir/Contents/Helpers/OpenIslandHooks"
 cp "$setup_binary" "$bundle_dir/Contents/Helpers/OpenIslandSetup"
 cp "$brand_icon" "$bundle_dir/Contents/Resources/OpenIsland.icns"
+cp "$repo_root/LICENSE" "$bundle_dir/Contents/Resources/LICENSE"
 
 # Copy SPM resource bundle into Contents/Resources/ so the .app root stays
 # clean for code signing (no unsealed contents). Our custom
@@ -166,7 +182,9 @@ smoke_app="$smoke_dir/$(basename "$bundle_dir")"
 smoke_binary="$smoke_app/Contents/MacOS/OpenIslandApp"
 if [[ -x "$smoke_binary" ]]; then
     # Launch and give it a few seconds — if it crashes, the pid disappears.
-    OPEN_ISLAND_HARNESS_START_BRIDGE=false "$smoke_binary" &
+    OPEN_ISLAND_HARNESS_SCENARIO=codexApproval \
+    OPEN_ISLAND_HARNESS_START_BRIDGE=false \
+    OPEN_ISLAND_HARNESS_BOOT_ANIMATION=false "$smoke_binary" &
     smoke_pid=$!
     sleep 3
     if kill -0 "$smoke_pid" 2>/dev/null; then
@@ -203,9 +221,10 @@ if [[ -n "$signing_identity" ]]; then
 
     codesign --verify --deep --strict --verbose=2 "$bundle_dir"
 else
-    codesign --force --sign - "$bundle_dir/Contents/Helpers/OpenIslandHooks" 2>/dev/null || true
-    codesign --force --sign - "$bundle_dir/Contents/Helpers/OpenIslandSetup" 2>/dev/null || true
-    codesign --force --sign - "$bundle_dir" 2>/dev/null || true
+    codesign --force --sign - "$bundle_dir/Contents/Helpers/OpenIslandHooks"
+    codesign --force --sign - "$bundle_dir/Contents/Helpers/OpenIslandSetup"
+    codesign --force --sign - "$bundle_dir"
+    codesign --verify --deep --strict --verbose=2 "$bundle_dir"
 fi
 
 ditto -c -k --keepParent "$bundle_dir" "$zip_path"
@@ -265,7 +284,7 @@ echo "DMG: $dmg_path"
 if [[ -n "$signing_identity" ]]; then
     echo "Signed with identity: $signing_identity"
 else
-    echo "No signing identity configured; produced an unsigned local bundle."
+    echo "No signing identity configured; produced an ad-hoc signed bundle without Apple notarization."
 fi
 
 if [[ -n "$notary_profile" ]]; then

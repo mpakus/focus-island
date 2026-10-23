@@ -13,6 +13,7 @@ for arg in "$@"; do
 done
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+version="${OPEN_ISLAND_VERSION:-$(cat "$repo_root/VERSION")}"
 brand_script="$repo_root/scripts/generate_brand_icons.py"
 brand_icon="$repo_root/Assets/Brand/OpenIsland.icns"
 bundle_dir="$HOME/Applications/Focus Island.app"
@@ -92,7 +93,7 @@ cat > "$plist_path" <<EOF
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.1</string>
+    <string>$version</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>LSMinimumSystemVersion</key>

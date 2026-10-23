@@ -2,20 +2,20 @@
 
 [![Focus Island: one pomodoro, three Claude Code sessions in Ghostty, Claude and PyCharm](docs/media/focus-island-demo.gif)](docs/media/focus-island-demo.mp4)
 
-**Focus Island** is a macOS tool that turns the time you spend waiting on coding agents into something useful. While an agent works on a task, the app suggests your next step: a new task from a simple kanban board, a session that is waiting for you, or a nudge to get back to work if you drifted off to social media.
+**Focus Island** is a macOS companion for **Claude Code and Codex** that turns the time you spend waiting on coding agents into something useful. While an agent works on a task, the app suggests your next step: a new task from a simple kanban board, a session that is waiting for you, or a nudge to get back to work if you drifted off to social media. Codex monitoring is an opt-in preview; see the [setup and support matrix](#codex-monitoring-opt-in-preview).
 
 > [!NOTE]
-> The Focus Island interface is currently in Russian. UI labels quoted below are English translations.
+> Available in **English** (default), **Español**, and **Русский**. Change the interface language in Settings → General → Language.
 
 ## Installation
 
-1. Download `Focus.Island.dmg` from the [Releases](https://github.com/dias-zhanabayev/focus-island/releases) page — one file for both Apple Silicon and Intel.
+1. Download `Focus.Island.dmg` from this fork's [Releases](https://github.com/mpakus/focus-island/releases/latest) page. The DMG and alternative `Focus.Island.zip` contain the same universal app, compiled natively for **Apple Silicon (`arm64`) and Intel (`x86_64`)**, on macOS 14 or later.
 2. Open the DMG and drag **Focus Island** into Applications.
 3. On first launch, right-click the app → Open.
 4. In the island under the notch, click "Connect" to open Setup, then install hooks for Claude Code, Codex, or both. For Codex, also complete the hook trust step below.
 
 > [!NOTE]
-> The build is signed with a local certificate and is not notarized by Apple, so macOS asks you to confirm the first launch. If "Open" does not appear: System Settings → Privacy & Security → Open Anyway.
+> The v0.4.0 binaries use ad-hoc signing and are **not notarized by Apple**. macOS may block the first launch. After attempting to open the app, use System Settings → Privacy & Security → Open Anyway if needed. Only open a download you trust.
 
 ## Features
 
@@ -69,7 +69,7 @@
 
 Focus Island supports local Codex command-hook monitoring alongside Claude Code. The adapter and UI have been verified with synthetic documented-contract fixtures. Native hook trust/emission and desktop lifecycle acceptance are still pending; no minimum supported Codex release is certified yet. The inspected CLI was `0.163.0-alpha.11.1`.
 
-1. Build and launch this version of Focus Island.
+1. Install and launch **Focus Island v0.4.0 or later** from [Releases](https://github.com/mpakus/focus-island/releases/latest), or build it from source.
 2. Open **Settings → Setup → CLI Hooks → Codex → Install**. **Install All** includes Codex and Claude Code; Codex can also be installed on its own.
 3. In the Codex CLI, open `/hooks` and review/trust the installed hooks using its own controls ([hook trust guide](https://learn.chatgpt.com/docs/hooks#review-and-trust-hooks)).
 4. Send a prompt. Setup diagnostics must show **Receiving Codex events** and the island must show a Codex session before treating monitoring as connected. **Configured** confirms installation only; use **Reinstall Codex hooks** and **Re-check** in diagnostics when repairing setup.
@@ -84,7 +84,7 @@ swift run OpenIslandSetup statusCodex
 swift run OpenIslandSetup uninstallCodex
 ```
 
-Configuration uses `CODEX_HOME` or `~/.codex/hooks.json`; the setup CLI also accepts `--codex-dir /path/to/home`. Existing hooks are preserved, changed configuration is backed up, and the installer never writes Codex trust records. If Focus Island entries already appear in `config.toml`, resolve those duplicates before installing.
+Configuration uses `$CODEX_HOME/hooks.json` or `~/.codex/hooks.json`; the setup CLI also accepts `--codex-dir /path/to/home`. Existing hooks are preserved, changed configuration is backed up, and the installer never writes Codex trust records. If Focus Island entries already appear in `config.toml`, resolve those duplicates before installing.
 
 | Capability | Claude Code | Codex preview |
 | --- | --- | --- |
@@ -105,10 +105,12 @@ Daily, weekly and task work totals use the union of Claude and Codex intervals; 
 ## Releasing
 
 ```bash
-zsh scripts/release.sh 0.2.0
+OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.4.0
 ```
 
-Requirements: a clean `main` that matches `origin/main`, release notes in `docs/releases/v0.2.0.md` (the first line is the release title) and the certificate from `zsh scripts/setup-dev-signing.sh`. The script runs the tests, builds a universal signed DMG and ZIP, tags `v0.2.0` and publishes the GitHub Release.
+Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.4.0.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs the tests, builds and verifies a universal DMG and ZIP, tags `v0.4.0`, and publishes the GitHub Release.
+
+`OPEN_ISLAND_SIGN_IDENTITY=-` selects ad-hoc signing. To use the local certificate instead, run `zsh scripts/setup-dev-signing.sh` once and omit that variable. Neither option provides Apple notarization. `VERSION` also supplies the version shown in packaged and development app bundles; `OPEN_ISLAND_VERSION` can override it for local builds.
 
 ## Building and running the dev version
 
@@ -136,7 +138,9 @@ Implementation and validation: [Codex monitoring plan and evidence](docs/CODEX-M
 
 ## About
 
-Focus Island is a fork of [open-vibe-island](https://github.com/Octane0411/open-vibe-island) (GPL v3), built as a personal productivity tool for working with coding agents on macOS 14+. It supports Claude Code and an opt-in preview of Codex monitoring.
+This fork is maintained by **Renat "MpaK" Ibragimov** — [@mpakus on GitHub](https://github.com/mpakus) · [aomega.co](https://aomega.co). It adds Codex monitoring alongside Claude Code and an English, Spanish, and Russian interface.
+
+Focus Island builds on [Dias Zhanabayev's Focus Island](https://github.com/dias-zhanabayev/focus-island), which was forked from [open-vibe-island](https://github.com/Octane0411/open-vibe-island). Thanks to the original authors and contributors. This fork remains licensed under [GPL v3](LICENSE).
 
 ## Supported terminals
 
@@ -144,7 +148,8 @@ Terminal.app, iTerm2, Ghostty, tmux, Zellij, WezTerm, Warp, cmux, VS Code, Curso
 
 ## Requirements
 
-macOS 14+, Swift 6.2 toolchain / Command Line Tools. Run the tests with `zsh scripts/test-clt.sh`.
+- **Run the app:** macOS 14 or later, on Apple Silicon or Intel. The release downloads include the app and both hook/setup helpers; no Swift toolchain is needed.
+- **Build from source:** Swift 6.2 or later with Xcode or Command Line Tools. Run `bin/test.dev` for tests and a debug build.
 
 ---
 
