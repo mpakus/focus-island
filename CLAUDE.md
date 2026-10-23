@@ -42,7 +42,7 @@ For Xcode: open `Package.swift`.
 
 - **Never edit in the main worktree.** Use `EnterWorktree` (preferred) or `git worktree add`, branched off latest local `main`.
 - Branch name matches topic: `feat/<topic>`, `fix/<topic>`. One coherent change per round.
-- Repo: public `dias-zhanabayev/focus-island` (`origin`). Open Island upstream remote and tags were removed; never add them back or push there. `main` on `origin` is the release branch.
+- Repo: public `mpakus/focus-island` (`origin`). Open Island upstream remote and tags were removed; never add them back or push there. `main` on `origin` is the release branch.
 - Conventional commit messages (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`). Never `--amend` unless asked.
 - After changes: run the matching verification (`swift build` / `swift test` / manual). If no check exists, say so in the summary and still commit.
 - Never `git reset --hard`, force-push, or overwrite user changes without explicit approval. If unexpected state appears, inspect — don't bulldoze.
@@ -61,7 +61,7 @@ The project is past MVP and welcomes new ideas and creative directions, but the 
 ## Release
 
 - Local, from a clean `main` equal to `origin/main`: `zsh scripts/release.sh X.Y.Z`. It runs tests, builds a universal DMG/ZIP signed with the local "Open Island Dev Local" identity (`scripts/setup-dev-signing.sh`), tags `vX.Y.Z`, pushes the tag and creates the GitHub Release with the DMG and ZIP. No notarization, no Sparkle.
-- Notes live in `docs/releases/vX.Y.Z.md` (Russian); the first line `# Focus Island vX.Y.Z — Title` becomes the release title. Before writing them, review `git log` since the last tag.
+- Write repository documentation and GitHub release titles and notes in English. Notes live in `docs/releases/vX.Y.Z.md`; the first line `# Focus Island vX.Y.Z — Title` becomes the release title. Before writing them, review `git log` since the last tag.
 - Install/update for users: download `Focus.Island.dmg` from Releases and drag it to Applications (steps in `README.md`).
 - CI (`.github/workflows/ci.yml`) is manual-only (`workflow_dispatch`) to save private-repo macOS minutes; run `zsh scripts/harness.sh ci` locally.
 

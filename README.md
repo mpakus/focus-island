@@ -5,7 +5,7 @@
 **Focus Island** is a macOS companion for **Claude Code and Codex** that turns the time you spend waiting on coding agents into something useful. While an agent works on a task, the app suggests your next step: a new task from a simple kanban board, a session that is waiting for you, or a nudge to get back to work if you drifted off to social media. Codex monitoring is an opt-in preview; see the [setup and support matrix](#codex-monitoring-opt-in-preview).
 
 > [!NOTE]
-> Available in **English** (default), **Español**, and **Русский**. Change the interface language in Settings → General → Language.
+> Available in **English** (default), **Spanish**, and **Russian**. Change the interface language in Settings → General → Language.
 
 ## Installation
 
@@ -59,7 +59,7 @@
 - "History" — a searchable session archive; "Open" jumps to a live session and "Resume" continues one via `claude --resume` or `codex resume` with its native session ID.
 
 **Settings**
-- Settings → General → Language: **English** (default), **Español**, or **Русский**. The interface, generated session messages, dates, and exported summaries follow this choice. Your task names, prompts, and agent replies stay as written.
+- Settings → General → Language: **English** (default), **Spanish**, or **Russian**. The interface, generated session messages, dates, and exported summaries follow this choice. Your task names, prompts, and agent replies stay as written.
 - Settings → Setup: independent Claude Code and Codex hook status, paths, install and uninstall, plus Codex trust instructions and reinstall controls.
 - "Sessions": parallel session limit (1–6), waiting-session reminder (5–60 min), the "Start of day" morning screen.
 - "What's next?", "Distractions" (threshold, blocklist of domains and apps), terminal used for Resume, board hotkey.
