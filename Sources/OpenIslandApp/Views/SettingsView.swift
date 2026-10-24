@@ -366,8 +366,9 @@ struct AboutSettingsPane: View {
                         .disabled(!updates.canCheck)
                 }
                 Section(lang.t("settings.about.credits")) {
-                    Link("Renat \"MpaK\" Ibragimov · aomega.co", destination: URL(string: "https://aomega.co")!)
-                    Text("Made in Austin ☆ Texas").foregroundStyle(.secondary)
+                    Link("Renat \"MpaK\" Ibragimov · aomega.co · Made in Austin ☆ Texas", destination: URL(string: "https://aomega.co")!)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                     Link("Dias Zhanabayev · Focus Island", destination: URL(string: "https://github.com/dias-zhanabayev/focus-island")!)
                     Link("Octane0411 · Open Vibe Island", destination: URL(string: "https://github.com/Octane0411/open-vibe-island")!)
                     Text(lang.t("settings.about.license")).font(.caption).foregroundStyle(.secondary)

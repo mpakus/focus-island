@@ -28,6 +28,7 @@ docs/*
 !docs/CODEX-MONITORING-PLAN.md
 !docs/JIRA-INTEGRATION-PLAN.md
 !docs/JIRA-API-RESEARCH.md
+!docs/CLICKUP-INTEGRATION-PLAN.md
 
 # Logs and temp files
 *.log

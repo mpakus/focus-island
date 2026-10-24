@@ -180,6 +180,8 @@ The app icon is generated from [Assets/Brand/icon.png](Assets/Brand/icon.png), p
 
 Jira implementation and limitations: [Jira import plan and evidence](docs/JIRA-INTEGRATION-PLAN.md), with [API and authentication research](docs/JIRA-API-RESEARCH.md).
 
+Planned ClickUp task sync: [integration plan and authentication gates](docs/CLICKUP-INTEGRATION-PLAN.md). ClickUp integration is not implemented yet.
+
 ## About
 
 This fork is maintained by **Renat "MpaK" Ibragimov** — [@mpakus on GitHub](https://github.com/mpakus) · [aomega.co](https://aomega.co). It adds Codex monitoring alongside Claude Code and an English, Spanish, and Russian interface.
