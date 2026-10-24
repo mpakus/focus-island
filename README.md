@@ -15,7 +15,7 @@
 4. In the island under the notch, click "Connect" to open Setup, then install hooks for Claude Code, Codex, or both. For Codex, also complete the hook trust step below.
 
 > [!NOTE]
-> The v0.5.2 binaries use ad-hoc signing and are **not notarized by Apple**. macOS may block the first launch. After attempting to open the app, use System Settings → Privacy & Security → Open Anyway if needed. Only open a download you trust.
+> The release binaries use ad-hoc signing and are **not notarized by Apple**. macOS may block the first launch. After attempting to open the app, use System Settings → Privacy & Security → Open Anyway if needed. Only open a download you trust.
 
 ## Features
 
@@ -53,11 +53,27 @@
 - Kanban Backlog → Todo → In progress → Done with drag & drop; badges for progress, definition of done and "prompt queued".
 - Task card: description, definition of done, "Where you left off", queued prompt, all task sessions with "Open" / "Resume" / "Unbind", "+ Add session" (same picker screen), "Close task".
 
+![Focus Island board with Jira and ClickUp cards](docs/media/task-board.png)
+
+_Screenshots use synthetic tasks and usage values._
+
 **Jira tasks (opt-in preview)**
 - Import selected assigned issues into Backlog or Todo, then use the same sessions, timers, notes, criteria, and reports.
 - Issue keys link to Jira; remote status appears separately from the local column. Closing a local task never changes Jira.
 - Manual refresh preserves local work. Imported tasks remain usable offline; disconnect keeps their history.
 - Connect with **Integrate Jira** in Setup, or use an already signed-in Atlassian CLI account. See [Jira setup](#jira-setup-opt-in-preview).
+
+**ClickUp tasks**
+- **Integrate ClickUp** opens browser authorization. Choose one Workspace, then sync assigned unfinished tasks into Backlog or import selected tasks into Backlog/Todo.
+- Source status stays separate from local progress. Manual sync preserves notes, sessions, timers, completion, and history. Reconnect, forget, or detach when needed.
+- No personal token, CLI installation, remote task writes, or automatic task polling. See [ClickUp setup](#clickup-setup).
+
+**Claude and Codex usage**
+- Usage chips appear together in the open island. Codex uses the official local CLI, including the copy bundled with Codex or ChatGPT, and its existing ChatGPT sign-in.
+- Quota labels follow the returned windows, including accounts that provide only a weekly limit. Separate quota buckets remain separate.
+- Codex refreshes every two minutes and from **Settings → Setup → Codex usage → Refresh**. Claude keeps its existing usage bridge.
+
+![Open island showing Claude and Codex usage](docs/media/agent-usage.png)
 
 **Reports**
 - "Today" — a daily summary: "You were working", "Agents were working", "Sessions waited for you", distractions, a time strip by task, "Done", "Still open", "Start tomorrow with"; "Copy to note" puts a markdown summary on the clipboard.
@@ -97,7 +113,8 @@ Configuration uses `$CODEX_HOME/hooks.json` or `~/.codex/hooks.json`; the setup 
 | Running, idle, completion, interruption | Existing support | Hook adapter; native-client acceptance pending |
 | Task binding, timers, history, provider labels | Yes | Yes |
 | Approval attention | Existing inline flow | Observe and open app; decide in Codex |
-| Questions, plan steps, subagents, usage | Existing support | Not mapped |
+| Questions, plan steps, subagents | Existing support | Not mapped |
+| Account usage limits | Claude status-line bridge | Official local app-server read; ChatGPT sign-in required |
 | Navigation | Supported terminal/session routes below | App activation for Terminal, iTerm and Ghostty when hinted; select the conversation yourself |
 | Queued prompt / completion reply | Existing supported sending routes | Copy queued prompt and open app; direct sending disabled |
 | Resume / new session | `claude --resume` / `claude` | `codex resume` / `codex`; task card has an agent choice |
@@ -134,6 +151,31 @@ Authorization, callback validation, token refresh, pagination, cancellation, boa
 
 Migration `v7` saves a consistent `before-jira-*.sqlite` snapshot before updating an existing database. It preserves tasks, Claude/Codex sessions, notes, criteria, prompts, activity, and timers. Prefer disconnecting Jira to restoring an old database; restoring a backup would discard later local work.
 
+## ClickUp setup
+
+1. Open **Settings → Setup → ClickUp authorization → Integrate ClickUp**.
+2. Authorize read access in your browser and select one Workspace. The app returns to the foreground when connected.
+3. Click **Sync my ClickUp tasks** in Setup or the board’s ClickUp menu. Connecting alone does not import cards.
+4. Use **ClickUp → Add from ClickUp** for selected imports into Backlog/Todo and an optional repository folder. **Refresh linked tasks** updates existing cards only.
+
+Sync includes assigned tasks and subtasks with status types other than Done/Closed, deduplicated by Workspace and stable task ID. Descriptions are plain text, limited to 50,000 characters. Source links open the original task. Moving or completing a local card never changes ClickUp.
+
+Browser sign-in uses ClickUp’s hosted MCP service, OAuth PKCE, and a temporary loopback callback. Credentials stay in macOS Keychain. The verified native grant supplies an expiring token without a refresh token; choose **Reconnect ClickUp** when sign-in expires. **Forget ClickUp** cancels pending work and removes local credentials while keeping cards/history. Revoke server-side access in ClickUp’s connected-app settings. **Detach from ClickUp** makes a card’s title and description editable locally.
+
+Sync is manual because ClickUp applies Workspace/client read budgets. The verified 93-task dataset required one discovery page, ten bulk reads, and six List metadata reads per sync. Rate limits, incomplete pages, or truncated responses never silently produce a partial new import; cached cards remain available. Existing linked tasks outside discovery are refreshed separately.
+
+Live browser authorization and read-only discovery succeeded for one Workspace. Production parsing and repeat imports were verified against those private recorded responses in a disposable board. Pagination, Done/Closed filtering, permission failures, and races have synthetic coverage; live multi-page and multi-List permission edge cases remain unverified. See the [implementation and verification record](docs/CLICKUP-INTEGRATION-PLAN.md).
+
+Database migration `v8` creates a consistent `before-clickup-*.sqlite` backup before upgrading. Existing Jira links, tasks, sessions, notes, and timers remain intact. Prefer forgetting an integration over restoring an old database, which would discard later work.
+
+## Codex usage setup
+
+Sign in to the official Codex CLI or desktop app with ChatGPT, then use **Settings → Setup → Codex usage → Refresh**. No usage bridge or API key is needed. Show or hide both providers’ chips in **Settings → Personalization → Usage**.
+
+Focus Island reads account quota metadata through the official local [Codex app-server](https://learn.chatgpt.com/docs/app-server); it does not start conversations or read transcripts. Percentages describe the shared account’s consumed quota, not this app’s usage or API billing. Missing windows are unavailable, never zero. Failed reads clear the display and show a status in Setup.
+
+Verified with `codex-cli 0.163.0-alpha.11.2`, including a live account with only a seven-day primary window. Older CLI versions and enterprise gateway authentication are not certified; update Codex if usage is unavailable. The official app-server API is experimental.
+
 ## App updates
 
 Open **Settings → About** to check the installed version against the latest GitHub release. **Check for Updates…** opens the update dialog; Sparkle downloads, verifies, installs, and relaunches the app after you confirm. **Automatically check for updates** controls background checks. Development and harness builds do not check for releases.
@@ -143,10 +185,10 @@ Install v0.6.0 manually once if you are on v0.5.x. Subsequent releases use a sig
 ## Releasing
 
 ```bash
-OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.6.0
+OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.7.0
 ```
 
-Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.6.0.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs tests, builds and verifies a universal DMG and ZIP, signs `appcast.xml` and its ZIP enclosure, tags the version, and publishes all three assets to GitHub Releases.
+Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.7.0.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs tests, builds and verifies a universal DMG and ZIP, signs `appcast.xml` and its ZIP enclosure, tags the version, and publishes all three assets to GitHub Releases.
 
 Sparkle tools are downloaded from the pinned official release with a SHA-256 check. Releases require the existing Keychain signing key under account `focus-island`; its public half must match `config/packaging/sparkle-public-key.txt`. Preserve this private key securely for future releases. A missing key stops the release; generating a replacement would break updates for existing installations.
 
@@ -176,11 +218,11 @@ Checks: `zsh scripts/harness.sh ci`, tests: `zsh scripts/test-clt.sh`.
 
 Implementation and validation: [Codex monitoring plan and evidence](docs/CODEX-MONITORING-PLAN.md).
 
-The app icon is generated from [Assets/Brand/icon.png](Assets/Brand/icon.png), preserving its transparency and proportions. The generated ICNS is used by the release and development app bundles for Dock, Finder, and About.
+The app icon uses [Assets/Brand/icon.png](Assets/Brand/icon.png) on a dark blue background, preserving its proportions. The generated ICNS is used by the release and development app bundles for Dock, Finder, and About.
 
 Jira implementation and limitations: [Jira import plan and evidence](docs/JIRA-INTEGRATION-PLAN.md), with [API and authentication research](docs/JIRA-API-RESEARCH.md).
 
-Planned ClickUp task sync: [integration plan and authentication gates](docs/CLICKUP-INTEGRATION-PLAN.md). ClickUp integration is not implemented yet.
+ClickUp implementation and verification limits: [integration plan](docs/CLICKUP-INTEGRATION-PLAN.md).
 
 ## About
 

@@ -1433,7 +1433,7 @@ private struct UsageDisplayPreview: View {
         HStack(spacing: 6) {
             if option == .compact {
                 usageChip("Cl", window: "5h", value: 42, color: Color(hex: AgentTool.claudeCode.brandColorHex) ?? .orange)
-                usageChip("Cl", window: "7d", value: 13, color: Color(hex: AgentTool.claudeCode.brandColorHex) ?? .orange)
+                usageChip("Co", window: "7d", value: 13, color: Color(hex: AgentTool.codex.brandColorHex) ?? .green)
             } else {
                 RoundedRectangle(cornerRadius: 2, style: .continuous)
                     .fill(V6Palette.paper.opacity(0.18))

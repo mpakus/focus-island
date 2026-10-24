@@ -1,9 +1,11 @@
 import Foundation
 import Network
 
+enum OAuthCallbackError: Error { case failed, timedOut }
+
 /// The listener exists only during sign-in and binds exclusively to this Mac's loopback interface.
 @MainActor
-final class JiraOAuthCallback {
+final class OAuthCallback {
     private let listener: NWListener
     private var ready: CheckedContinuation<URL, any Error>?
     private var result: CheckedContinuation<URL, any Error>?
@@ -12,19 +14,13 @@ final class JiraOAuthCallback {
     private var timeoutTask: Task<Void, Never>?
     private var connections: [NWConnection] = []
 
-    init() throws {
+    private let path: String
+
+    init(path: String) throws {
+        self.path = path
         let parameters = NWParameters.tcp
         parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: .any)
         listener = try NWListener(using: parameters)
-    }
-
-    static func authorize(send: JiraHTTP.Send, browser: @escaping @Sendable (URL) async throws -> Void) async throws -> JiraOAuthCredentials {
-        let server = try JiraOAuthCallback()
-        defer { server.stop() }
-        let callback = try await server.start()
-        return try await JiraOAuth.authorize(callback: callback, send: send, browser: { url in
-            try await server.open(url, browser: browser)
-        })
     }
 
     func start() async throws -> URL {
@@ -36,10 +32,10 @@ final class JiraOAuthCallback {
                     Task { @MainActor in
                         guard let self else { return }
                         if case .ready = status, let port = self.listener.port {
-                            let url = URL(string: "http://127.0.0.1:\(port.rawValue)/jira/callback")!
+                            let url = URL(string: "http://127.0.0.1:\(port.rawValue)\(self.path)")!
                             self.callback = url
                             self.ready?.resume(returning: url); self.ready = nil
-                        } else if case .failed = status { self.stop(error: JiraError.commandFailed) }
+                        } else if case .failed = status { self.stop(error: OAuthCallbackError.failed) }
                     }
                 }
                 listener.newConnectionHandler = { [weak self] connection in
@@ -59,7 +55,7 @@ final class JiraOAuthCallback {
                 timeoutTask = Task {
                     do { try await Task.sleep(for: timeout) }
                     catch { return }
-                    self.stop(error: JiraError.authorizationTimedOut)
+                    self.stop(error: OAuthCallbackError.timedOut)
                 }
                 Task {
                     do { try await browser(url) }
@@ -123,7 +119,7 @@ final class JiraOAuthCallback {
         guard let callback, let state, result != nil else { return nil }
         let lines = request.components(separatedBy: "\r\n")
         let parts = (lines.first ?? "").split(separator: " ")
-        guard parts.count == 3, parts[0] == "GET", parts[1].hasPrefix("/jira/callback?"),
+        guard parts.count == 3, parts[0] == "GET", parts[1].hasPrefix("\(path)?"),
               lines.contains(where: { $0.lowercased() == "host: 127.0.0.1:\(callback.port!)" }),
               let url = URL(string: "http://127.0.0.1:\(callback.port!)\(parts[1])"),
               let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems,

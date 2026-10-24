@@ -117,7 +117,7 @@
 "setup.claudeConfigDir.reset" = "Сбросить";
 "setup.claudeConfigDir.footer" = "Для запуска Claude Code с CLAUDE_CONFIG_DIR. Оставь значение по умолчанию, если не используешь другой каталог.";
 "setup.section.hooks" = "Хуки CLI";
-"setup.section.usage" = "Мост статистики";
+"setup.section.usage" = "Использование";
 "setup.section.permissions" = "Разрешения";
 "setup.binaryReady" = "Готово";
 "setup.binaryMissing" = "Не найден — сначала собери OpenIslandHooks";
@@ -1041,3 +1041,53 @@
 "jira.cli_connected" = "Подключено через Atlassian CLI";
 
 "jira.reconnect" = "Переподключить Jira";
+
+/* ClickUp task integration. */
+"clickup.authorization" = "Авторизация ClickUp";
+"clickup.authorize" = "Подключить ClickUp";
+"clickup.setup_hint" = "Подключитесь в браузере и выберите рабочее пространство ClickUp. Focus Island только читает задачи.";
+"clickup.sync_assigned" = "Синхронизировать мои задачи ClickUp";
+"clickup.sync_hint" = "Импортирует назначенные незавершённые задачи в бэклог и обновляет связанные карточки. Локальный прогресс сохраняется.";
+"clickup.reconnect" = "Переподключить ClickUp";
+"clickup.disconnect" = "Забыть ClickUp";
+"clickup.disconnect_hint" = "Забыть удаляет подключение, сохраняя карточки и историю. При необходимости отзовите доступ в настройках аккаунта ClickUp.";
+"clickup.authorizing" = "Ожидание авторизации ClickUp в браузере…";
+"clickup.loading" = "Чтение задач ClickUp…";
+"clickup.refreshed" = "ClickUp синхронизирован: %@";
+"clickup.add_from_clickup" = "Добавить из ClickUp…";
+"clickup.import_hint" = "Выберите назначенные задачи для добавления на доску. Изменения на доске остаются локальными.";
+"clickup.search" = "Фильтр задач ClickUp";
+"clickup.on_board" = "На доске";
+"clickup.no_tasks" = "В этом рабочем пространстве ClickUp вам не назначены незавершённые задачи.";
+"clickup.choose_folder" = "Выбрать папку…";
+"clickup.reload_tasks" = "Обновить список";
+"clickup.import_selected" = "Импортировать выбранные (%@)";
+"clickup.refresh_linked" = "Обновить связанные задачи ClickUp";
+"clickup.status" = "ClickUp: %@";
+"clickup.unavailable" = "Эта задача ClickUp недоступна. Последняя сохранённая копия сохранена.";
+"clickup.detach" = "Отвязать от ClickUp";
+"clickup.local_progress" = "Название и описание берутся из ClickUp. Заметки, прогресс и история остаются локальными.";
+"clickup.partial_refresh" = "Недоступно задач ClickUp: %@. Сохранённые копии и локальный прогресс сохранены.";
+"clickup.credentials_unavailable" = "Focus Island не может получить авторизацию ClickUp из Связки ключей. Разблокируйте её и повторите попытку.";
+"clickup.error.signInRequired" = "Авторизация ClickUp истекла или отсутствует. Переподключите ClickUp.";
+"clickup.error.accountChanged" = "Аккаунт или рабочее пространство ClickUp изменились. Переподключитесь перед синхронизацией.";
+"clickup.error.invalidResponse" = "ClickUp вернул неполные или неожиданные данные. Неполный импорт не сохранён; обновите список и повторите попытку.";
+"clickup.error.unavailable" = "Доступ к ClickUp недоступен. Проверьте разрешения рабочего пространства и переподключитесь.";
+"clickup.error.commandFailed" = "ClickUp не удалось завершить операцию. Проверьте соединение и повторите попытку. Локальная работа сохранена.";
+"clickup.error.databaseUnavailable" = "Импорт ClickUp отключён: локальная база данных недоступна. Устраните проблему хранения и перезапустите приложение.";
+"clickup.error.authorizationTimedOut" = "Вход в ClickUp не завершён. Проверьте браузер и нажмите «Подключить ClickUp» ещё раз.";
+"clickup.error.rateLimited" = "Достигнут лимит запросов ClickUp. Повторите позже; сохранённые задачи сохранены.";
+
+// Codex account usage
+"codex.usage.title" = "Использование Codex";
+"codex.usage.refresh" = "Обновить";
+"codex.usage.hint" = "Общие лимиты аккаунта ChatGPT из Codex CLI или приложения с активным входом. Обновление каждые две минуты.";
+"codex.usage.unavailable" = "Лимиты Codex недоступны. Откройте или обновите Codex и повторите.";
+"codex.usage.signInRequired" = "Войдите в Codex через ChatGPT и обновите.";
+"codex.usage.unsupportedAccount" = "Для лимитов нужен вход через ChatGPT; расходы API не отображаются.";
+"codex.usage.invalidResponse" = "Codex вернул неподдерживаемые данные. Обновите Codex и повторите.";
+"codex.usage.timedOut" = "Время ожидания лимитов Codex истекло. Обновите ещё раз.";
+"codex.usage.primary" = "Основной";
+"codex.usage.secondary" = "Дополнительный";
+"clickup.rate_limited_until" = "Достигнут лимит чтения ClickUp. Повторите после %@.";
+"clickup.access_settings" = "Управление доступом ClickUp";

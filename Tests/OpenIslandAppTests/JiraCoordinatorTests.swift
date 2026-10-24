@@ -269,7 +269,7 @@ struct JiraCoordinatorTests {
     @Test(.enabled(if: ProcessInfo.processInfo.environment["FOCUS_ISLAND_JIRA_BROWSER_KEYCHAIN"] != nil))
     func liveBrowserConnectionSyncsADisposableBoard() async throws {
         let service = try #require(ProcessInfo.processInfo.environment["FOCUS_ISLAND_JIRA_BROWSER_KEYCHAIN"])
-        let client = JiraMCPClient(credentials: JiraKeychain(service: service), browser: { _ in throw JiraError.signInRequired }, chooseSite: { $0[0] })
+        let client = JiraMCPClient(credentials: IntegrationKeychain(service: service), browser: { _ in throw JiraError.signInRequired }, chooseSite: { $0[0] })
         let store = try FocusStore.inMemory()
         let coordinator = JiraCoordinator(store: store, defaults: defaults(), durable: true, client: client)
         coordinator.connect()

@@ -182,7 +182,7 @@ final class JiraCoordinator {
             catch is CancellationError { }
             catch {
                 guard self.generation == generation, !Task.isCancelled else { return }
-                self.error = (error as? JiraError)?.localizedDescription ?? L10n.tr("jira.error.commandFailed")
+                self.error = error is IntegrationCredentialError ? L10n.tr("jira.error.credentialsUnavailable") : ((error as? JiraError)?.localizedDescription ?? L10n.tr("jira.error.commandFailed"))
             }
         }
     }

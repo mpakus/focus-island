@@ -5,7 +5,7 @@ import OpenIslandCore
 @MainActor
 enum JiraBrowserAuthorization {
     static func client() -> JiraMCPClient {
-        JiraMCPClient(credentials: JiraKeychain(service: "\(Bundle.main.bundleIdentifier ?? "dev.zhanabayev.focusisland").jira"), browser: { url in
+        JiraMCPClient(credentials: IntegrationKeychain(service: "\(Bundle.main.bundleIdentifier ?? "dev.zhanabayev.focusisland").jira"), browser: { url in
             try await MainActor.run {
                 guard NSWorkspace.shared.open(url) else { throw JiraError.commandFailed }
             }

@@ -3,22 +3,22 @@ import Foundation
 /// A fixed set of read operations; no model, local proxy, or executable is involved.
 public actor JiraMCPClient: JiraProviding {
     private nonisolated let credentialLock = NSLock()
-    private nonisolated let credentials: any JiraCredentialStoring
-    private let send: JiraHTTP.Send
+    private nonisolated let credentials: any IntegrationCredentialStoring
+    private let send: IntegrationHTTP.Send
     private let browser: @Sendable (URL) async throws -> Void
     private let chooseSite: @Sendable ([JiraConnection]) async throws -> JiraConnection
     private var sessionID: String?
     private var initialized = false
     private var protocolVersion = "2025-03-26"
 
-    public init(credentials: any JiraCredentialStoring = JiraKeychain(), send: @escaping JiraHTTP.Send = JiraHTTP.send,
+    public init(credentials: any IntegrationCredentialStoring = IntegrationKeychain(service: "dev.zhanabayev.focusisland.jira"), send: @escaping IntegrationHTTP.Send = IntegrationHTTP.send,
                 browser: @escaping @Sendable (URL) async throws -> Void,
                 chooseSite: @escaping @Sendable ([JiraConnection]) async throws -> JiraConnection) {
         self.credentials = credentials; self.send = send; self.browser = browser; self.chooseSite = chooseSite
     }
 
     public func authorize() async throws -> JiraConnection {
-        let tokens = try await JiraOAuthCallback.authorize(send: send, browser: browser)
+        let tokens = try await JiraOAuth.authorize(send: send, browser: browser)
         try Task.checkCancellation()
         try save(tokens)
         initialized = false; sessionID = nil
@@ -173,7 +173,7 @@ public actor JiraMCPClient: JiraProviding {
         let id = UUID().uuidString
         var body: [String: Any] = ["jsonrpc": "2.0", "method": method, "params": params]
         if !notification { body["id"] = id }
-        var request = try JiraHTTP.request(JiraOAuth.resource, body: body)
+        var request = try IntegrationHTTP.request(JiraOAuth.resource, body: body)
         request.setValue("Bearer \(try await tokens().accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json, text/event-stream", forHTTPHeaderField: "Accept")
         request.setValue(protocolVersion, forHTTPHeaderField: "MCP-Protocol-Version")

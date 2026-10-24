@@ -67,6 +67,7 @@ final class AppModel {
     @ObservationIgnored private var _agentsGridNextTicket: Int = 0
     var selectedSessionID: String?
     let hooks = HookInstallationCoordinator()
+    let codexUsage: CodexUsageCoordinator
     let focus: FocusCoordinator
     let overlay = OverlayUICoordinator()
     let discovery: SessionDiscoveryCoordinator
@@ -495,8 +496,10 @@ final class AppModel {
         },
         focusStore: FocusStore? = nil,
         claudeRegistry: ClaudeSessionRegistry? = nil,
-        runBackfill: Bool = true
+        runBackfill: Bool = true,
+        codexUsageRead: @escaping @Sendable () async throws -> CodexUsageSnapshot = { try await CodexUsageClient.read() }
     ) {
+        self.codexUsage = CodexUsageCoordinator(read: codexUsageRead)
         self.discovery = SessionDiscoveryCoordinator(claudeSessionRegistry: claudeRegistry ?? ClaudeSessionRegistry())
         self.terminalJumpAction = terminalJumpAction
         self.isNotificationSessionAlreadyFrontmost = isNotificationSessionAlreadyFrontmost
@@ -1050,6 +1053,7 @@ final class AppModel {
             hooks.refreshCodexHookStatus()
             hooks.refreshClaudeUsageState()
             hooks.startClaudeUsageMonitoringIfNeeded()
+            codexUsage.start()
 
         } else {
             isResolvingInitialLiveSessions = false

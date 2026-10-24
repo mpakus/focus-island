@@ -166,6 +166,7 @@ final class FocusCoordinator {
     private(set) var onboardingDismissed: Bool
     let storeOutcome: FocusStoreOpenOutcome
     let jira: JiraCoordinator
+    let clickUp: ClickUpCoordinator
     var storeRecoveredBackupURL: URL? {
         if case let .recovered(backupURL) = storeOutcome { return backupURL }
         return nil
@@ -256,11 +257,13 @@ final class FocusCoordinator {
         gitDiff: GitDiffProviding = GitDiffProvider(),
         clipboard: @escaping (String) -> Void = FocusCoordinator.copyToPasteboard,
         runBackfill: Bool = true,
-        jiraClient: any JiraProviding = JiraBrowserAuthorization.client()
+        jiraClient: any JiraProviding = JiraBrowserAuthorization.client(),
+        clickUpClient: (any ClickUpProviding)? = nil
     ) {
         self.store = store
         self.storeOutcome = storeOutcome
         self.jira = JiraCoordinator(store: store, defaults: defaults, durable: storeOutcome != .inMemoryFallback, client: jiraClient)
+        self.clickUp = ClickUpCoordinator(store: store, defaults: defaults, durable: storeOutcome != .inMemoryFallback, client: clickUpClient)
         self.boardService = BoardService(store: store)
         self.history = SessionHistory(store: store)
         self.distractionLog = DistractionLog(store: store)
@@ -284,6 +287,7 @@ final class FocusCoordinator {
         self.turnTracker = TurnTracker(delay: settings.nextActionDelay)
         self.distractionTracker = DistractionTracker(threshold: settings.distractionThreshold)
         self.jira.onChange = { [weak self] in self?.reload() }
+        self.clickUp.onChange = { [weak self] in self?.reload() }
     }
 
     nonisolated static func copyToPasteboard(_ text: String) {

@@ -124,13 +124,54 @@ struct SettingsRenderingTests {
         #expect(detail.contains("Source description"))
     }
 
-    private func render(_ view: some View, name: String, model: AppModel) async throws -> String {
+    @Test func clickUpAndCodexUsageRenderWithSyntheticData() async throws {
+        let store = try FocusStore.inMemory()
+        let board = BoardService(store: store)
+        _ = try board.createTask(title: "Plan the next release", column: .backlog)
+        _ = try board.createTask(title: "Polish keyboard shortcuts", column: .todo)
+        _ = try board.createTask(title: "Ship the new app icon", column: .done)
+        let jiraClient = StubJiraClient(), clickUpClient = StubClickUpClient()
+        _ = try JiraTaskService(store: store).importIssues([StubJiraClient.fixture(title: "Improve task search")], connection: jiraClient.connection, column: .todo)
+        let clickUpID = try ClickUpTaskService(store: store).importTasks([StubClickUpClient.fixture()], connection: clickUpClient.connection)[0]
+        try board.moveTask(id: clickUpID, to: .inProgress, beforeTaskID: nil)
+        let model = AppModel(focusStore: store, claudeRegistry: .temporaryForTesting(), runBackfill: false, codexUsageRead: {
+            try CodexUsageSnapshot.decode(Data(#"{"rateLimits":{"primary":{"usedPercent":32,"windowDurationMins":300},"secondary":{"usedPercent":18,"windowDurationMins":10080}}}"#.utf8))
+        })
+        model.focus.start(initialSessions: [])
+        model.hooks.claudeUsageSnapshot = ClaudeUsageSnapshot(fiveHour: .init(usedPercentage: 24, resetsAt: nil), sevenDay: .init(usedPercentage: 41, resetsAt: nil))
+        model.codexUsage.refresh(); await model.codexUsage.operation?.value
+        let boardText = try await render(BoardRootView(focus: model.focus, state: BoardWindowState()), name: "readme-board", model: model, size: NSSize(width: 1120, height: 640))
+        #expect(boardText.contains("CU-42") && boardText.contains("TEST-1"))
+        let previousUsage = model.islandUsageDisplay
+        defer { model.islandUsageDisplay = previousUsage }
+        model.islandUsageDisplay = .compact
+        model.hooks.codexHookStatus = CodexHookInstallationStatus(configURL: URL(fileURLWithPath: "/fixture/hooks.json"), configured: true, binaryAvailable: true, inlineConflict: false)
+        model.notchStatus = .opened
+        let usage = try await render(IslandPanelView(model: model), name: "readme-usage", model: model, size: NSSize(width: 900, height: 430))
+        #expect(usage.contains("Codex") && usage.contains("Claude"))
+        #expect(usage.contains("32%") && usage.contains("24%"))
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let focus = FocusCoordinator(store: store, defaults: defaults, launcher: RecordingLauncher(), runBackfill: false, clickUpClient: clickUpClient)
+        focus.start(initialSessions: [])
+        let disconnected = try await render(ClickUpConnectionView(focus: focus).padding(), name: "clickup-setup", model: model)
+        #expect(disconnected.contains("Integrate ClickUp"))
+        focus.clickUp.connect(authorize: true); await focus.clickUp.operation?.value
+        let connected = try await render(ClickUpConnectionView(focus: focus).padding(), name: "clickup-connected", model: model)
+        #expect(connected.contains("Sync my ClickUp tasks") && connected.contains("Forget ClickUp"))
+        focus.clickUp.loadTasks(); await focus.clickUp.operation?.value
+        let picker = try await render(ClickUpImportView(focus: focus), name: "clickup-picker", model: model)
+        #expect(picker.contains("CU-42"))
+        let detail = try await render(TaskDetailView(focus: focus, task: #require(focus.board.task(id: clickUpID))), name: "clickup-detail", model: model)
+        #expect(detail.contains("Detach from ClickUp"))
+    }
+
+    private func render(_ view: some View, name: String, model: AppModel, size: NSSize = NSSize(width: 780, height: 1100)) async throws -> String {
         _ = NSApplication.shared
         let temporary = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let output = ProcessInfo.processInfo.environment["FOCUS_ISLAND_TEST_ARTIFACT_DIR"].map { URL(fileURLWithPath: $0) }
         let directory = (output ?? temporary).appendingPathComponent(name)
         defer { if output == nil { try? FileManager.default.removeItem(at: temporary) } }
-        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 780, height: 1100), styleMask: [.titled], backing: .buffered, defer: false)
+        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: size.width, height: size.height), styleMask: [.titled], backing: .buffered, defer: false)
         panel.contentView = NSHostingView(rootView: view.preferredColorScheme(.dark).frame(maxWidth: .infinity, maxHeight: .infinity).background(Color(white: 0.12)))
         panel.orderFront(nil)
         defer { panel.orderOut(nil) }

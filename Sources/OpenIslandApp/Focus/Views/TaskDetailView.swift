@@ -48,6 +48,20 @@ struct TaskDetailView: View {
                 }
                 Text(L10n.tr("jira.local_progress")).font(.caption).foregroundStyle(.secondary)
             }
+            if let link = focus.board.clickUpLinks[task.id] {
+                HStack {
+                    ClickUpTaskBadge(link: link)
+                    Spacer()
+                    Button(L10n.tr("clickup.detach")) {
+                        if let current = focus.board.task(id: task.id) {
+                            task.title = current.title
+                            task.details = current.details
+                        }
+                        focus.clickUp.detach(taskID: task.id)
+                    }
+                }
+                Text(L10n.tr("clickup.local_progress")).font(.caption).foregroundStyle(.secondary)
+            }
             TaskPomodoroSection(
                 focus: focus,
                 taskID: task.id,
@@ -103,10 +117,10 @@ struct TaskDetailView: View {
     private var header: some View {
         HStack(spacing: 10) {
             TextField(L10n.tr("focus.title"), text: Binding(
-                get: { focus.board.jiraLinks[task.id] == nil ? task.title : (focus.board.task(id: task.id)?.title ?? task.title) },
+                get: { !focus.board.isSourceLinked(taskID: task.id) ? task.title : (focus.board.task(id: task.id)?.title ?? task.title) },
                 set: { task.title = $0 }
             ))
-                .disabled(focus.board.jiraLinks[task.id] != nil)
+                .disabled(focus.board.isSourceLinked(taskID: task.id))
                 .textFieldStyle(.plain)
                 .font(FocusStyle.titleFont)
                 .foregroundStyle(FocusStyle.primaryText)
@@ -133,7 +147,7 @@ struct TaskDetailView: View {
     private func leftColumn(aggregate: TaskAggregate) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             field(L10n.tr("focus.description"), text: detailsBinding, height: 72)
-                .disabled(focus.board.jiraLinks[task.id] != nil)
+                .disabled(focus.board.isSourceLinked(taskID: task.id))
             VStack(alignment: .leading, spacing: 6) {
                 FocusSectionCaption(Self.criteriaCaption(aggregate.criteria))
                 CriteriaChecklist(focus: focus, taskID: task.id)
@@ -331,8 +345,8 @@ struct TaskDetailView: View {
     }
 
     private var detailsBinding: Binding<String> {
-        Binding(get: { focus.board.jiraLinks[task.id] == nil ? (task.details ?? "") : (focus.board.task(id: task.id)?.details ?? "") },
-                set: { if focus.board.jiraLinks[task.id] == nil { task.details = $0.isEmpty ? nil : $0 } })
+        Binding(get: { !focus.board.isSourceLinked(taskID: task.id) ? (task.details ?? "") : (focus.board.task(id: task.id)?.details ?? "") },
+                set: { if !focus.board.isSourceLinked(taskID: task.id) { task.details = $0.isEmpty ? nil : $0 } })
     }
 
     private var noteBinding: Binding<String> {

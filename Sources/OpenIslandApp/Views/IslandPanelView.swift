@@ -940,6 +940,13 @@ struct IslandPanelView: View {
             }
         }
 
+        if let snapshot = model.codexUsage.snapshot {
+            for bucket in snapshot.buckets {
+                providers.append(UsageProviderPresentation(id: "codex-\(bucket.id)", title: bucket.name,
+                    windows: bucket.windows.map { UsageWindowPresentation(id: $0.id, label: $0.label,
+                        usedPercentage: $0.usedPercentage, resetsAt: $0.resetsAt) }))
+            }
+        }
         return providers
     }
 

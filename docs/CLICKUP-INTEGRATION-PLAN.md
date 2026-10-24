@@ -73,4 +73,14 @@ The board gets a ClickUp menu matching Jira: sync assigned tasks into Backlog, s
 
 Run focused client/service/coordinator tests, the existing Jira regression tests, localization/render checks, then `rtk proxy bash bin/test.dev` and the normal packaged-app smoke test. Keep synthetic fixtures in the repository; private live content and credentials stay out of logs. The user's real board is never the test fixture. If live pagination or a permission edge case cannot be exercised, report that limit rather than treating fixtures as live proof.
 
-The implementation decision remaining after this plan is Phase 0: whether ClickUp accepts Focus Island's native client and exposes a complete read-only assignment contract. Personal-token setup, a hosted OAuth broker, multi-Workspace aggregation, scheduled sync, and remote writes are outside this proposal.
+## Implementation evidence — v0.7.0
+
+Phase 0 passed on 2026-10-24: Focus Island’s registered native public client completed real browser consent, PKCE exchange, and the exact loopback callback with issuer/state validation. Read-only identity and one selected Workspace were verified. The grant returned an expiring access token without a refresh token; this release explicitly asks for reconnection on expiry.
+
+The live Workspace returned 93 assigned tasks on one complete page. Fixed `task/get_many/getBulkTasks` reads in batches of ten returned every discovered ID; six home-List reads supplied status types. A large response was explicitly truncated, so the production client recursively splits bounded batches and rejects a truncated single-task response. Negative additional assignee IDs observed in bulk metadata are preserved; the current-user filter still matches the verified user ID exactly. Only fixed read tools/operators are callable.
+
+Production transport fixtures cover JSON/SSE parsing, pagination, repeated pages, truncation, partial sets, scope mismatch, auth/session expiry, read limits, and missing tasks. Private recorded live responses passed the production decoder and repeat imports into disposable SQLite storage, including a local note/completed card, refresh, detach, and forget. Private response bodies and credentials are not committed. A native sign-in/read helper supplied the live proof; the packaged app’s entire sign-in/sync flow has not yet been exercised live.
+
+Migration v8 and stale-editor tests preserve existing Jira links, task history, Claude/Codex sessions, criteria, prompts, timers, activity, and day plans. App fixtures cover explicit sync, repeat imports, reconnect/forget, cancelled work, and disabled fallback storage. Rendered synthetic Setup/import/detail/board screenshots confirm controls and source badges.
+
+Live pagination beyond one page, assigned subtasks, Done/Closed tasks, multiple-List permission edge cases, token expiry, and account-side revocation were not independently exercised. Fixtures cover the deterministic behavior; they are not claims of live acceptance. One Workspace is selected in consent; there is no multi-Workspace aggregation. Personal-token setup, a hosted OAuth broker, scheduled sync, and remote writes remain out of scope.

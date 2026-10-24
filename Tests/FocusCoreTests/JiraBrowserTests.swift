@@ -3,7 +3,7 @@ import Foundation
 import Testing
 @testable import FocusCore
 
-final class MemoryJiraCredentials: JiraCredentialStoring, @unchecked Sendable {
+final class MemoryJiraCredentials: IntegrationCredentialStoring, @unchecked Sendable {
     private let lock = NSLock()
     private var data: Data?
     var beforeSave: (@Sendable () -> Void)?
@@ -21,8 +21,8 @@ actor BrowserJiraFixture {
     func expire() { expireSession = true }
     let cloudID = "00000000-0000-0000-0000-000000000001"
     func repeatPagination() { repeatPage = true }
-    func send(_ request: URLRequest) throws -> JiraHTTPResponse {
-        func response(_ value: Any) throws -> JiraHTTPResponse { JiraHTTPResponse(data: try JSONSerialization.data(withJSONObject: value)) }
+    func send(_ request: URLRequest) throws -> IntegrationHTTPResponse {
+        func response(_ value: Any) throws -> IntegrationHTTPResponse { IntegrationHTTPResponse(data: try JSONSerialization.data(withJSONObject: value)) }
         if request.url?.path == "/oauth/token" {
             let form = String(decoding: request.httpBody!, as: UTF8.self)
             #expect(form.contains("refresh_token=refresh"))
@@ -34,10 +34,10 @@ actor BrowserJiraFixture {
         var result: [String: Any] = [:]
         if expireSession, method == "tools/call" {
             expireSession = false
-            return JiraHTTPResponse(data: Data(), status: 404)
+            return IntegrationHTTPResponse(data: Data(), status: 404)
         }
         if method == "initialize" { initializations += 1; result = ["protocolVersion": "2025-03-26", "capabilities": [:]] }
-        else if method == "notifications/initialized" { return JiraHTTPResponse(data: Data(), status: 202) }
+        else if method == "notifications/initialized" { return IntegrationHTTPResponse(data: Data(), status: 202) }
         else {
             let params = try #require(body["params"] as? [String: Any]), name = try #require(params["name"] as? String)
             let arguments = params["arguments"] as? [String: Any] ?? [:]
@@ -61,7 +61,7 @@ actor BrowserJiraFixture {
         }
         let envelope: [String: Any] = ["jsonrpc": "2.0", "id": body["id"]!, "result": result]
         let json = String(decoding: try JSONSerialization.data(withJSONObject: envelope), as: UTF8.self)
-        return JiraHTTPResponse(data: Data("event: message\ndata: \(json)\n\n".utf8), sessionID: "test-session")
+        return IntegrationHTTPResponse(data: Data("event: message\ndata: \(json)\n\n".utf8), sessionID: "test-session")
     }
     static func issue(id: String) -> [String: Any] {
         ["id": id, "key": "TEST-\(id)", "fields": ["summary": "Assigned issue", "description": "## Jira text", "status": ["name": "In Progress"], "updated": "2026-10-23T10:00:00.000Z"]]
@@ -71,7 +71,7 @@ actor BrowserJiraFixture {
 struct JiraBrowserTests {
     @Test func nativeAuthorizationUsesPKCEAndReadOnlyScopesWithoutAClientSecret() async throws {
         let fixture = OAuthFixture(), store = MemoryJiraCredentials()
-        let tokens = try await JiraOAuthCallback.authorize(send: { try await fixture.send($0) }, browser: { url in
+        let tokens = try await JiraOAuth.authorize(send: { try await fixture.send($0) }, browser: { url in
             let callback = try await fixture.browser(url)
             let (data, response) = try await URLSession.shared.data(from: callback)
             #expect((response as? HTTPURLResponse)?.statusCode == 200)
@@ -94,7 +94,7 @@ struct JiraBrowserTests {
     }
 
     @Test @MainActor func loopbackIgnoresWrongStateAndClosesWhenCancelled() async throws {
-        let server = try JiraOAuthCallback()
+        let server = try OAuthCallback(path: "/jira/callback")
         let callback = try await server.start()
         defer { server.stop() }
         let task = Task {
@@ -112,10 +112,10 @@ struct JiraBrowserTests {
     }
 
     @Test @MainActor func browserFailureCannotLeaveAuthorizationWaitingForever() async throws {
-        let server = try JiraOAuthCallback()
+        let server = try OAuthCallback(path: "/jira/callback")
         _ = try await server.start()
         defer { server.stop() }
-        await #expect(throws: JiraError.authorizationTimedOut) {
+        await #expect(throws: OAuthCallbackError.timedOut) {
             try await server.open(URL(string: "https://auth.atlassian.com/authorize?state=expected")!, timeout: .milliseconds(20), browser: { _ in })
         }
     }
@@ -195,7 +195,7 @@ private actor OAuthFixture {
         let callback = try #require(value("redirect_uri"))
         return URL(string: "\(callback)?state=\(try #require(value("state")))&code=authorized")!
     }
-    func send(_ request: URLRequest) throws -> JiraHTTPResponse {
+    func send(_ request: URLRequest) throws -> IntegrationHTTPResponse {
         let body: [String: Any]
         switch request.url?.path {
         case "/.well-known/oauth-protected-resource/v2/mcp":
@@ -221,6 +221,6 @@ private actor OAuthFixture {
             body = ["access_token": "access", "refresh_token": "refresh", "expires_in": 3600, "token_type": "Bearer"]
         default: throw JiraError.invalidResponse
         }
-        return JiraHTTPResponse(data: try JSONSerialization.data(withJSONObject: body))
+        return IntegrationHTTPResponse(data: try JSONSerialization.data(withJSONObject: body))
     }
 }

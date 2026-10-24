@@ -29,8 +29,8 @@ public struct JiraCLIClient: JiraProviding {
     }
 
     private static func loadCloudID(_ site: String) async throws -> String {
-        let response = try await JiraHTTP.send(JiraHTTP.request(URL(string: "\(site)/_edge/tenant_info")!))
-        let value = try JiraHTTP.object(response)
+        let response = try await IntegrationHTTP.send(IntegrationHTTP.request(URL(string: "\(site)/_edge/tenant_info")!))
+        let value = try JiraOAuth.object(response)
         guard let id = value["cloudId"] as? String, UUID(uuidString: id) != nil else { throw JiraError.invalidResponse }
         return id
     }

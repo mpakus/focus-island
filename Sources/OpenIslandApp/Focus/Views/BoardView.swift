@@ -69,6 +69,7 @@ struct BoardRootView: View {
     @State private var projectFilter: String?
     @State private var showsArchive = false
     @State private var showsJira = false
+    @State private var showsClickUp = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -85,6 +86,7 @@ struct BoardRootView: View {
             StartTaskSheet(focus: focus, taskID: item.id).id(item.id)
         }
         .sheet(isPresented: $showsJira) { JiraImportView(focus: focus) }
+        .sheet(isPresented: $showsClickUp) { ClickUpImportView(focus: focus) }
     }
 
     private var startTaskBinding: Binding<StartTaskItem?> {
@@ -142,6 +144,17 @@ struct BoardRootView: View {
                     Button(L10n.tr("jira.disconnect")) { focus.jira.disconnect() }
                         .disabled(focus.jira.connection == nil && focus.jira.error == nil && !focus.jira.isBusy)
                 }
+                Menu("ClickUp") {
+                    Button(L10n.tr("clickup.sync_assigned")) { focus.clickUp.syncAssignedTasks(links: Array(focus.board.clickUpLinks.values)) }
+                        .disabled(focus.clickUp.connection == nil || focus.clickUp.isBusy || focus.storeIsInMemoryFallback)
+                    Button(L10n.tr("clickup.add_from_clickup")) { showsClickUp = true }
+                    Button(L10n.tr("clickup.refresh_linked")) { focus.clickUp.refresh(links: Array(focus.board.clickUpLinks.values)) }
+                        .disabled(focus.clickUp.connection == nil || focus.clickUp.isBusy)
+                    Divider()
+                    Button(L10n.tr("clickup.reconnect")) { focus.clickUp.reconnect() }.disabled(focus.clickUp.isBusy)
+                    Button(L10n.tr("clickup.disconnect")) { focus.clickUp.disconnect() }
+                        .disabled(focus.clickUp.connection == nil && focus.clickUp.error == nil && !focus.clickUp.isBusy)
+                }
                 .fixedSize()
                 filterMenu
             }
@@ -181,6 +194,7 @@ struct BoardRootView: View {
         case .board:
             VStack(spacing: 0) {
                 JiraOperationStatus(jira: focus.jira).padding(.horizontal, 16)
+                ClickUpOperationStatus(clickUp: focus.clickUp).padding(.horizontal, 16)
                 BoardView(focus: focus, projectFilter: projectFilter, showsArchive: showsArchive)
             }
         case .today:
@@ -386,6 +400,7 @@ struct TaskCardView: View {
                 sessionLine(row)
             }
             if let link = focus.board.jiraLinks[task.id] { JiraTaskBadge(link: link) }
+            if let link = focus.board.clickUpLinks[task.id] { ClickUpTaskBadge(link: link) }
             if let summary = Self.pastSummary(records: records, live: live), !isDone {
                 HStack(spacing: 8) {
                     StatusDot(color: FocusStyle.parkedDot)

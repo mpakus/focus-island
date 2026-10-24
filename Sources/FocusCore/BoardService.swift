@@ -10,11 +10,15 @@ public enum BoardError: Error, Equatable {
 public struct BoardSnapshot: Equatable, Sendable {
     public var tasks: [FocusTask]
     public var jiraLinks: [String: JiraTaskLink]
+    public var clickUpLinks: [String: ClickUpTaskLink]
 
-    public init(tasks: [FocusTask], jiraLinks: [String: JiraTaskLink] = [:]) {
+    public init(tasks: [FocusTask], jiraLinks: [String: JiraTaskLink] = [:], clickUpLinks: [String: ClickUpTaskLink] = [:]) {
         self.tasks = tasks
         self.jiraLinks = jiraLinks
+        self.clickUpLinks = clickUpLinks
     }
+
+    public func isSourceLinked(taskID: String) -> Bool { jiraLinks[taskID] != nil || clickUpLinks[taskID] != nil }
 
     public func tasks(in column: BoardColumn) -> [FocusTask] {
         tasks.filter { $0.boardColumn == column }.sorted { $0.position < $1.position }
@@ -50,7 +54,8 @@ public final class BoardService: Sendable {
     public func snapshot() throws -> BoardSnapshot {
         try store.dbQueue.read { db in
             BoardSnapshot(tasks: try FocusTask.order(Column("position")).fetchAll(db),
-                          jiraLinks: Dictionary(uniqueKeysWithValues: try JiraTaskLink.fetchAll(db).map { ($0.taskId, $0) }))
+                          jiraLinks: Dictionary(uniqueKeysWithValues: try JiraTaskLink.fetchAll(db).map { ($0.taskId, $0) }),
+                          clickUpLinks: Dictionary(uniqueKeysWithValues: try ClickUpTaskLink.fetchAll(db).map { ($0.taskId, $0) }))
         }
     }
 
@@ -66,7 +71,7 @@ public final class BoardService: Sendable {
         guard !trimmed.isEmpty else { throw BoardError.emptyTitle }
         try store.dbQueue.write { db in
             guard var stored = try FocusTask.fetchOne(db, key: task.id) else { throw BoardError.unknownTask }
-            if try !JiraTaskLink.exists(db, key: task.id) {
+            if try !JiraTaskLink.exists(db, key: task.id) && !ClickUpTaskLink.exists(db, key: task.id) {
                 stored.title = trimmed
                 stored.details = task.details
             }
@@ -91,6 +96,7 @@ public final class BoardService: Sendable {
             try db.execute(sql: "UPDATE activity_spans SET taskId = NULL WHERE taskId = ?", arguments: [id])
             try db.execute(sql: "DELETE FROM task_criteria WHERE taskId = ?", arguments: [id])
             _ = try JiraTaskLink.deleteOne(db, key: id)
+            _ = try ClickUpTaskLink.deleteOne(db, key: id)
             _ = try FocusTask.deleteOne(db, key: id)
         }
     }

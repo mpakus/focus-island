@@ -131,7 +131,7 @@
 "setup.claudeConfigDir.reset" = "Reset";
 "setup.claudeConfigDir.footer" = "For users who run Claude Code with CLAUDE_CONFIG_DIR. Leave default unless you use a custom config path.";
 "setup.section.hooks" = "CLI Hooks";
-"setup.section.usage" = "Usage Bridge";
+"setup.section.usage" = "Usage";
 "setup.section.permissions" = "Permissions";
 "setup.binaryReady" = "Ready";
 "setup.binaryMissing" = "Not found — build OpenIslandHooks first";
@@ -1076,3 +1076,53 @@
 "jira.cli_connected" = "Connected through Atlassian CLI";
 
 "jira.reconnect" = "Reconnect Jira";
+
+/* ClickUp task integration. */
+"clickup.authorization" = "ClickUp authorization";
+"clickup.authorize" = "Integrate ClickUp";
+"clickup.setup_hint" = "Connect in your browser and choose one ClickUp Workspace. Focus Island only reads your tasks.";
+"clickup.sync_assigned" = "Sync my ClickUp tasks";
+"clickup.sync_hint" = "Import assigned, unfinished tasks into Backlog and refresh linked cards. Local progress stays unchanged.";
+"clickup.reconnect" = "Reconnect ClickUp";
+"clickup.disconnect" = "Forget ClickUp";
+"clickup.disconnect_hint" = "Forget removes this connection and keeps your cards and history. Revoke app access in ClickUp account settings if needed.";
+"clickup.authorizing" = "Waiting for ClickUp authorization in your browser…";
+"clickup.loading" = "Reading ClickUp tasks…";
+"clickup.refreshed" = "ClickUp synced: %@";
+"clickup.add_from_clickup" = "Add from ClickUp…";
+"clickup.import_hint" = "Select assigned tasks to add to your board. Changes on this board are local.";
+"clickup.search" = "Filter ClickUp tasks";
+"clickup.on_board" = "On board";
+"clickup.no_tasks" = "No unfinished ClickUp tasks are assigned to you in this Workspace.";
+"clickup.choose_folder" = "Choose folder…";
+"clickup.reload_tasks" = "Reload tasks";
+"clickup.import_selected" = "Import selected (%@)";
+"clickup.refresh_linked" = "Refresh linked ClickUp tasks";
+"clickup.status" = "ClickUp: %@";
+"clickup.unavailable" = "This ClickUp task is unavailable. The last saved copy is kept.";
+"clickup.detach" = "Detach from ClickUp";
+"clickup.local_progress" = "Title and description come from ClickUp. Notes, progress and history stay local.";
+"clickup.partial_refresh" = "%@ ClickUp tasks are unavailable; their saved copies and local progress were kept.";
+"clickup.credentials_unavailable" = "Focus Island could not access ClickUp authorization in Keychain. Unlock your Keychain and try again.";
+"clickup.error.signInRequired" = "ClickUp sign-in has expired or is missing. Reconnect ClickUp to continue.";
+"clickup.error.accountChanged" = "The ClickUp account or Workspace changed. Reconnect before syncing.";
+"clickup.error.invalidResponse" = "ClickUp returned incomplete or unexpected data. No incomplete import was saved; reload and try again.";
+"clickup.error.unavailable" = "ClickUp access is unavailable. Check your Workspace permissions and reconnect.";
+"clickup.error.commandFailed" = "ClickUp could not finish this operation. Check your connection and retry. Local work is safe.";
+"clickup.error.databaseUnavailable" = "ClickUp import is disabled because the local database is unavailable. Resolve the storage problem and restart.";
+"clickup.error.authorizationTimedOut" = "ClickUp sign-in did not finish. Check your browser, then choose Integrate ClickUp to try again.";
+"clickup.error.rateLimited" = "ClickUp reached its request limit. Try again later; your saved tasks are kept.";
+
+// Codex account usage
+"codex.usage.title" = "Codex usage";
+"codex.usage.refresh" = "Refresh";
+"codex.usage.hint" = "Shared ChatGPT account limits from your signed-in Codex CLI or desktop app. Refreshes every two minutes.";
+"codex.usage.unavailable" = "Codex usage is unavailable. Open or update Codex, then refresh.";
+"codex.usage.signInRequired" = "Sign in to Codex with ChatGPT, then refresh.";
+"codex.usage.unsupportedAccount" = "Usage limits require a ChatGPT sign-in; API billing is not shown.";
+"codex.usage.invalidResponse" = "Codex returned unsupported usage data. Update Codex and retry.";
+"codex.usage.timedOut" = "Codex usage timed out. Try refreshing again.";
+"codex.usage.primary" = "Primary";
+"codex.usage.secondary" = "Secondary";
+"clickup.rate_limited_until" = "ClickUp has reached its read limit. Try again after %@.";
+"clickup.access_settings" = "Manage ClickUp access";

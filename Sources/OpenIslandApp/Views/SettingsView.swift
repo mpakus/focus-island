@@ -435,6 +435,9 @@ struct SetupSettingsPane: View {
             Section(L10n.tr("jira.authorization")) {
                 JiraConnectionView(focus: model.focus)
             }
+            Section(L10n.tr("clickup.authorization")) {
+                ClickUpConnectionView(focus: model.focus)
+            }
             if !model.hasAnyInstalledAgent {
                 emptyStateBanner
             }
@@ -521,6 +524,23 @@ struct SetupSettingsPane: View {
                     Button(lang.t("settings.general.cancel"), role: .cancel) {}
                 } message: {
                     Text(lang.t("settings.general.uninstallConfirmMessage.claudeUsage"))
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Label(lang.t("codex.usage.title"), systemImage: "chart.bar")
+                        Spacer()
+                        if model.codexUsage.isRefreshing { ProgressView().controlSize(.small) }
+                        Button(lang.t("codex.usage.refresh")) { model.codexUsage.refresh() }
+                            .disabled(model.codexUsage.isRefreshing)
+                    }
+                    if let snapshot = model.codexUsage.snapshot {
+                        ForEach(snapshot.buckets) { bucket in
+                            Text(bucket.name + " · " + bucket.windows.map { "\($0.label) \(Int($0.usedPercentage.rounded()))%" }.joined(separator: " · "))
+                        }
+                        Text(snapshot.fetchedAt, style: .relative)
+                    }
+                    Text(model.codexUsage.error ?? lang.t("codex.usage.hint"))
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             } header: {
                 HStack(spacing: 4) {

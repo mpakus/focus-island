@@ -117,7 +117,7 @@
 "setup.claudeConfigDir.reset" = "Restablecer";
 "setup.claudeConfigDir.footer" = "Para quienes ejecutan Claude Code con CLAUDE_CONFIG_DIR. Mantén el valor predeterminado salvo que uses una ruta personalizada.";
 "setup.section.hooks" = "Hooks de CLI";
-"setup.section.usage" = "Puente de uso";
+"setup.section.usage" = "Uso";
 "setup.section.permissions" = "Permisos";
 "setup.binaryReady" = "Listo";
 "setup.binaryMissing" = "No encontrado: compila OpenIslandHooks primero";
@@ -1041,3 +1041,53 @@
 "jira.cli_connected" = "Conectado mediante Atlassian CLI";
 
 "jira.reconnect" = "Reconectar Jira";
+
+/* ClickUp task integration. */
+"clickup.authorization" = "Autorización de ClickUp";
+"clickup.authorize" = "Integrar ClickUp";
+"clickup.setup_hint" = "Conecta en el navegador y elige un espacio de trabajo de ClickUp. Focus Island solo lee tus tareas.";
+"clickup.sync_assigned" = "Sincronizar mis tareas de ClickUp";
+"clickup.sync_hint" = "Importa las tareas asignadas pendientes a Pendientes y actualiza las tarjetas vinculadas. Se conserva el progreso local.";
+"clickup.reconnect" = "Reconectar ClickUp";
+"clickup.disconnect" = "Olvidar ClickUp";
+"clickup.disconnect_hint" = "Olvidar elimina esta conexión y conserva las tarjetas y el historial. Puedes revocar el acceso en los ajustes de tu cuenta de ClickUp.";
+"clickup.authorizing" = "Esperando la autorización de ClickUp en el navegador…";
+"clickup.loading" = "Leyendo tareas de ClickUp…";
+"clickup.refreshed" = "ClickUp sincronizado: %@";
+"clickup.add_from_clickup" = "Añadir desde ClickUp…";
+"clickup.import_hint" = "Selecciona las tareas asignadas que quieres añadir al tablero. Los cambios del tablero son locales.";
+"clickup.search" = "Filtrar tareas de ClickUp";
+"clickup.on_board" = "En el tablero";
+"clickup.no_tasks" = "No tienes tareas pendientes asignadas en este espacio de trabajo de ClickUp.";
+"clickup.choose_folder" = "Elegir carpeta…";
+"clickup.reload_tasks" = "Recargar tareas";
+"clickup.import_selected" = "Importar seleccionadas (%@)";
+"clickup.refresh_linked" = "Actualizar tareas vinculadas de ClickUp";
+"clickup.status" = "ClickUp: %@";
+"clickup.unavailable" = "Esta tarea de ClickUp no está disponible. Se conserva la última copia guardada.";
+"clickup.detach" = "Desvincular de ClickUp";
+"clickup.local_progress" = "El título y la descripción provienen de ClickUp. Las notas, el progreso y el historial son locales.";
+"clickup.partial_refresh" = "%@ tareas de ClickUp no están disponibles; se conservaron sus copias y el progreso local.";
+"clickup.credentials_unavailable" = "Focus Island no pudo acceder a la autorización de ClickUp en el Llavero. Desbloquéalo e inténtalo de nuevo.";
+"clickup.error.signInRequired" = "La sesión de ClickUp ha caducado o no existe. Reconecta ClickUp para continuar.";
+"clickup.error.accountChanged" = "La cuenta o el espacio de trabajo de ClickUp cambió. Reconecta antes de sincronizar.";
+"clickup.error.invalidResponse" = "ClickUp devolvió datos incompletos o inesperados. No se guardó ninguna importación incompleta; recarga e inténtalo de nuevo.";
+"clickup.error.unavailable" = "El acceso a ClickUp no está disponible. Comprueba los permisos del espacio de trabajo y reconecta.";
+"clickup.error.commandFailed" = "ClickUp no pudo completar esta operación. Comprueba la conexión e inténtalo de nuevo. El trabajo local está a salvo.";
+"clickup.error.databaseUnavailable" = "La importación de ClickUp está desactivada porque la base de datos local no está disponible. Resuelve el problema y reinicia.";
+"clickup.error.authorizationTimedOut" = "El inicio de sesión de ClickUp no finalizó. Revisa el navegador y elige Integrar ClickUp para volver a intentarlo.";
+"clickup.error.rateLimited" = "ClickUp alcanzó su límite de solicitudes. Inténtalo más tarde; tus tareas guardadas se conservan.";
+
+// Codex account usage
+"codex.usage.title" = "Uso de Codex";
+"codex.usage.refresh" = "Actualizar";
+"codex.usage.hint" = "Límites compartidos de tu cuenta ChatGPT desde Codex CLI o la app con sesión iniciada. Se actualizan cada dos minutos.";
+"codex.usage.unavailable" = "El uso de Codex no está disponible. Abre o actualiza Codex y vuelve a intentarlo.";
+"codex.usage.signInRequired" = "Inicia sesión en Codex con ChatGPT y actualiza.";
+"codex.usage.unsupportedAccount" = "Los límites requieren iniciar sesión con ChatGPT; no se muestra la facturación de la API.";
+"codex.usage.invalidResponse" = "Codex devolvió datos incompatibles. Actualiza Codex y reintenta.";
+"codex.usage.timedOut" = "La consulta de uso agotó el tiempo. Vuelve a actualizar.";
+"codex.usage.primary" = "Principal";
+"codex.usage.secondary" = "Secundario";
+"clickup.rate_limited_until" = "ClickUp alcanzó su límite de lecturas. Vuelve a intentarlo después de %@.";
+"clickup.access_settings" = "Gestionar acceso a ClickUp";

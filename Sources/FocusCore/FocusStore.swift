@@ -39,7 +39,7 @@ public final class FocusStore: Sendable {
         try queue.writeWithoutTransaction { db in
             if try db.tableExists("grdb_migrations") {
                 let applied = try String.fetchAll(db, sql: "SELECT identifier FROM grdb_migrations")
-                for (version, name) in [("v6", "codex"), ("v7", "jira")] where !applied.contains(version) {
+                for (version, name) in [("v6", "codex"), ("v7", "jira"), ("v8", "clickup")] where !applied.contains(version) {
                     let backup = fileURL.appendingPathExtension("before-\(name)-\(UUID().uuidString).sqlite")
                     try db.execute(sql: "VACUUM INTO ?", arguments: [backup.path])
                 }
@@ -230,6 +230,26 @@ public final class FocusStore: Sendable {
                 t.column("refreshedAt", .datetime).notNull()
                 t.column("unavailable", .boolean).notNull().defaults(to: false)
                 t.uniqueKey(["cloudID", "issueID"])
+            }
+        }
+        if identifier == "v7" { return migrator }
+        migrator.registerMigration("v8") { db in
+            try db.create(table: "clickup_task_links") { t in
+                t.primaryKey("taskId", .text).references("tasks", onDelete: .cascade)
+                t.column("workspaceID", .text).notNull()
+                t.column("remoteTaskID", .text).notNull()
+                t.column("customID", .text)
+                t.column("listID", .text).notNull()
+                t.column("listName", .text).notNull()
+                t.column("parentID", .text)
+                t.column("status", .text).notNull()
+                t.column("statusType", .text).notNull()
+                t.column("assigneeIDs", .text).notNull()
+                t.column("remoteUpdatedAt", .datetime).notNull()
+                t.column("refreshedAt", .datetime).notNull()
+                t.column("unavailable", .boolean).notNull().defaults(to: false)
+                t.column("archived", .boolean).notNull().defaults(to: false)
+                t.uniqueKey(["workspaceID", "remoteTaskID"])
             }
         }
         return migrator
