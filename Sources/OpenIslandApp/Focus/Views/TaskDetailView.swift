@@ -225,13 +225,14 @@ struct TaskDetailView: View {
             title: focus.sessionTitle(row.id),
             subtitle: Self.liveSubtitle(progress: row.progress, group: row.group),
             progress: row.group == .running ? row.progress : nil,
-            actionTitle: L10n.tr("focus.open_session"),
+            actionTitle: row.group == .review ? L10n.tr("review.title") : L10n.tr("focus.open_session"),
             enabled: true,
             doneGroup: SessionDoneFormat.showsDoneCheck(group: row.group) ? row.group : nil,
             status: SessionStatusKind.of(row.group),
             sessionID: row.id
         ) {
-            focus.requestJump(sessionID: row.id)
+            if row.group == .review { focus.showReview(sessionID: row.id) }
+            else { focus.requestJump(sessionID: row.id) }
         }
     }
 

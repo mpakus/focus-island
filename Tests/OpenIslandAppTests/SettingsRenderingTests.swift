@@ -165,6 +165,50 @@ struct SettingsRenderingTests {
         #expect(detail.contains("Detach from ClickUp"))
     }
 
+    @Test func paletteReviewAndRestoreRenderWithSyntheticData() async throws {
+        let git = GitReviewProviderTests()
+        let root = try git.repository()
+        defer { try? FileManager.default.removeItem(at: root) }
+        try Data("let title = \"Before\"\n".utf8).write(to: root.appendingPathComponent("Feature.swift"))
+        try git.git(root, ["add", "."])
+        try git.git(root, ["commit", "-qm", "fixture"])
+        try Data("let title = \"After\"\n".utf8).write(to: root.appendingPathComponent("Feature.swift"))
+        let storeURL = FileManager.default.temporaryDirectory.appendingPathComponent("focus-render-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: storeURL) }
+        let store = try FocusStore(fileURL: storeURL.appendingPathComponent("focus.sqlite"))
+        defer { try? store.dbQueue.close() }
+        let defaults = UserDefaults(suiteName: "workflow-render-\(UUID().uuidString)")!
+        var settings = FocusSettings()
+        settings.dailyBackupsEnabled = false
+        settings.save(to: defaults)
+        let focus = FocusCoordinator(store: store, defaults: defaults, launcher: RecordingLauncher(), runBackfill: false)
+        let task = try BoardService(store: store).createTask(title: "Polish keyboard navigation", column: .inProgress, projectPath: root.path)
+        try TaskCriteriaService(store: store).add(taskID: task.id, text: "Arrow keys choose an action")
+        var session = FocusCoordinatorTests().session("review-fixture", .running, at: .now, cwd: root.path)
+        focus.start(initialSessions: [session])
+        focus.startTask(taskID: task.id, sessionIDs: [session.id], focusMinutes: nil)
+        session.phase = .completed
+        session.claudeMetadata?.lastAssistantMessage = "Added keyboard navigation and a searchable command palette."
+        session.updatedAt = .now
+        focus.sessionsDidChange([session])
+        let model = AppModel(focusStore: try FocusStore.inMemory(), claudeRegistry: .temporaryForTesting(), runBackfill: false)
+        let palette = try await render(CommandPaletteView(focus: focus, execute: { _ in }), name: "workflow-palette", model: model, size: NSSize(width: 640, height: 500))
+        #expect(palette.contains("Polish keyboard navigation"))
+        #expect(palette.contains("Start focus timer"))
+        let snapshot = try await GitReviewProvider().snapshot(cwd: root.path)
+        let review = try await render(ReviewHandoffView(focus: focus, sessionID: session.id, snapshot: snapshot), name: "workflow-review", model: model, size: NSSize(width: 1100, height: 760))
+        #expect(review.contains("main"))
+        #expect(review.contains("Feature.swift"))
+        #expect(review.contains("Arrow keys choose an action"))
+        let backups = try FocusBackups(store: store)
+        let preview = try backups.preview(backups.create())
+        defer { backups.discard(preview) }
+        let restore = try await render(BackupRestorePreview(preview: preview, currentTasks: 3, isBusy: false, error: nil, cancel: {}, restore: {}), name: "workflow-restore", model: model, size: NSSize(width: 560, height: 430))
+        #expect(restore.contains("Restore preview"))
+        #expect(restore.contains("Restore and quit"))
+        #expect(restore.contains("recovery copy"))
+    }
+
     private func render(_ view: some View, name: String, model: AppModel, size: NSSize = NSSize(width: 780, height: 1100)) async throws -> String {
         _ = NSApplication.shared
         let temporary = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

@@ -167,6 +167,7 @@ final class FocusCoordinator {
     let storeOutcome: FocusStoreOpenOutcome
     let jira: JiraCoordinator
     let clickUp: ClickUpCoordinator
+    let backups: BackupCoordinator
     var storeRecoveredBackupURL: URL? {
         if case let .recovered(backupURL) = storeOutcome { return backupURL }
         return nil
@@ -218,6 +219,7 @@ final class FocusCoordinator {
     @ObservationIgnored private var latestSessions: [AgentSession] = []
     @ObservationIgnored private var lastObservations: [String: SessionObservation] = [:]
     @ObservationIgnored private var previousPhases: [String: SessionPhase] = [:]
+    @ObservationIgnored private var waitingSince: [String: Date] = [:]
     @ObservationIgnored private var unseenCompleted: Set<String> = []
     @ObservationIgnored private var planStartedAt: [String: Date] = [:]
     @ObservationIgnored private var runStartedAt: [String: Date] = [:]
@@ -262,6 +264,7 @@ final class FocusCoordinator {
     ) {
         self.store = store
         self.storeOutcome = storeOutcome
+        self.backups = BackupCoordinator(store: store, durable: storeOutcome != .inMemoryFallback)
         self.jira = JiraCoordinator(store: store, defaults: defaults, durable: storeOutcome != .inMemoryFallback, client: jiraClient)
         self.clickUp = ClickUpCoordinator(store: store, defaults: defaults, durable: storeOutcome != .inMemoryFallback, client: clickUpClient)
         self.boardService = BoardService(store: store)
@@ -384,6 +387,7 @@ final class FocusCoordinator {
         started = true
         sessionsDidChange(initialSessions, now: now)
         refreshTodaySummary(now: now, force: true)
+        backups.tick(now: now, enabled: settings.dailyBackupsEnabled)
         presentPendingPomodoroCard(now: now)
         if runBackfill {
             let store = store
@@ -425,6 +429,9 @@ final class FocusCoordinator {
             return
         }
         let relevant = sessions.filter { !$0.isDemoSession && !$0.isSyntheticProcessSession }
+        waitingSince = Dictionary(uniqueKeysWithValues: relevant.filter {
+            !$0.isSessionEnded && ($0.phase == .waitingForApproval || $0.phase == .waitingForAnswer)
+        }.map { ($0.id, waitingSince[$0.id] ?? min(now, $0.updatedAt)) })
         let currentIDs = Set(relevant.map(\.id))
         let focusTaskIDBefore = currentTask?.id
         var changed = false
@@ -551,7 +558,7 @@ final class FocusCoordinator {
             closeCard(reacted: false, now: now)
         }
         if case let .nextAction(triggering, _) = card {
-            refreshAlternatives(triggering: triggering)
+            refreshAlternatives(triggering: triggering, now: now)
         }
         refreshHub(now: now)
         closeResolvedOverload(now: now)
@@ -560,6 +567,7 @@ final class FocusCoordinator {
     }
 
     func tick(now: Date = .now) {
+        backups.tick(now: now, enabled: settings.dailyBackupsEnabled)
         if let shownAt = toastShownAt, now.timeIntervalSince(shownAt) >= Self.toastLifetime {
             toast = nil
             toastShownAt = nil
@@ -604,6 +612,7 @@ final class FocusCoordinator {
     }
 
     private func tickNextAction(now: Date) {
+        if case let .nextAction(triggering, _) = card { refreshAlternatives(triggering: triggering, now: now) }
         if case .nextAction = card, let shownAt = nextActionShownAt,
            now.timeIntervalSince(shownAt) >= Self.nextActionCardLifetime {
             closeCard(reacted: false, now: now)
@@ -1701,7 +1710,7 @@ final class FocusCoordinator {
 
     func nudgeSuggestion(now: Date = .now) -> NextAlternative? {
         guard let triggering = nudgeSessionID() else { return nil }
-        return computeAlternatives(triggering: triggering, limit: 1).first
+        return computeAlternatives(triggering: triggering, limit: 1, now: now).first
     }
 
     func resume(record: SessionRecord, now: Date = .now) {
@@ -2287,7 +2296,7 @@ final class FocusCoordinator {
         }
         if case let .nextAction(triggering, _) = new {
             nextActionShownAt = now
-            refreshAlternatives(triggering: triggering)
+            refreshAlternatives(triggering: triggering, now: now)
             loadChangedFiles(sessionID: triggering, now: now)
         } else {
             nextActionShownAt = nil
@@ -2334,14 +2343,14 @@ final class FocusCoordinator {
         return present(.nextAction(triggeringSessionID: triggering, eventID: eventID), now: now)
     }
 
-    private func refreshAlternatives(triggering: String) {
-        let result = computeAlternatives(triggering: triggering, limit: 2)
+    private func refreshAlternatives(triggering: String, now: Date) {
+        let result = computeAlternatives(triggering: triggering, limit: 2, now: now)
         if result != alternatives {
             alternatives = result
         }
     }
 
-    private func computeAlternatives(triggering: String, limit: Int) -> [NextAlternative] {
+    private func computeAlternatives(triggering: String, limit: Int, now: Date) -> [NextAlternative] {
         let bindings = Dictionary(uniqueKeysWithValues: liveRecords.compactMap { record in record.taskId.map { (record.id, $0) } })
         let input = NextActionInput(
             triggeringSessionID: triggering,
@@ -2349,9 +2358,24 @@ final class FocusCoordinator {
             unseenCompletedSessionIDs: unseenCompleted,
             board: board,
             sessionTaskBindings: bindings,
-            skippedTaskIDs: []
+            skippedTaskIDs: [],
+            currentTaskID: currentTask?.id,
+            waitingSince: waitingSince
         )
-        return NextActionEngine.alternatives(input, triggerCWD: sessionCWD(triggering), parked: parkedSessionIDs, limit: limit)
+        return NextActionEngine.alternatives(input, triggerCWD: sessionCWD(triggering), parked: parkedSessionIDs, limit: limit, now: now, longWait: TimeInterval(settings.stalledReminderMinutes * 60))
+    }
+
+    func recommendationReason(_ alternative: NextAlternative, now: Date = .now) -> String {
+        switch alternative {
+        case let .attend(id, _, since):
+            let minutes = max(0, Int(now.timeIntervalSince(since) / 60))
+            let context = minutes >= settings.stalledReminderMinutes ? L10n.tr("next.long_wait")
+                : (currentTask != nil && taskID(forSession: id) == currentTask?.id ? L10n.tr("next.current_task") : L10n.tr("next.needs_you"))
+            return L10n.tr("next.wait_reason", context, "\(minutes)")
+        case let .review(id) where currentTask != nil && taskID(forSession: id) == currentTask?.id:
+            return L10n.tr("next.current_task")
+        default: return StayInTaskCard.reason(alternative)
+        }
     }
 
     private func loadChangedFiles(sessionID: String, now: Date) {

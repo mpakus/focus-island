@@ -433,6 +433,7 @@ final class AppModel {
 
     @ObservationIgnored
     private var boardHotKey: GlobalHotKey?
+    private var paletteHotKey: GlobalHotKey?
 
     @ObservationIgnored
     private var openBoardObserver: NSObjectProtocol?
@@ -1677,6 +1678,7 @@ final class AppModel {
         focus.startTicking()
         focus.onSettingsChanged = { [weak self] settings in
             self?.boardHotKey?.update(settings.boardHotKey)
+            self?.paletteHotKey?.updatePalette(enabled: settings.paletteShortcutEnabled)
         }
         frontmostMonitor = FrontmostAppMonitor(focus: focus)
         frontmostMonitor?.start()
@@ -1684,6 +1686,9 @@ final class AppModel {
             guard let self else { return }
             self.notchClose()
             BoardWindowController.shared.show(focus: self.focus)
+        }
+        paletteHotKey = GlobalHotKey(paletteEnabled: focus.settings.paletteShortcutEnabled) { [weak self] in
+            self?.showCommandPalette()
         }
         openBoardObserver = NotificationCenter.default.addObserver(forName: .focusOpenBoard, object: nil, queue: .main) { [weak self] notification in
             let tab = BoardTab.explicit(userInfo: notification.userInfo)
@@ -1699,6 +1704,11 @@ final class AppModel {
     private func settleFocusHookState() {
         focusHookStateReady = true
         focus.setHooksInstalled(hooks.claudeHooksInstalled || hooks.codexHooksConfigured)
+    }
+
+    func showCommandPalette() {
+        notchClose()
+        CommandPaletteController.shared.show(focus: focus)
     }
 
     private func observeFocusLifecycle() {

@@ -110,6 +110,10 @@ struct OpenIslandApp: App {
         }
         .windowResizability(.contentMinSize)
         .commands {
+            CommandMenu(L10n.tr("palette.title")) {
+                Button(L10n.tr("palette.title")) { appDelegate.model.showCommandPalette() }
+                    .keyboardShortcut("k", modifiers: .command)
+            }
             CommandGroup(replacing: .appSettings) {
                 Button(L10n.tr("common.settingsMenu")) {
                     openWindow(id: "settings")

@@ -36,6 +36,7 @@
 - "Take" on the pick card brings a task from "In progress" into focus; if it has no sessions, the "Task sessions" screen opens right away with checkboxes (bound sessions first, then the project's sessions). While a task is in focus, the panel shows only its sessions: "Unbind", "+ Add session", "Timer", "✓ Close task" (goes straight to Done, with an 8-second "Undo").
 
 **While an agent is working**
+- "What's next?" ranks approvals and questions together. Sessions in your focused task come first until another session passes your waiting-reminder threshold; then the longest wait wins. The card explains the recommendation and shows waiting minutes. Repeated session updates do not reset the observed wait.
 - Every session is labelled with its task; Claude Code also shows its current plan step (from TodoWrite): "Step k of n", progress and a time estimate.
 - "What's next?" — stay in the task: queue the next prompt, review changed files (git diff), tick off the definition of done; or, as a second option, switch to a waiting session or another task.
 - Prompt queue: when Claude finishes, "Send and go back" pastes the prompt into the session's terminal and takes you there. Sending works in Ghostty, iTerm2, Terminal.app and tmux; in other terminals the prompt is copied to the clipboard (⌘V).
@@ -56,6 +57,22 @@
 ![Focus Island board with Jira and ClickUp cards](docs/media/task-board.png)
 
 _Screenshots use synthetic tasks and usage values._
+
+**Command palette** (⌥⌘K globally, or ⌘K while Focus Island is active)
+- Search tasks, sessions, source task IDs, and actions. Use ↑/↓ and Return, or click a result. Escape closes the palette.
+- Open a waiting session, review completed work, focus a task through the existing start sheet, or start/pause/resume the timer. Typing a new task name offers **Create task** in Todo.
+- The board toolbar and app menu also open the palette. Disable its global shortcut in Settings → Focus → Terminal and board; the board shortcut stays independent.
+
+**Review handoff**
+- **Review changes** opens the agent's completion summary, the task's completion criteria, branch/worktree, and a selectable file list with text diffs.
+- Reviews show the current worktree relative to `HEAD`, including staged, unstaged, deleted, and untracked files. These are repository changes, not attribution to one agent: other sessions may share the folder, and committed work is not included.
+- Refresh to re-read the repository. Text previews are bounded to 256 KiB and the list to 500 files, with an explicit notice for larger results. Binary files and unsafe file targets stay in your editor. Git errors remain distinct from a clean worktree.
+
+**Local backups**
+- Settings → Focus → Backups and restore creates a daily SQLite snapshot while the app runs, keeping the last seven daily copies. Manual and recovery copies remain until you remove them. Daily backups can be disabled.
+- **Back up now**, **Export backup**, and **Show backups** manage consistent copies of tasks, notes, completion criteria, session history, queued prompts, activity, day plans, and timers. Preferences and sign-in credentials are not included.
+- **Restore** validates the database and shows its contents before confirmation. Older supported schemas are upgraded on a separate copy; malformed or newer schemas are rejected.
+- **Restore and quit** stages the previewed copy. On the next launch, the app saves the current database as a recovery copy, then replaces its contents in one SQLite backup transaction. Jira and ClickUp are never modified. Backups live beside the database in `~/Library/Application Support/FocusIsland/Backups/`.
 
 **Jira tasks (opt-in preview)**
 - Import selected assigned issues into Backlog or Todo, then use the same sessions, timers, notes, criteria, and reports.

@@ -13,6 +13,8 @@ struct ReturnCard: View {
         VStack(alignment: .leading, spacing: 14) {
             header
             doneBox
+            Button(L10n.tr("review.title")) { focus.showReview(sessionID: sessionID) }
+                .buttonStyle(FocusButtonStyle(kind: .secondary))
             criteriaBox
             queuedBox
             footer

@@ -20,30 +20,42 @@ public struct NextActionInput: Sendable {
     public var board: BoardSnapshot
     public var sessionTaskBindings: [String: String]
     public var skippedTaskIDs: Set<String>
+    public var currentTaskID: String?
+    public var waitingSince: [String: Date]
 
-    public init(triggeringSessionID: String, sessions: [AgentSession], unseenCompletedSessionIDs: Set<String>, board: BoardSnapshot, sessionTaskBindings: [String: String], skippedTaskIDs: Set<String>) {
+    public init(triggeringSessionID: String, sessions: [AgentSession], unseenCompletedSessionIDs: Set<String>, board: BoardSnapshot, sessionTaskBindings: [String: String], skippedTaskIDs: Set<String>, currentTaskID: String? = nil, waitingSince: [String: Date] = [:]) {
         self.triggeringSessionID = triggeringSessionID
         self.sessions = sessions
         self.unseenCompletedSessionIDs = unseenCompletedSessionIDs
         self.board = board
         self.sessionTaskBindings = sessionTaskBindings
         self.skippedTaskIDs = skippedTaskIDs
+        self.currentTaskID = currentTaskID
+        self.waitingSince = waitingSince
     }
 }
 
 public enum NextActionEngine {
-    public static func alternatives(_ input: NextActionInput, triggerCWD: String?, parked: Set<String>, limit: Int = 2) -> [NextAlternative] {
+    public static func alternatives(_ input: NextActionInput, triggerCWD: String?, parked: Set<String>, limit: Int = 2, now: Date = .now, longWait: TimeInterval = 900) -> [NextAlternative] {
         guard limit > 0 else { return [] }
+        func since(_ session: AgentSession) -> Date { input.waitingSince[session.id] ?? session.updatedAt }
+        func focused(_ session: AgentSession) -> Bool {
+            input.currentTaskID != nil && input.sessionTaskBindings[session.id] == input.currentTaskID
+        }
         let others = input.sessions
             .filter { $0.id != input.triggeringSessionID && !parked.contains($0.id) && $0.isVisibleInIsland && !$0.isSessionEnded && !$0.isDemoSession && !$0.isSyntheticProcessSession }
-            .sorted { $0.updatedAt < $1.updatedAt }
+            .sorted {
+                let leftOverdue = now.timeIntervalSince(since($0)) >= longWait
+                let rightOverdue = now.timeIntervalSince(since($1)) >= longWait
+                if leftOverdue != rightOverdue { return leftOverdue }
+                if !leftOverdue, focused($0) != focused($1) { return focused($0) }
+                if since($0) != since($1) { return since($0) < since($1) }
+                return $0.id < $1.id
+            }
 
         var result: [NextAlternative] = []
-        for session in others where session.phase == .waitingForApproval {
-            result.append(.attend(sessionID: session.id, reason: .approval, since: session.updatedAt))
-        }
-        for session in others where session.phase == .waitingForAnswer {
-            result.append(.attend(sessionID: session.id, reason: .question, since: session.updatedAt))
+        for session in others where session.phase == .waitingForApproval || session.phase == .waitingForAnswer {
+            result.append(.attend(sessionID: session.id, reason: session.phase == .waitingForApproval ? .approval : .question, since: since(session)))
         }
         for session in others where session.phase == .completed && input.unseenCompletedSessionIDs.contains(session.id) {
             result.append(.review(sessionID: session.id))

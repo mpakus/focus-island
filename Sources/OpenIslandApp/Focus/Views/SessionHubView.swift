@@ -418,7 +418,10 @@ struct SessionHubView: View {
         case .done:
             Button(Self.actionTitle(group: row.group)) { focus.reopenDoneSession(sessionID: row.id) }
                 .buttonStyle(FocusButtonStyle(kind: .secondary, height: 28))
-        case .waiting, .review, .running, .idle:
+        case .review:
+            Button(Self.actionTitle(group: row.group)) { focus.showReview(sessionID: row.id) }
+                .buttonStyle(FocusButtonStyle(kind: Self.isPrimary(row: row, primaryID: primaryID) ? .primary : .secondary, height: 28))
+        case .waiting, .running, .idle:
             Button(Self.actionTitle(group: row.group)) { focus.requestJump(sessionID: row.id) }
                 .buttonStyle(FocusButtonStyle(kind: Self.isPrimary(row: row, primaryID: primaryID) ? .primary : .secondary, height: 28))
         }

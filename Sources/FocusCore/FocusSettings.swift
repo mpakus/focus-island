@@ -48,6 +48,8 @@ public struct FocusSettings: Codable, Equatable, Sendable {
     public var stopList: StopList = .default
     public var resumeTerminal: ResumeTerminal = .terminal
     public var boardHotKey: BoardHotKey = .optionCommandB
+    public var paletteShortcutEnabled = true
+    public var dailyBackupsEnabled = true
     public var nudgeSoundEnabled = false
     public var maxParallelSessions: Int = 3
     public var stalledReminderMinutes: Int = 15
@@ -73,6 +75,8 @@ public struct FocusSettings: Codable, Equatable, Sendable {
         stopList = try container.decodeIfPresent(StopList.self, forKey: .stopList) ?? defaults.stopList
         resumeTerminal = try container.decodeIfPresent(ResumeTerminal.self, forKey: .resumeTerminal) ?? defaults.resumeTerminal
         boardHotKey = try container.decodeIfPresent(BoardHotKey.self, forKey: .boardHotKey) ?? defaults.boardHotKey
+        paletteShortcutEnabled = try container.decodeIfPresent(Bool.self, forKey: .paletteShortcutEnabled) ?? defaults.paletteShortcutEnabled
+        dailyBackupsEnabled = try container.decodeIfPresent(Bool.self, forKey: .dailyBackupsEnabled) ?? defaults.dailyBackupsEnabled
         nudgeSoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .nudgeSoundEnabled) ?? defaults.nudgeSoundEnabled
         let parallel = try container.decodeIfPresent(Int.self, forKey: .maxParallelSessions) ?? defaults.maxParallelSessions
         maxParallelSessions = min(Self.maxParallelRange.upperBound, max(Self.maxParallelRange.lowerBound, parallel))
@@ -103,6 +107,8 @@ public struct FocusSettings: Codable, Equatable, Sendable {
         case stopList
         case resumeTerminal
         case boardHotKey
+        case paletteShortcutEnabled
+        case dailyBackupsEnabled
         case nudgeSoundEnabled
         case maxParallelSessions
         case stalledReminderMinutes

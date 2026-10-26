@@ -104,7 +104,12 @@ struct StayInTaskCard: View {
         if !files.isEmpty {
             let cwd = focus.sessionCWD(sessionID)
             FocusBox(spacing: 4) {
-                FocusSectionCaption(L10n.tr("focus.2_review_completed_work"))
+                HStack {
+                    FocusSectionCaption(L10n.tr("focus.2_review_completed_work"))
+                    Spacer()
+                    Button(L10n.tr("review.title")) { focus.showReview(sessionID: sessionID) }
+                        .buttonStyle(FocusButtonStyle(kind: .secondary, height: 26))
+                }
                 ForEach(files) { file in
                     HStack(spacing: 12) {
                         Text(file.path)
@@ -172,10 +177,12 @@ struct StayInTaskCard: View {
                 Text(alternativeTitle(alternative))
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(1)
-                Text(Self.reason(alternative))
-                    .font(FocusStyle.secondaryFont)
-                    .foregroundStyle(FocusStyle.secondaryText)
-                    .lineLimit(1)
+                TimelineView(.periodic(from: .now, by: 30)) { context in
+                    Text(focus.recommendationReason(alternative, now: context.date))
+                        .font(FocusStyle.secondaryFont)
+                        .foregroundStyle(FocusStyle.secondaryText)
+                        .lineLimit(2)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Button(Self.actionTitle(alternative)) { performAlternative(alternative) }
@@ -203,8 +210,9 @@ struct StayInTaskCard: View {
 
     private func performAlternative(_ alternative: NextAlternative) {
         switch alternative {
-        case let .attend(id, _, _), let .review(id):
+        case let .attend(id, _, _):
             focus.perform(.jump(sessionID: id))
+        case let .review(id): focus.showReview(sessionID: id)
         case let .startTask(taskID, _):
             focus.perform(.startTask(taskID: taskID))
         }

@@ -23,6 +23,7 @@ public enum FocusStoreOpenError: Error {
 
 public final class FocusStore: Sendable {
     public let dbQueue: DatabaseQueue
+    public let restoreError: String?
 
     public static var defaultFileURL: URL {
         FileManager.default.homeDirectoryForCurrentUser
@@ -35,6 +36,7 @@ public final class FocusStore: Sendable {
         var configuration = Configuration()
         configuration.busyMode = .timeout(5)
         let queue = try DatabaseQueue(path: fileURL.path, configuration: configuration)
+        let restoreError = FocusBackups.applyPending(to: queue, databaseURL: fileURL)
         // Keep a consistent pre-migration snapshot; never restore it automatically over later work.
         try queue.writeWithoutTransaction { db in
             if try db.tableExists("grdb_migrations") {
@@ -46,7 +48,7 @@ public final class FocusStore: Sendable {
             }
         }
         do {
-            try self.init(queue: queue)
+            try self.init(queue: queue, restoreError: restoreError)
         } catch {
             throw FocusStoreOpenError.migrationFailed(error)
         }
@@ -88,8 +90,9 @@ public final class FocusStore: Sendable {
         return isCorruption(underlying)
     }
 
-    private init(queue: DatabaseQueue) throws {
+    private init(queue: DatabaseQueue, restoreError: String? = nil) throws {
         dbQueue = queue
+        self.restoreError = restoreError
         try Self.migrator(upTo: nil).migrate(dbQueue)
     }
 

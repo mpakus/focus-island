@@ -25,8 +25,8 @@ struct NextActionAlternativesTests {
         let sessions = [session("me", .running), session("c", .completed), session("q", .waitingForAnswer, updatedAt: 5), session("a", .waitingForApproval, updatedAt: 9)]
         let all = NextActionEngine.alternatives(input(sessions: sessions, tasks: [task("t1", 1)], unseen: ["c"]), triggerCWD: nil, parked: [], limit: 10)
         #expect(all == [
-            .attend(sessionID: "a", reason: .approval, since: t0.addingTimeInterval(9)),
             .attend(sessionID: "q", reason: .question, since: t0.addingTimeInterval(5)),
+            .attend(sessionID: "a", reason: .approval, since: t0.addingTimeInterval(9)),
             .review(sessionID: "c"),
             .startTask(taskID: "t1", sameProject: false),
         ])
@@ -80,5 +80,24 @@ struct NextActionAlternativesTests {
         let result = NextActionEngine.alternatives(input(sessions: sessions, tasks: [task("t1", 1)]), triggerCWD: nil, parked: [], limit: 2)
         #expect(result.count == 2)
         #expect(result.last == .startTask(taskID: "t1", sameProject: false))
+    }
+
+    @Test func prefersCurrentTaskUntilAnotherWaitIsOverdue() {
+        var input = input(sessions: [session("outside", .waitingForAnswer), session("inside", .waitingForApproval, updatedAt: 100)])
+        input.currentTaskID = "focused"
+        input.sessionTaskBindings = ["inside": "focused"]
+        let fresh = NextActionEngine.alternatives(input, triggerCWD: nil, parked: [], now: t0.addingTimeInterval(120), longWait: 300)
+        #expect(fresh.first == .attend(sessionID: "inside", reason: .approval, since: t0.addingTimeInterval(100)))
+        let overdue = NextActionEngine.alternatives(input, triggerCWD: nil, parked: [], now: t0.addingTimeInterval(310), longWait: 300)
+        #expect(overdue.first == .attend(sessionID: "outside", reason: .question, since: t0))
+    }
+
+    @Test func ongoingUpdatesDoNotResetRecordedWaitAndTiesAreStable() {
+        var input = input(sessions: [session("z", .waitingForApproval, updatedAt: 400), session("a", .waitingForAnswer, updatedAt: 20)])
+        input.waitingSince = ["z": t0]
+        let result = NextActionEngine.alternatives(input, triggerCWD: nil, parked: [], now: t0.addingTimeInterval(500))
+        #expect(result.first == .attend(sessionID: "z", reason: .approval, since: t0))
+        input.waitingSince["a"] = t0
+        #expect(NextActionEngine.alternatives(input, triggerCWD: nil, parked: [], now: t0).first == .attend(sessionID: "a", reason: .question, since: t0))
     }
 }

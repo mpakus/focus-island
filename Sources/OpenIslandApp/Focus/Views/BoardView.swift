@@ -119,6 +119,11 @@ struct BoardRootView: View {
             .padding(2)
             .background(RoundedRectangle(cornerRadius: 8).fill(FocusStyle.segmentFill))
             Spacer(minLength: 0)
+            Button { CommandPaletteController.shared.show(focus: focus) } label: {
+                Image(systemName: "command")
+            }
+            .help(L10n.tr("palette.title"))
+            .accessibilityLabel(L10n.tr("palette.title"))
             HStack(spacing: 6) {
                 StatusDot(color: FocusStyle.working)
                 Text(BoardView.workingLabel(counts.working))
