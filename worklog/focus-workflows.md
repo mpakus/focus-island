@@ -70,3 +70,7 @@ confirm universal slices and bundle/package integrity, compare published asset
 digests, check the latest signed appcast, and preserve local evidence before
 archiving the implementation worktree. Publication evidence is retained in the
 main checkout's ignored `output/release-0.8.0/` directory.
+
+### Release gate correction
+
+The first release gate reproduced a test fixture lookup error: the restore test selected the first `before-restore-*` directory entry, which could be SQLite's `.sqlite-shm` sidecar. The recovered database and portable snapshot both passed `PRAGMA quick_check`. Restricted the test lookup to `.sqlite`, matching the production backup listing. No runtime changes were needed. The unmodified test failed in isolation; the corrected backup suite passed all 5 tests, and the recovery test passed 10 consecutive isolated runs before rerunning the full release gate.

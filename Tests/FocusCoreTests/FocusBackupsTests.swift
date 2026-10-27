@@ -42,7 +42,7 @@ struct FocusBackupsTests {
         let restored = try FocusStore(fileURL: url)
         #expect(restored.restoreError == nil)
         #expect(try contents(restored.dbQueue) == before)
-        let recovery = try #require(FileManager.default.contentsOfDirectory(at: backups.directory, includingPropertiesForKeys: nil).first { $0.lastPathComponent.hasPrefix("before-restore-") })
+        let recovery = try #require(FileManager.default.contentsOfDirectory(at: backups.directory, includingPropertiesForKeys: nil).first { $0.pathExtension == "sqlite" && $0.lastPathComponent.hasPrefix("before-restore-") })
         let recoveryStore = try FocusStore(fileURL: recovery)
         #expect(try BoardService(store: recoveryStore).snapshot().tasks.count == 3)
         try recoveryStore.dbQueue.close()
