@@ -55,4 +55,18 @@ The installed app was not replaced or manually exercised with a physical global
 shortcut. This is a local debug build, not a universal release/package check.
 Live Jira, ClickUp, and Codex acceptance was intentionally outside the selected
 scope. Existing ClickUp decoder and native-build-system deprecation warnings
-remain. The change is committed on `feat/focus-workflows`, not merged or published.
+remain. These limits describe implementation validation before release packaging.
+
+## v0.8.0 release preparation — 2026-10-26
+
+The user requested the version update, main merge, GitHub publication, and cleanup.
+The release includes the complete feature commit `e07da3c`. `VERSION`, README
+release commands, and English release notes now target v0.8.0. GitHub write access
+and the existing Sparkle signing key were verified before publication. The host
+has no Apple signing identity, so the established ad-hoc signing mode is used.
+
+Release verification must run the repository release script from clean main,
+confirm universal slices and bundle/package integrity, compare published asset
+digests, check the latest signed appcast, and preserve local evidence before
+archiving the implementation worktree. Publication evidence is retained in the
+main checkout's ignored `output/release-0.8.0/` directory.

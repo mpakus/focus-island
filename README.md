@@ -202,10 +202,10 @@ Install v0.6.0 manually once if you are on v0.5.x. Subsequent releases use a sig
 ## Releasing
 
 ```bash
-OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.7.0
+OPEN_ISLAND_SIGN_IDENTITY=- zsh scripts/release.sh 0.8.0
 ```
 
-Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.7.0.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs tests, builds and verifies a universal DMG and ZIP, signs `appcast.xml` and its ZIP enclosure, tags the version, and publishes all three assets to GitHub Releases.
+Requirements: a clean `main` that matches `origin/main`, the same version in `VERSION`, release notes in `docs/releases/v0.8.0.md` (the first line is the release title), and an authenticated `gh` CLI with permission to publish to the origin repository. The script runs tests, builds and verifies a universal DMG and ZIP, signs `appcast.xml` and its ZIP enclosure, tags the version, and publishes all three assets to GitHub Releases.
 
 Sparkle tools are downloaded from the pinned official release with a SHA-256 check. Releases require the existing Keychain signing key under account `focus-island`; its public half must match `config/packaging/sparkle-public-key.txt`. Preserve this private key securely for future releases. A missing key stops the release; generating a replacement would break updates for existing installations.
 
